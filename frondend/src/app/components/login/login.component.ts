@@ -115,17 +115,27 @@ export class LoginComponent implements OnInit {
                 },
                 error: (error) => {
                     console.error('Authentication Error:', error);
-                    const backendMessage = typeof error?.error === 'string'
-                        ? error.error
-                        : error?.error?.message;
-
-                    this.error = backendMessage
-                        || (error?.status === 0
-                            ? 'Cannot reach the authentication service. Check that the backend is running and the API proxy is configured.'
-                            : 'Authentication failed. Please verify your Service ID is registered in the system.');
+                    this.error = this.getLoginErrorMessage(error);
                     this.loading = false;
                 }
             });
+    }
+
+    private getLoginErrorMessage(error: any): string {
+        if (error?.status === 0 || error?.error instanceof ProgressEvent) {
+            return 'Cannot reach the backend. Please check that the API is running and the browser can access it.';
+        }
+
+        const backendMessage = error?.error;
+        if (typeof backendMessage === 'string' && backendMessage.trim()) {
+            return backendMessage;
+        }
+
+        if (backendMessage?.message) {
+            return backendMessage.message;
+        }
+
+        return 'Authentication failed. Please verify your Service ID is registered in the system.';
     }
 
     signInWithAzure() {

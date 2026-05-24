@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { finalize } from 'rxjs/operators';
+import { environment } from '../../../../../environments/environment';
 
 /* ========== DATA TYPES ========== */
 
@@ -50,7 +51,7 @@ export class AdminRoutineMtncComponent implements OnInit {
   errorMessage = '';
 
   // ✅ backend base url (change port if needed)
-  private readonly apiBase = 'https://socapps.intranet.slt.com.lk/kpi/api/mtnc-routine';
+  private readonly apiBase = `${environment.apiUrl}/mtnc-routine`;
 
   form = this.fb.group({
     kpi: ['', Validators.required],

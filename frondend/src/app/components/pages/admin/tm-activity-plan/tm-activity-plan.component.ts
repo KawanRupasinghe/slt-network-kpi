@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { finalize } from 'rxjs/operators';
+import { environment } from '../../../../../environments/environment';
 
 /* ========== TM ACTIVITY PLAN ADMIN COMPONENT ========== */
 
@@ -62,7 +63,7 @@ export class AdminTmActivityPlanComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
     this.http
-      .get<ActivityRecord[]>('https://socapps.intranet.slt.com.lk/kpi/api/TmActivityPlans') // Connect to real API
+      .get<ActivityRecord[]>(`${environment.apiUrl}/TmActivityPlans`)
       .pipe(finalize(() => {
         this.loading = false;
         this.cdr.detectChanges();
@@ -86,8 +87,8 @@ export class AdminTmActivityPlanComponent implements OnInit {
 
     const payload = this.form.getRawValue();
     const request$ = this.editingId
-      ? this.http.put(`https://socapps.intranet.slt.com.lk/kpi/api/TmActivityPlans/${this.editingId}`, { id: this.editingId, ...payload })
-      : this.http.post('https://socapps.intranet.slt.com.lk/kpi/api/TmActivityPlans', payload);
+      ? this.http.put(`${environment.apiUrl}/TmActivityPlans/${this.editingId}`, { id: this.editingId, ...payload })
+      : this.http.post(`${environment.apiUrl}/TmActivityPlans`, payload);
 
     this.saving = true;
     request$
@@ -124,7 +125,7 @@ export class AdminTmActivityPlanComponent implements OnInit {
 
     this.saving = true;
     this.http
-      .delete(`https://socapps.intranet.slt.com.lk/kpi/api/TmActivityPlans/${id}`)
+      .delete(`${environment.apiUrl}/TmActivityPlans/${id}`)
       .pipe(finalize(() => (this.saving = false)))
       .subscribe({
         next: () => this.fetchData(),

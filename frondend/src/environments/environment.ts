@@ -7,5 +7,5 @@ export const environment = {
     /* Production mode flag */
     production: false,
     /* Backend API endpoint URL */
-  apiUrl: '/kpi/api'
+  apiUrl: '/api'
 };

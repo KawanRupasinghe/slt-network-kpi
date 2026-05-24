@@ -5,6 +5,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import * as ExcelJS from 'exceljs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { environment } from '../../../../../environments/environment';
 
 /* ================= TYPES ================= */
 
@@ -150,7 +151,7 @@ export class RoutineMtncComponent implements OnInit {
       msan: this.http.get<PlatformRecord[]>('/kpi/api/multi-table/fetchMsan').pipe(catchError(() => of([]))),
       vpn: this.http.get<PlatformRecord[]>('/kpi/api/multi-table/fetchVpn').pipe(catchError(() => of([]))),
       slbn: this.http.get<PlatformRecord[]>('/kpi/api/multi-table/fetchSlbn').pipe(catchError(() => of([]))),
-      routine: this.http.get<RoutineRecord[]>('/kpi/api/mtnc-routine').pipe(
+      routine: this.http.get<RoutineRecord[]>(`${environment.apiUrl}/mtnc-routine`).pipe(
 
         catchError((err: HttpErrorResponse) => {
           console.error(err.message);

@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { UserService, User, CreateUserDto, UpdateUserDto } from '../../../../services/user.service';
+import { environment } from '../../../../../environments/environment';
 
 /* ========== USER REGISTRATION COMPONENT ========== */
 
@@ -226,7 +227,7 @@ export class UserRegistrationComponent implements OnInit {
   testBackendConnection() {
     this.error = '';
     this.success = 'Testing backend connection...';
-    fetch('https://socapps.intranet.slt.com.lk/kpi/api/users')
+    fetch(`${environment.apiUrl}/users`)
       .then(response => {
         if (response.ok) {
           this.success = 'Backend connection successful!';
@@ -235,7 +236,7 @@ export class UserRegistrationComponent implements OnInit {
         }
       })
       .catch(err => {
-        this.error = 'Cannot connect to backend. Make sure it\'s running on https://socapps.intranet.slt.com.lk';
+        this.error = 'Cannot connect to backend. Make sure the local API is running.';
         console.error('Connection test failed:', err);
       });
   }

@@ -4,6 +4,7 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { catchError, finalize } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 import * as ExcelJS from 'exceljs';
+import { environment } from '../../../../../environments/environment';
 
 /* ===================== TYPES ===================== */
 
@@ -75,12 +76,12 @@ export class TowerMtceAchievementComponent implements OnInit {
 
     forkJoin({
       distribution: this.http
-        .get<TowerRecord[]>('/api/ProcessedDataFetch1')
+        .get<TowerRecord[]>(`${environment.apiUrl}/ProcessedDataFetch1`)
         .pipe(catchError(() => of([]))),
 
       // ✅ STRONGLY TYPED + NO FALLBACK
       kpis: this.http
-        .get<KpiTowerRow[]>('https://socapps.intranet.slt.com.lk/kpi/api/kpitower')
+        .get<KpiTowerRow[]>(`${environment.apiUrl}/kpitower`)
         .pipe(
           catchError(err => {
             console.error('❌ KPI API FAILED', err);

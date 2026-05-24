@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { finalize } from 'rxjs/operators';
+import { environment } from '../../../../../environments/environment';
 
 /* ========== DATA TYPES ========== */
 
@@ -67,7 +68,7 @@ export class FinalTableComponent implements OnInit {
   saving = false;
   errorMessage = '';
 
-  private readonly apiBase = 'https://socapps.intranet.slt.com.lk/kpi/api/kpi-definitions';
+  private readonly apiBase = `${environment.apiUrl}/kpi-definitions`;
 
   // ✅ weightage is displayed but NOT editable, so keep a disabled control
   form = this.fb.nonNullable.group({
@@ -109,7 +110,7 @@ export class FinalTableComponent implements OnInit {
           }
         },
         error: (err) => {
-          console.error('GET /kpi/api/kpi-definitions failed:', err);
+          console.error('GET /api/kpi-definitions failed:', err);
           this.errorMessage = 'Unable to load KPI definitions.';
           this.records = [];
         },

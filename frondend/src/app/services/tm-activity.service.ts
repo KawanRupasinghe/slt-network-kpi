@@ -6,6 +6,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 /* ========== DATA INTERFACES ========== */
 
@@ -38,7 +39,7 @@ export interface ActivityRecord {
 })
 export class TmActivityService {
   /* Backend API base URL */
-  private apiBase = 'https://socapps.intranet.slt.com.lk/kpi/api/TmActivityPlans';
+  private apiBase = `${environment.apiUrl}/TmActivityPlans`;
 
   constructor(private http: HttpClient) {}
 

@@ -5,6 +5,7 @@ import { catchError, finalize } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 import * as ExcelJS from 'exceljs';
 import { TmActivityService, ActivityRecord } from '../../../../services/tm-activity.service';
+import { environment } from '../../../../../environments/environment';
 
 type ProcessedDetail = {
   Column1: string;
@@ -411,7 +412,7 @@ export class TmActivityPlanComponent implements OnInit {
       // Use processed mock data (since /api/ProcessedDataFetch1 doesn't exist)
       //this.tableData = [...MOCK_PROCESSED_DATA];/
       this.loading = false;
-      this.http.get<any[]>('/kpi/api/tower-mtc/fetchTower')
+      this.http.get<any[]>(`${environment.apiUrl}/tower-mtc/fetchTower`)
         .pipe(
           catchError(err => {
             console.error('Tower API error:', err);

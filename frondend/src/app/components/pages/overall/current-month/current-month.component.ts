@@ -16,6 +16,7 @@ import { Subscription } from 'rxjs';
 import { Region as RegionApi, RegionService } from '../../../../services/region.service';
 import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import { environment } from '../../../../../environments/environment';
 
 type Region = {
   id: number;
@@ -99,10 +100,10 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
   noOverallResults = false;
 
   /** same API you used in FinalTableComponent */
-  private readonly apiBase = 'https://socapps.intranet.slt.com.lk/kpi/api/kpi-definitions';
+  private readonly apiBase = `${environment.apiUrl}/kpi-definitions`;
  
 
-  private readonly overallResultsApiBase = 'https://socapps.intranet.slt.com.lk/kpi/api/overall-kpi-results';
+  private readonly overallResultsApiBase = `${environment.apiUrl}/overall-kpi-results`;
  
 
   @ViewChildren('leftRowRef', { read: ElementRef })

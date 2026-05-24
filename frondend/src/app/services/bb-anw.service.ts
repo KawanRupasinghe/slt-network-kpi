@@ -7,6 +7,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 /* ========== DATA INTERFACES ========== */
 
@@ -61,7 +62,7 @@ export interface BbAnwHeaderDto {
 @Injectable({ providedIn: 'root' })
 export class BbAnwService {
   /* Backend API endpoint */
-  private readonly apiUrl = 'https://socapps.intranet.slt.com.lk/kpi/api/bb-anw';
+  private readonly apiUrl = `${environment.apiUrl}/bb-anw`;
 
   constructor(private http: HttpClient) {}
 

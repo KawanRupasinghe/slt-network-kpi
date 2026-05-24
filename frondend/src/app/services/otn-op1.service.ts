@@ -6,6 +6,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 /* ========== DATA INTERFACES ========== */
 
@@ -62,7 +63,7 @@ export interface OtnOp1Metric {
 })
 export class OtnOp1Service {
   /* Backend API base URL */
-  private readonly apiUrl = 'https://socapps.intranet.slt.com.lk/kpi';
+  private readonly apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
@@ -70,28 +71,28 @@ export class OtnOp1Service {
    * Get all OtnOp1 KPIs
    */
   getAllKpis(): Observable<OtnOpKpi[]> {
-    return this.http.get<OtnOpKpi[]>(`${this.apiUrl}/api/OtnOp1`);
+    return this.http.get<OtnOpKpi[]>(`${this.apiUrl}/OtnOp1`);
   }
 
   /**
    * Create a new OtnOp1 KPI
    */
   createKpi(payload: CreateOtnOpKpi): Observable<OtnOpKpi> {
-    return this.http.post<OtnOpKpi>(`${this.apiUrl}/api/OtnOp1`, payload);
+    return this.http.post<OtnOpKpi>(`${this.apiUrl}/OtnOp1`, payload);
   }
 
   /**
    * Update an existing OtnOp1 KPI
    */
   updateKpi(id: number, payload: CreateOtnOpKpi): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/api/OtnOp1/${id}`, payload);
+    return this.http.put<void>(`${this.apiUrl}/OtnOp1/${id}`, payload);
   }
 
   /**
    * Delete an OtnOp1 KPI
    */
   deleteKpi(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/api/OtnOp1/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/OtnOp1/${id}`);
   }
 
   /**
@@ -99,7 +100,7 @@ export class OtnOp1Service {
    */
   getMetrics(id: number, year: number, month: number): Observable<OtnOp1Metric[]> {
     return this.http.get<OtnOp1Metric[]>(
-      `${this.apiUrl}/api/OtnOp1/${id}/metrics?year=${year}&month=${month}`
+      `${this.apiUrl}/OtnOp1/${id}/metrics?year=${year}&month=${month}`
     );
   }
 
@@ -107,6 +108,6 @@ export class OtnOp1Service {
    * Upsert (create or update) metrics for an OtnOp1 KPI
    */
   upsertMetrics(id: number, metrics: OtnOp1Metric[]): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/api/OtnOp1/${id}/metrics`, metrics);
+    return this.http.post<any>(`${this.apiUrl}/OtnOp1/${id}/metrics`, metrics);
   }
 }
