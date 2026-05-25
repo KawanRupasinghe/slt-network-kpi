@@ -418,6 +418,10 @@ namespace backend.Data
                     .HasColumnName("pointsApplicable")
                     .IsRequired();
 
+                entity.Property(x => x.TotalPoints)
+                    .HasColumnName("totalPoints")
+                    .IsRequired();
+
                 // ❌ removed: v
             });
 

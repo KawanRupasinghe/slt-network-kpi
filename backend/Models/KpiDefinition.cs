@@ -50,6 +50,10 @@ namespace backend.Models
         [Column("pointsApplicable")]
         public int PointsApplicable { get; set; } = 0;
 
+        // Total points used for weightage calculation
+        [Column("totalPoints")]
+        public int TotalPoints { get; set; } = 36000;
+
         // Timestamp when the KPI definition was created
         [Column("createdAt")]
         public string? CreatedAt { get; set; }

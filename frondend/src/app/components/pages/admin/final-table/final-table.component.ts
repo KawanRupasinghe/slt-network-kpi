@@ -28,6 +28,7 @@ export type KpiDefinition = {
 
   // ✅ user input
   pointsApplicable: number;
+  totalPoints?: number;
 
   month?: number;
   year?: number;
@@ -42,6 +43,8 @@ export type UpsertKpiDefinitionRequest = {
   descriptionOfKPI: string;
 
   pointsApplicable: number;
+  totalPoints: number;
+  weightage: number;
 
   month: number;
   year: number;
@@ -58,11 +61,12 @@ export class FinalTableComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly totalPointsStorageKey = 'kpi.final-table.totalPoints';
 
   pageTitle = 'Strategic KPI Management';
 
   records: KpiDefinition[] = [];
-    editingId: number | null = null;
+  editingId: number | null = null;
 
   loading = false;
   saving = false;
@@ -83,9 +87,11 @@ export class FinalTableComponent implements OnInit {
 
     // ✅ user input
     pointsApplicable: [0, [Validators.required, Validators.min(0)]],
+    totalPoints: [36000, [Validators.required, Validators.min(1)]],
   });
 
   ngOnInit(): void {
+    this.form.patchValue({ totalPoints: this.getPersistedTotalPoints() });
     this.fetchData();
   }
 
@@ -94,14 +100,14 @@ export class FinalTableComponent implements OnInit {
     this.errorMessage = '';
 
     this.http
-      .get<KpiDefinition[]>(this.apiBase)
+      .get<any[]>(this.apiBase)
       .pipe(finalize(() => {
         this.loading = false;
         this.cdr.detectChanges();
       }))
       .subscribe({
         next: (res) => {
-          this.records = (res ?? []).sort((a, b) => a.id - b.id);
+          this.records = (res ?? []).map((item) => this.normalizeRecord(item)).sort((a, b) => a.id - b.id);
 
           // ✅ If editing, refresh the displayed weightage from server (after recalculation)
           if (this.editingId) {
@@ -157,6 +163,7 @@ export class FinalTableComponent implements OnInit {
       unit: record.unit ?? '',
       descriptionOfKPI: record.descriptionOfKPI ?? '',
       pointsApplicable: record.pointsApplicable ?? 0,
+      totalPoints: record.totalPoints ?? 36000,
     });
 
     // ✅ set readonly calculated field
@@ -195,6 +202,17 @@ export class FinalTableComponent implements OnInit {
     this.resetForm();
   }
 
+  saveTotalPoints(): void {
+    const totalPoints = Number(this.form.get('totalPoints')?.value ?? 36000);
+    if (totalPoints <= 0) {
+      this.errorMessage = 'Total Points must be greater than 0.';
+      return;
+    }
+
+    localStorage.setItem(this.totalPointsStorageKey, String(totalPoints));
+    this.errorMessage = '';
+  }
+
   private buildPayload(): UpsertKpiDefinitionRequest {
     const raw = this.form.getRawValue(); // includes disabled too (fine)
     const now = new Date();
@@ -208,6 +226,8 @@ export class FinalTableComponent implements OnInit {
 
       // ✅ only input needed
       pointsApplicable: Number(raw.pointsApplicable),
+      totalPoints: Number(raw.totalPoints),
+      weightage: Number(((Number(raw.pointsApplicable) / Number(raw.totalPoints || 36000)) * 100).toFixed(4)),
 
       month: now.getMonth() + 1,
       year: now.getFullYear(),
@@ -222,6 +242,7 @@ export class FinalTableComponent implements OnInit {
       unit: '',
       descriptionOfKPI: '',
       pointsApplicable: 0,
+      totalPoints: this.getPersistedTotalPoints(),
       weightage: 0, // will be set by backend after save
     });
 
@@ -238,32 +259,18 @@ export class FinalTableComponent implements OnInit {
     return `${n.toFixed(4)}%`;
   }
 
-  /** Total points from saved records (table display) */
-  private calculateTotalPointsForRecords(): number {
-    return this.records.reduce((sum, r) => sum + (r.pointsApplicable ?? 0), 0);
-  }
-
   /** Display weightage normalized to total points (table display) */
   getComputedWeightageForRecord(record: KpiDefinition): string {
-    const totalPoints = this.calculateTotalPointsForRecords();
+    const totalPoints = Number(record.totalPoints ?? 36000);
     if (totalPoints <= 0) return '0.0000%';
     const weightage = (Number(record.pointsApplicable ?? 0) / totalPoints) * 100;
     return `${weightage.toFixed(4)}%`;
   }
 
-  /** Calculate total points from all records + current input for live preview */
-  calculateTotalPoints(): number {
-    const currentPoints = Number(this.form.get('pointsApplicable')?.value ?? 0);
-    const existingPoints = this.records
-      .filter((r) => r.id !== this.editingId)
-      .reduce((sum, r) => sum + (r.pointsApplicable ?? 0), 0);
-    return existingPoints + currentPoints;
-  }
-
   /** Calculate live weightage preview based on current points input */
   calculateLiveWeightage(): string {
     const pointsApplicable = Number(this.form.get('pointsApplicable')?.value ?? 0);
-    const totalPoints = this.calculateTotalPoints();
+    const totalPoints = Number(this.form.get('totalPoints')?.value ?? 36000);
 
     if (totalPoints <= 0 || pointsApplicable <= 0) return '0.00%';
     const weightage = (pointsApplicable / totalPoints) * 100;
@@ -272,6 +279,27 @@ export class FinalTableComponent implements OnInit {
 
   /** Get total points for display hint */
   getTotalPointsDisplay(): number {
-    return this.calculateTotalPoints();
+    return Number(this.form.get('totalPoints')?.value ?? 36000);
+  }
+
+  private normalizeRecord(raw: any): KpiDefinition {
+    return {
+      id: Number(raw?.id ?? raw?.Id ?? 0),
+      perspectives: raw?.perspectives ?? raw?.Perspectives ?? '',
+      strategicObjectives: raw?.strategicObjectives ?? raw?.StrategicObjectives ?? '',
+      keyPerformanceIndicators: raw?.keyPerformanceIndicators ?? raw?.KeyPerformanceIndicators ?? '',
+      unit: raw?.unit ?? raw?.Unit ?? '',
+      descriptionOfKPI: raw?.descriptionOfKPI ?? raw?.DescriptionOfKPI ?? '',
+      weightage: Number(raw?.weightage ?? raw?.Weightage ?? 0),
+      pointsApplicable: Number(raw?.pointsApplicable ?? raw?.PointsApplicable ?? 0),
+      totalPoints: Number(raw?.totalPoints ?? raw?.TotalPoints ?? 36000),
+      month: raw?.month ?? raw?.Month,
+      year: raw?.year ?? raw?.Year,
+    };
+  }
+
+  private getPersistedTotalPoints(): number {
+    const savedValue = Number(localStorage.getItem(this.totalPointsStorageKey) ?? 36000);
+    return savedValue > 0 ? savedValue : 36000;
   }
 }

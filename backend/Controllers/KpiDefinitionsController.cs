@@ -118,6 +118,7 @@ namespace backend.Controllers
                 DescriptionOfKPI = dto.DescriptionOfKPI.Trim(),
 
                 PointsApplicable = dto.PointsApplicable,
+                TotalPoints = ResolveTotalPoints(dto.TotalPoints),
 
                 // Weightage is recalculated after insert
                 Weightage = 0m,
@@ -133,7 +134,7 @@ namespace backend.Controllers
             await _db.SaveChangesAsync();
 
             // Recalculate weightage for the month/year group
-            await RecalculateWeightageAsync(month, year);
+            await RecalculateWeightageAsync(month, year, ResolveTotalPoints(dto.TotalPoints));
 
             // Retrieve updated entity with recalculated weightage
             var updated = await _db.KpiDefinitions
@@ -172,6 +173,7 @@ namespace backend.Controllers
             entity.DescriptionOfKPI = dto.DescriptionOfKPI.Trim();
 
             entity.PointsApplicable = dto.PointsApplicable;
+            entity.TotalPoints = ResolveTotalPoints(dto.TotalPoints ?? entity.TotalPoints);
 
             // Update month/year only if values were provided
             entity.Month = dto.Month.HasValue ? (byte)dto.Month.Value : entity.Month;
@@ -184,7 +186,7 @@ namespace backend.Controllers
 
             // Recalculate weightage for old group (if moved) and new group
             await RecalculateWeightageAsync(oldMonth, oldYear);
-            await RecalculateWeightageAsync(entity.Month, entity.Year);
+            await RecalculateWeightageAsync(entity.Month, entity.Year, entity.TotalPoints);
 
             // Fetch updated record
             var updated = await _db.KpiDefinitions
@@ -226,24 +228,30 @@ namespace backend.Controllers
         // Calculates percentage weightage for all KPIs
         // within the same month/year group
         // =========================================================
-        private async Task RecalculateWeightageAsync(byte month, short year)
+        private async Task RecalculateWeightageAsync(byte month, short year, int? totalPointsOverride = null)
         {
             // Retrieve all KPI definitions in the specified group
             var rows = await _db.KpiDefinitions
                 .Where(x => x.Month == month && x.Year == year)
                 .ToListAsync();
 
-            // Calculate total points for the group
-            var totalPoints = rows.Sum(x => (decimal)x.PointsApplicable);
+            if (rows.Count == 0)
+                return;
+
+            // Use provided total points; fallback to stored value; default to 36000.
+            var resolvedTotalPoints = ResolveTotalPoints(totalPointsOverride ?? rows[0].TotalPoints);
+
+            var denominator = (decimal)resolvedTotalPoints;
 
             foreach (var r in rows)
             {
                 var points = (decimal)r.PointsApplicable;
+                r.TotalPoints = resolvedTotalPoints;
 
                 // Calculate weightage percentage
-                r.Weightage = totalPoints <= 0m
+                r.Weightage = denominator <= 0m
                     ? 0m
-                    : Math.Round((points / totalPoints) * 100m, 4);
+                    : Math.Round((points / denominator) * 100m, 4);
             }
 
             await _db.SaveChangesAsync();
@@ -263,10 +271,14 @@ namespace backend.Controllers
             DescriptionOfKPI = x.DescriptionOfKPI,
             Weightage = x.Weightage,
             PointsApplicable = x.PointsApplicable,
+            TotalPoints = ResolveTotalPoints(x.TotalPoints),
             CreatedAt = x.CreatedAt,
             UpdatedAt = x.UpdatedAt,
             Month = x.Month,
             Year = x.Year
         };
+
+        private static int ResolveTotalPoints(int? totalPoints)
+            => totalPoints.HasValue && totalPoints.Value > 0 ? totalPoints.Value : 36000;
     }
 }

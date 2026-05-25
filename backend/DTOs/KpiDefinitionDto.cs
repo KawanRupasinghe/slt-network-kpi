@@ -36,6 +36,9 @@ namespace backend.DTOs
         // Maximum points applicable for this KPI
         public int PointsApplicable { get; set; }
 
+        // Total points used for KPI weightage calculation
+        public int TotalPoints { get; set; }
+
         // Timestamp when the KPI definition was created
         public string? CreatedAt { get; set; }
 

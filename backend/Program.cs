@@ -89,6 +89,13 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<AppDbContext>();
 
+        await context.Database.ExecuteSqlRawAsync(@"
+IF COL_LENGTH('dbo.finaldatatables', 'totalPoints') IS NULL
+BEGIN
+    ALTER TABLE dbo.finaldatatables
+    ADD totalPoints int NOT NULL CONSTRAINT DF_finaldatatables_totalPoints DEFAULT (36000) WITH VALUES;
+END");
+
         var roleNames = new[] { "SuperAdmin", "Admin", "PlatformAdmin", "User" };
         var existingRoles = context.Roles.Select(r => r.RoleName).ToList();
         var missingRoles = roleNames.Except(existingRoles).ToList();

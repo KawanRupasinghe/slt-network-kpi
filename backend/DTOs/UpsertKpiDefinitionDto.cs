@@ -37,6 +37,10 @@ namespace backend.DTOs
         [Range(0, 100000)]
         public int PointsApplicable { get; set; } = 0;
 
+        // Total points used for weightage calculation (optional; defaults to 36000)
+        [Range(1, 1000000)]
+        public int? TotalPoints { get; set; }
+
         // Month for which this KPI applies (range 1-12, optional)
         [Range(1, 12)]
         public int? Month { get; set; }
