@@ -34,7 +34,7 @@
           </div>
           <div class="summary-row">
             <span>Total Points:</span>
-            <span>36000</span>
+            <span>{{ getTotalPointsDisplay() }}</span>
           </div>
           <div class="summary-highlight">
             <span>Your Weightage:</span>
@@ -46,6 +46,16 @@
         <div class="field-group">
           <label>Points Applicable *</label>
           <input type="number" formControlName="pointsApplicable" placeholder="0" />
+        </div>
+
+        <div class="field-group">
+          <label>Total Points *</label>
+          <div class="total-points-row">
+            <input type="number" formControlName="totalPoints" placeholder="36000" />
+            <button type="button" class="secondary-btn total-points-btn" (click)="saveTotalPoints()">
+              Save
+            </button>
+          </div>
         </div>
 
         <div class="field-group span-full">
