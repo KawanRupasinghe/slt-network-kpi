@@ -121,7 +121,7 @@ END");
             new backend.Models.Page { PageId = 2, PageCode = "SERVICE_FULFILMENT", PageName = "SERVICE FULFILMENT" },
             new backend.Models.Page { PageId = 3, PageCode = "BB_ANW", PageName = "BB ANW" },
             new backend.Models.Page { PageId = 4, PageCode = "OTN_OP", PageName = "OTN OP" },
-            new backend.Models.Page { PageId = 5, PageCode = "TM_ACTIVITY", PageName = "TM Activity Plan" },
+            new backend.Models.Page { PageId = 5, PageCode = "TM_ACTIVITY", PageName = "Other Operator" },
             new backend.Models.Page { PageId = 6, PageCode = "ROUTINE_MTNC", PageName = "ROUTINE MTNC" },
             new backend.Models.Page { PageId = 7, PageCode = "TOWER_MTCE", PageName = "TOWER MTCE ACHIEVEMENT" }
         };
