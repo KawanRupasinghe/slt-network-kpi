@@ -45,7 +45,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("SuperAdminOnly", policy => policy.RequireClaim("role", "SuperAdmin"));
     options.AddPolicy("AdminOnly", policy => policy.RequireClaim("role", "Admin", "SuperAdmin"));
     options.AddPolicy("PlatformAdminOnly", policy => policy.RequireClaim("role", "PlatformAdmin", "SuperAdmin"));
-    
+
     options.AddPolicy("ViewPagePolicy", policy =>
         policy.AddRequirements(new backend.Helpers.Authorization.PageAccessRequirement()));
 
@@ -96,7 +96,7 @@ BEGIN
     ADD totalPoints int NOT NULL CONSTRAINT DF_finaldatatables_totalPoints DEFAULT (36000) WITH VALUES;
 END");
 
-            await context.Database.ExecuteSqlRawAsync(@"
+        await context.Database.ExecuteSqlRawAsync(@"
     IF COL_LENGTH('dbo.finaldatatables', 'category') IS NULL
     BEGIN
         ALTER TABLE dbo.finaldatatables
@@ -133,7 +133,7 @@ END");
             context.Pages.AddRange(missingPages);
             context.SaveChanges();
         }
-        
+
         // Fix: Ensure Admin has correct Role (SuperAdmin = 1) and Password hash if missing
         var adminUser = context.Users.FirstOrDefault(u => u.ServiceId == "admin");
         if (adminUser != null)
