@@ -1,0 +1,76 @@
+<div class="kpi-page">
+  <div class="kpi-overlay"></div>
+
+  <section class="kpi-hero">
+    <h1>{{ pageTitle }}</h1>
+    <p>Network engineer KPI tracking for Enterprise KPI.</p>
+  </section>
+
+  <section class="form-section">
+    <form class="kpi-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+      <h2>{{ editingId ? 'Update KPI' : 'Create KPI' }}</h2>
+
+      <div class="field-group">
+        <input type="text" formControlName="networkEngineerKpi" placeholder="Network Engineer KPI" required />
+      </div>
+
+      <div class="field-group">
+        <input type="text" formControlName="division" placeholder="Division" />
+      </div>
+
+      <div class="field-group">
+        <input type="text" formControlName="section" placeholder="Section" />
+      </div>
+
+      <div class="field-group">
+        <input type="number" formControlName="kpiPercent" placeholder="KPI (%)" />
+      </div>
+
+      <div class="actions">
+        <button type="submit" [disabled]="form.invalid || saving">
+          {{ editingId ? 'Update' : 'Add' }}
+        </button>
+
+        <button type="button"
+                class="secondary"
+                *ngIf="editingId"
+                (click)="onCancelEdit()"
+                [disabled]="saving">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="table-section">
+    <div class="state" *ngIf="loading">Loading KPI data...</div>
+    <div class="state error" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
+    <div class="state" *ngIf="!loading && !errorMessage && !records.length">
+      No KPI entries yet.
+    </div>
+
+    <table *ngIf="!loading && records.length" class="kpi-table">
+      <thead>
+        <tr>
+          <th>Network Engineers KPI</th>
+          <th>Division</th>
+          <th>Section</th>
+          <th>KPI (%)</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let record of records">
+          <td>{{ record.networkEngineerKpi }}</td>
+          <td>{{ record.division }}</td>
+          <td>{{ record.section }}</td>
+          <td>{{ record.kpiPercent }}</td>
+          <td>
+            <button type="button" class="edit" (click)="onEdit(record)">Edit</button>
+            <button type="button" class="delete" (click)="onDelete(record.id)">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>

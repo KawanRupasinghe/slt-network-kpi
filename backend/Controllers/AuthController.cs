@@ -175,9 +175,12 @@ namespace backend.Controllers
             {
                 "ipnwop" => (byte)1,
                 "servicefulfilment" => (byte)2,
+                "servicefulfillment" => (byte)2,
                 "bbanw" => (byte)3,
+                "otnop" => (byte)4,
                 "otonop" => (byte)4,
                 "tmactivityplan" => (byte)5,
+                "otheroperator" => (byte)5,
                 "routinemtnc" => (byte)6,
                 "towermtceachievement" => (byte)7,
                 _ => null

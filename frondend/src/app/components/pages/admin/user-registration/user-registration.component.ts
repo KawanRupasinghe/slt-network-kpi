@@ -47,7 +47,7 @@ export class UserRegistrationComponent implements OnInit {
     'IP NW OP',
     'BB ANW',
     'OTN OP',
-    'TM Activity Plan',
+    'Other Operator',
     'ROUTINE MTNC',
     'TOWER MTCE ACHIEVEMENT'
   ];

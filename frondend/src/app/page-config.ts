@@ -49,9 +49,9 @@ export const platformNavOptions: NavOption[] = [
     title: 'Platform KPI — OTN OP'
   },
   {
-    label: 'TM Activity Plan',
+    label: 'Other Operator',
     path: 'platform/tm-activity-plan',
-    title: 'Platform KPI — TM Activity Plan'
+    title: 'Platform KPI — Other Operator'
   },
   {
     label: 'Routine MTNC',
@@ -114,9 +114,9 @@ export const adminNavOptions: NavOption[] = [
     title: 'Admin — Tower MTCE Achievement'
   },
   {
-    label: 'TM Activity Plan',
+    label: 'Other Operator',
     path: 'admin/tm-activity-plan',
-    title: 'Admin — TM Activity Plan'
+    title: 'Admin — Other Operator'
   },
   {
     label: 'Routine MTNC',
@@ -132,6 +132,16 @@ export const adminNavOptions: NavOption[] = [
     label: 'KPI Management',
     path: 'admin/final-table',
     title: 'Admin — KPI Management'
+  },
+  {
+    label: 'Enterprise KPI',
+    path: 'admin/enterprise-kpi',
+    title: 'Admin — Enterprise KPI'
+  },
+  {
+    label: 'Other KPI',
+    path: 'admin/other-kpi',
+    title: 'Admin — Other KPI'
   }
 ];
 
