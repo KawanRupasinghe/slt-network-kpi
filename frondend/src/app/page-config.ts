@@ -132,6 +132,16 @@ export const adminNavOptions: NavOption[] = [
     label: 'KPI Management',
     path: 'admin/final-table',
     title: 'Admin — KPI Management'
+  },
+  {
+    label: 'Enterprise KPI',
+    path: 'admin/enterprise-kpi',
+    title: 'Admin — Enterprise KPI'
+  },
+  {
+    label: 'Other KPI',
+    path: 'admin/other-kpi',
+    title: 'Admin — Other KPI'
   }
 ];
 

@@ -80,6 +80,12 @@ namespace backend.Data
         public DbSet<IpNwOpKpi> IpNwOpKpis { get; set; } = null!;
         public DbSet<IpNwOpKpiMetric> IpNwOpKpiMetrics { get; set; } = null!;
 
+        // =========================
+        // ENTERPRISE KPI & OTHER KPI
+        // =========================
+        public DbSet<EnterpriseKpi> EnterpriseKpis { get; set; } = null!;
+        public DbSet<OtherKpi> OtherKpis { get; set; } = null!;
+
         //OTNOP1 AND OTNOP2
         public DbSet<OtnOp1> OtnOp1 { get; set; } = null!;
         public DbSet<OtnOp1Metrics> OtnOp1Metrics { get; set; } = null!;
@@ -652,6 +658,34 @@ namespace backend.Data
 
 
 
+
+            // =========================
+            // ENTERPRISE KPI
+            // =========================
+            modelBuilder.Entity<EnterpriseKpi>(entity =>
+            {
+                entity.ToTable("EnterpriseKpi", "dbo");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(x => x.NetworkEngineerKpi).HasColumnName("network_engineer_kpi").HasMaxLength(255).IsRequired();
+                entity.Property(x => x.Division).HasColumnName("division").HasMaxLength(100);
+                entity.Property(x => x.Section).HasColumnName("section").HasMaxLength(100);
+                entity.Property(x => x.KpiPercent).HasColumnName("kpi_percent").HasColumnType("decimal(6,3)");
+            });
+
+            // =========================
+            // OTHER KPI
+            // =========================
+            modelBuilder.Entity<OtherKpi>(entity =>
+            {
+                entity.ToTable("OtherKpi", "dbo");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(x => x.NetworkEngineerKpi).HasColumnName("network_engineer_kpi").HasMaxLength(255).IsRequired();
+                entity.Property(x => x.Division).HasColumnName("division").HasMaxLength(100);
+                entity.Property(x => x.Section).HasColumnName("section").HasMaxLength(100);
+                entity.Property(x => x.KpiPercent).HasColumnName("kpi_percent").HasColumnType("decimal(6,3)");
+            });
 
             base.OnModelCreating(modelBuilder);
         }

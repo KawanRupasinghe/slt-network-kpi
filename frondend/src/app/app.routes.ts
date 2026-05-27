@@ -30,6 +30,8 @@ import { AdminIpNwOpComponent } from './components/pages/admin/ip-nw-op/ip-nw-op
 import { BbAnwComponent as AdminBbAnwComponent } from './components/pages/admin/bb-anw/bb-anw.component';
 import { OtnOp1Component } from './components/pages/admin/otn-op-1/otn-op-1.component';
 import { OtnOp2Component } from './components/pages/admin/otn-op-2/otn-op-2.component';
+import { EnterpriseKpiComponent } from './components/pages/admin/enterprise-kpi/enterprise-kpi.component';
+import { OtherKpiComponent } from './components/pages/admin/other-kpi/other-kpi.component';
 import { TowerMtceAchievementComponent as AdminTowerMtceAchievementComponent } from './components/pages/admin/tower-mtce-achievement/tower-mtce-achievement.component';
 import { AdminTmActivityPlanComponent } from './components/pages/admin/tm-activity-plan/tm-activity-plan.component';
 import { AdminRoutineMtncComponent } from './components/pages/admin/routine-mtnc/routine-mtnc.component';
@@ -71,6 +73,8 @@ export const routes: Routes = [
   { path: 'admin/routine-mtnc', component: AdminRoutineMtncComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
   { path: 'admin/email-service', component: EmailServiceComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
   { path: 'admin/final-table', component: FinalTableComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
+  { path: 'admin/enterprise-kpi', component: EnterpriseKpiComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
+  { path: 'admin/other-kpi', component: OtherKpiComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
   { path: '**', redirectTo: 'dashboard' },
   { path: 'dashboard', canActivate: [MsalGuard], loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent)}
 ];
