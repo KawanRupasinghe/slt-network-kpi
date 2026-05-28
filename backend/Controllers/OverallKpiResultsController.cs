@@ -150,6 +150,14 @@ namespace backend.Controllers
                 .Where(x => x.Month == month && x.Year == year)
                 .ToListAsync();
 
+            var entMetrics = await _db.EnterpriseKpiMetrics.AsNoTracking()
+                .Where(x => x.Month == month && x.Year == year)
+                .ToListAsync();
+
+            var otherMetrics = await _db.OtherKpiMetrics.AsNoTracking()
+                .Where(x => x.Month == month && x.Year == year)
+                .ToListAsync();
+
             // =========================================================
             // STEP 3: EXTRACT AREA CODES FROM METRICS
             // Aggregate all unique area codes from actual metric data
@@ -183,6 +191,16 @@ namespace backend.Controllers
                 .Select(x => x.Trim()));
 
             allAreaCodes.UnionWith(sfMetrics
+                .Select(x => x.AreaCode)
+                .Where(x => x != null && x.Trim() != string.Empty)
+                .Select(x => x.Trim()));
+
+            allAreaCodes.UnionWith(entMetrics
+                .Select(x => x.AreaCode)
+                .Where(x => x != null && x.Trim() != string.Empty)
+                .Select(x => x.Trim()));
+
+            allAreaCodes.UnionWith(otherMetrics
                 .Select(x => x.AreaCode)
                 .Where(x => x != null && x.Trim() != string.Empty)
                 .Select(x => x.Trim()));
@@ -231,12 +249,28 @@ namespace backend.Controllers
                 .Select(x => new NamedKpi("sf", x.Id, x.Kpi ?? string.Empty))
                 .ToListAsync();
 
+            var entKpis = await _db.EnterpriseKpis.AsNoTracking()
+                .Select(x => new NamedKpi("ent", x.Id, x.NetworkEngineerKpi ?? string.Empty))
+                .ToListAsync();
+
+            var otherKpis = await _db.OtherKpis.AsNoTracking()
+                .Select(x => new NamedKpi("other", x.Id, x.NetworkEngineerKpi ?? string.Empty))
+                .ToListAsync();
+
             var allNamedKpis = ipKpis
                 .Concat(bbKpis)
                 .Concat(otn1Kpis)
                 .Concat(otn2Kpis)
+                .Concat(entKpis)
+                .Concat(otherKpis)
                 .Concat(sfKpis)
                 .ToList();
+
+            var enterpriseTargets = await _db.EnterpriseKpis.AsNoTracking()
+                .ToDictionaryAsync(x => x.Id, x => x.KpiPercent ?? 0m);
+
+            var otherTargets = await _db.OtherKpis.AsNoTracking()
+                .ToDictionaryAsync(x => x.Id, x => x.KpiPercent ?? 0m);
 
             var daysInMonth = DateTime.DaysInMonth(year, month);
             var results = new List<OverallKpiResult>();
@@ -253,7 +287,7 @@ namespace backend.Controllers
             foreach (var kpi in kpis)
             {
                 var matchedKpi = FindBestMatch(kpi.KeyPerformanceIndicators, allNamedKpis);
-                var snapshots = BuildAreaSnapshots(matchedKpi, ipMetrics, bbMetrics, otn1Metrics, otn2Metrics, sfMetrics, daysInMonth);
+                var snapshots = BuildAreaSnapshots(matchedKpi, ipMetrics, bbMetrics, otn1Metrics, otn2Metrics, sfMetrics, entMetrics, otherMetrics, enterpriseTargets, otherTargets, daysInMonth);
 
                 var areaSnapshots = normalizedAreas
                     .Select(area => (area, snapshot: FindSnapshotForArea(snapshots, NormalizeArea(area))))
@@ -277,7 +311,9 @@ namespace backend.Controllers
                     
                     // Calculate pointsAchieved based on target value
                     var targetValue = TryParseTargetValue(kpi.DescriptionOfKPI);
-                    var pointsAchieved = CalculatePointsAchieved(maxPoints, achieved, targetValue);
+                    var pointsAchieved = snapshot?.NormalizedAchieved is decimal normalizedAchieved
+                        ? Math.Round(maxPoints * normalizedAchieved, 4)
+                        : CalculatePointsAchieved(maxPoints, achieved, targetValue);
 
                     results.Add(new OverallKpiResult
                     {
@@ -353,6 +389,10 @@ namespace backend.Controllers
             List<OtnOp1Metrics> otn1Metrics,
             List<OtnOp2Metrics> otn2Metrics,
             List<ServiceFulfilmentKpiMetric> sfMetrics,
+            List<EnterpriseKpiMetric> entMetrics,
+            List<OtherKpiMetric> otherMetrics,
+            IReadOnlyDictionary<int, decimal> enterpriseTargets,
+            IReadOnlyDictionary<int, decimal> otherTargets,
             int daysInMonth)
         {
             var result = new Dictionary<string, AreaSnapshot>();
@@ -404,6 +444,40 @@ namespace backend.Controllers
                     var achieved = CalculateSlaRatio(row.TotalFailedLinks, row.LinksSlaNotViolated);
                     result[area] = new AreaSnapshot(achieved, row.TotalFailedLinks);
                 }
+                return result;
+            }
+
+            if (matchedKpi.Source == "ent")
+            {
+                var target = enterpriseTargets.TryGetValue(matchedKpi.Id, out var targetValue) ? targetValue : 0m;
+
+                foreach (var row in entMetrics.Where(x => x.EnterpriseKpiId == matchedKpi.Id))
+                {
+                    var area = NormalizeArea(row.AreaCode);
+                    if (area == string.Empty) continue;
+
+                    var actual = row.KpiValue ?? 0m;
+                    var normalized = CalculateEnterpriseOrOtherNormalized(matchedKpi.Name, actual, target);
+                    result[area] = new AreaSnapshot(normalized * 100m, 0m, normalized);
+                }
+
+                return result;
+            }
+
+            if (matchedKpi.Source == "other")
+            {
+                var target = otherTargets.TryGetValue(matchedKpi.Id, out var targetValue) ? targetValue : 0m;
+
+                foreach (var row in otherMetrics.Where(x => x.OtherKpiId == matchedKpi.Id))
+                {
+                    var area = NormalizeArea(row.AreaCode);
+                    if (area == string.Empty) continue;
+
+                    var actual = row.KpiValue ?? 0m;
+                    var normalized = CalculateEnterpriseOrOtherNormalized(matchedKpi.Name, actual, target);
+                    result[area] = new AreaSnapshot(normalized * 100m, 0m, normalized);
+                }
+
                 return result;
             }
 
@@ -615,7 +689,7 @@ namespace backend.Controllers
         // AreaSnapshot: Calculated KPI value and node weight for an area
         // =========================================================
         private sealed record NamedKpi(string Source, int Id, string Name);
-        private sealed record AreaSnapshot(decimal Achieved, decimal TotalNodes);
+        private sealed record AreaSnapshot(decimal Achieved, decimal TotalNodes, decimal? NormalizedAchieved = null);
 
         // =========================================================
         // POINT CALCULATION WITH TARGET-BASED SCALING
@@ -658,6 +732,25 @@ namespace backend.Controllers
             var m = Regex.Match(text, @"\d+(\.\d+)?");
             if (!m.Success) return null;
             return decimal.TryParse(m.Value, out var value) ? value : null;
+        }
+
+        private static decimal CalculateEnterpriseOrOtherNormalized(string kpiName, decimal actual, decimal target)
+        {
+            var normalizedName = NormalizeText(kpiName);
+
+            if (normalizedName.Contains("fault clearance rate") || normalizedName.Contains("clearance rate"))
+            {
+                return actual > 0.9m ? 1m : actual / 0.9m;
+            }
+
+            if (target <= 0m)
+            {
+                return 0m;
+            }
+
+            return actual < target
+                ? 1m
+                : 1m - ((actual - target) / target);
         }
 
         // =========================================================
