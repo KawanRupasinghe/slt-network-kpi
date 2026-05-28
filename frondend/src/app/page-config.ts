@@ -40,8 +40,13 @@ export const platformNavOptions: NavOption[] = [
   },
   {
     label: 'Other Operator KPI',
-    path: 'platform/other-kpi',
+    path: 'platform/other-operator-kpi',
     title: 'Platform KPI — Other Operator KPI'
+  },
+  {
+    label: 'Other KPI',
+    path: 'platform/other-kpi',
+    title: 'Platform KPI — Other KPI'
   },
   {
     label: 'IP NW OP',
@@ -160,4 +165,3 @@ export const infoPages = [
   ...platformNavOptions,
   ...adminNavOptions
 ];
-

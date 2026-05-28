@@ -3,50 +3,15 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-
-export interface OtherKpiDto {
-  id?: number | string;
-  networkEngineerKpi: string;
-  division: string;
-  section: string;
-  kpiPercent: number;
-  displayOrder?: number;
-}
-
-export interface OtherMetricDto {
-  id?: number | string;
-  otherKpiId?: number | string;
-  networkEngineerKpi?: string;
-  division?: string;
-  section?: string;
-  kpiPercent?: number;
-  site: string;
-  totalFaults?: number | null;
-  faultsWithinSla?: number | null;
-  repeatedFaults?: number | null;
-  totalCustomers?: number | null;
-  totalClearanceFaults?: number | null;
-  clearedWithin4Hrs?: number | null;
-  month: number;
-  year: number;
-}
-
-export interface UpsertOtherMetricRequest {
-  otherKpiId: number;
-  site: string;
-  totalFaults?: number | null;
-  faultsWithinSla?: number | null;
-  repeatedFaults?: number | null;
-  totalCustomers?: number | null;
-  totalClearanceFaults?: number | null;
-  clearedWithin4Hrs?: number | null;
-  month: number;
-  year: number;
-}
+import {
+  OtherKpiDto,
+  OtherMetricDto,
+  UpsertOtherMetricRequest
+} from './other-kpi-platform.service';
 
 @Injectable({ providedIn: 'root' })
-export class OtherKpiPlatformService {
-  private readonly apiUrl = `${environment.apiUrl}/OtherKpi`;
+export class OtherOperatorKpiPlatformService {
+  private readonly apiUrl = `${environment.apiUrl}/OtherOperatorKpi`;
 
   constructor(private http: HttpClient) {}
 

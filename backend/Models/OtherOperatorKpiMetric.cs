@@ -1,21 +1,16 @@
-/*
- * File: OtherKpiMetric.cs
- * Entity model representing site-level metrics for Other KPI.
- */
-
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace backend.Models
 {
-    [Table("OtherKpiMetrics")]
-    public class OtherKpiMetric
+    [Table("OtherOperatorKpiMetrics")]
+    public class OtherOperatorKpiMetric
     {
         [Key]
         public int Id { get; set; }
 
         [Required]
-        public int OtherKpiId { get; set; }
+        public int OtherOperatorKpiId { get; set; }
 
         public string? Site { get; set; }
 
@@ -31,11 +26,11 @@ namespace backend.Models
 
         public int? ClearedWithin4Hrs { get; set; }
 
-        public byte Month { get; set; }
-
         public short Year { get; set; }
 
-        [ForeignKey(nameof(OtherKpiId))]
-        public OtherKpi? OtherKpi { get; set; }
+        public byte Month { get; set; }
+
+        [ForeignKey(nameof(OtherOperatorKpiId))]
+        public OtherOperatorKpi? OtherOperatorKpi { get; set; }
     }
 }

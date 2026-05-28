@@ -201,7 +201,7 @@ namespace backend.Controllers
                 .Select(x => x.Trim()));
 
             allAreaCodes.UnionWith(otherMetrics
-                .Select(x => x.AreaCode)
+                .Select(x => x.Site)
                 .Where(x => x != null && x.Trim() != string.Empty)
                 .Select(x => x.Trim()));
 
@@ -470,10 +470,10 @@ namespace backend.Controllers
 
                 foreach (var row in otherMetrics.Where(x => x.OtherKpiId == matchedKpi.Id))
                 {
-                    var area = NormalizeArea(row.AreaCode);
+                    var area = NormalizeArea(row.Site);
                     if (area == string.Empty) continue;
 
-                    var actual = row.KpiValue ?? 0m;
+                    var actual = CalculateOtherMetricPercentage(row);
                     var normalized = CalculateEnterpriseOrOtherNormalized(matchedKpi.Name, actual, target);
                     result[area] = new AreaSnapshot(normalized * 100m, 0m, normalized);
                 }
@@ -633,6 +633,27 @@ namespace backend.Controllers
             if (totalFailedLinks <= 0) return 100m;
             var pct = ((decimal)linksSlaNotViolated / totalFailedLinks) * 100m;
             return Math.Clamp(pct, 0m, 100m);
+        }
+
+        private static decimal CalculateOtherMetricPercentage(OtherKpiMetric row)
+        {
+            if ((row.TotalFaults ?? 0) > 0 && row.FaultsWithinSla.HasValue)
+            {
+                return CalculateSlaRatio(row.TotalFaults!.Value, row.FaultsWithinSla.Value);
+            }
+
+            if ((row.TotalClearanceFaults ?? 0) > 0 && row.ClearedWithin4Hrs.HasValue)
+            {
+                return CalculateSlaRatio(row.TotalClearanceFaults!.Value, row.ClearedWithin4Hrs.Value);
+            }
+
+            if ((row.TotalCustomers ?? 0) > 0 && row.RepeatedFaults.HasValue)
+            {
+                var repeatedPct = ((decimal)row.RepeatedFaults.Value / row.TotalCustomers!.Value) * 100m;
+                return Math.Clamp(100m - repeatedPct, 0m, 100m);
+            }
+
+            return 0m;
         }
 
         // =========================================================

@@ -45,3 +45,5 @@ Thumbs.db
 .sonarqube/
 .sonar/
 sonarqube-analysis.xml
+
+info.md

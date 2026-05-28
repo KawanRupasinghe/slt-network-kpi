@@ -1,15 +1,10 @@
-/*
- * File: OtherKpi.cs
- * Entity model for Other KPI definitions.
- */
-
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace backend.Models
 {
-    [Table("OtherKpi")]
-    public class OtherKpi
+    [Table("OtherOperatorKpi")]
+    public class OtherOperatorKpi
     {
         [Key]
         public int Id { get; set; }

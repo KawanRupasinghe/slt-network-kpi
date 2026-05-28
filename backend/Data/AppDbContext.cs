@@ -85,6 +85,8 @@ namespace backend.Data
         // =========================
         public DbSet<EnterpriseKpi> EnterpriseKpis { get; set; } = null!;
         public DbSet<EnterpriseKpiMetric> EnterpriseKpiMetrics { get; set; } = null!;
+        public DbSet<OtherOperatorKpi> OtherOperatorKpis { get; set; } = null!;
+        public DbSet<OtherOperatorKpiMetric> OtherOperatorKpiMetrics { get; set; } = null!;
         public DbSet<OtherKpi> OtherKpis { get; set; } = null!;
         public DbSet<OtherKpiMetric> OtherKpiMetrics { get; set; } = null!;
 
@@ -703,7 +705,7 @@ namespace backend.Data
             // =========================
             modelBuilder.Entity<OtherKpi>(entity =>
             {
-                entity.ToTable("OtherOperatorKpi", "dbo");
+                entity.ToTable("OtherKpi", "dbo");
                 entity.HasKey(x => x.Id);
                 entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(x => x.NetworkEngineerKpi).HasColumnName("network_engineer_kpi").HasMaxLength(255).IsRequired();
@@ -719,20 +721,55 @@ namespace backend.Data
 
                 entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(x => x.OtherKpiId).HasColumnName("OtherKpiId").IsRequired();
-                entity.Property(x => x.AreaCode).HasColumnName("area_code").HasMaxLength(50).IsRequired();
-                entity.Property(x => x.KpiValue).HasColumnName("kpi_value").HasColumnType("decimal(18,4)");
-                entity.Property(x => x.Month).HasColumnName("month");
-                entity.Property(x => x.Year).HasColumnName("year");
+                entity.Property(x => x.Site).HasColumnName("Site").HasMaxLength(100);
+                entity.Property(x => x.TotalFaults).HasColumnName("TotalFaults");
+                entity.Property(x => x.FaultsWithinSla).HasColumnName("FaultsWithinSla");
+                entity.Property(x => x.RepeatedFaults).HasColumnName("RepeatedFaults");
+                entity.Property(x => x.TotalCustomers).HasColumnName("TotalCustomers");
+                entity.Property(x => x.TotalClearanceFaults).HasColumnName("TotalClearanceFaults");
+                entity.Property(x => x.ClearedWithin4Hrs).HasColumnName("ClearedWithin4Hrs");
+                entity.Property(x => x.Year).HasColumnName("Year");
+                entity.Property(x => x.Month).HasColumnName("Month");
 
                 entity.HasOne(x => x.OtherKpi)
                       .WithMany()
                       .HasForeignKey(x => x.OtherKpiId)
                       .HasConstraintName("FK_OtherKpiMetrics_OtherKpi")
                       .OnDelete(DeleteBehavior.Cascade);
+            });
 
-                entity.HasIndex(x => new { x.OtherKpiId, x.AreaCode, x.Month, x.Year })
-                      .IsUnique()
-                      .HasDatabaseName("UQ_OtherKpiMetrics_Row");
+            modelBuilder.Entity<OtherOperatorKpi>(entity =>
+            {
+                entity.ToTable("OtherOperatorKpi", "dbo");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(x => x.NetworkEngineerKpi).HasColumnName("network_engineer_kpi").HasMaxLength(255).IsRequired();
+                entity.Property(x => x.Division).HasColumnName("division").HasMaxLength(100);
+                entity.Property(x => x.Section).HasColumnName("section").HasMaxLength(100);
+                entity.Property(x => x.KpiPercent).HasColumnName("kpi_percent").HasColumnType("decimal(6,3)");
+            });
+
+            modelBuilder.Entity<OtherOperatorKpiMetric>(entity =>
+            {
+                entity.ToTable("OtherOperatorKpiMetrics", "dbo");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(x => x.OtherOperatorKpiId).HasColumnName("OtherOperatorKpiId").IsRequired();
+                entity.Property(x => x.Site).HasColumnName("Site").HasMaxLength(100);
+                entity.Property(x => x.TotalFaults).HasColumnName("TotalFaults");
+                entity.Property(x => x.FaultsWithinSla).HasColumnName("FaultsWithinSla");
+                entity.Property(x => x.RepeatedFaults).HasColumnName("RepeatedFaults");
+                entity.Property(x => x.TotalCustomers).HasColumnName("TotalCustomers");
+                entity.Property(x => x.TotalClearanceFaults).HasColumnName("TotalClearanceFaults");
+                entity.Property(x => x.ClearedWithin4Hrs).HasColumnName("ClearedWithin4Hrs");
+                entity.Property(x => x.Year).HasColumnName("Year");
+                entity.Property(x => x.Month).HasColumnName("Month");
+
+                entity.HasOne(x => x.OtherOperatorKpi)
+                      .WithMany()
+                      .HasForeignKey(x => x.OtherOperatorKpiId)
+                      .HasConstraintName("FK_OtherOperatorKpiMetrics_OtherOperatorKpi")
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             base.OnModelCreating(modelBuilder);
