@@ -16,7 +16,6 @@ import { CurrentMonthComponent } from './components/pages/overall/current-month/
 /* Platform KPI Components */
 import { ServiceFulfilmentComponent } from './components/pages/platform/service-fulfilment/service-fulfilment.component';
 import { EnterpriseKpiComponent } from './components/pages/platform/enterprise-kpi/enterprise-kpi.component';
-import { OtherKpiComponent } from './components/pages/platform/other-kpi/other-kpi.component';
 import { IpNwOpComponent } from './components/pages/platform/ip-nw-op/ip-nw-op.component';
 import { BbAnwComponent } from './components/pages/platform/bb-anw/bb-anw.component';
 import { OtnOpComponent } from './components/pages/platform/otn-op/otn-op.component';
@@ -56,7 +55,6 @@ export const routes: Routes = [
   /* Platform KPI Routes */
   { path: 'platform/service-fulfilment', component: ServiceFulfilmentComponent, canActivate: [AuthGuard] },
   { path: 'platform/enterprise-kpi', component: EnterpriseKpiComponent, canActivate: [AuthGuard] },
-  { path: 'platform/other-kpi', component: OtherKpiComponent, canActivate: [AuthGuard] },
   { path: 'platform/ip-nw-op', component: IpNwOpComponent, canActivate: [AuthGuard] },
   { path: 'platform/bb-anw', component: BbAnwComponent, canActivate: [AuthGuard] },
   { path: 'platform/otn-op', component: OtnOpComponent, canActivate: [AuthGuard] },
