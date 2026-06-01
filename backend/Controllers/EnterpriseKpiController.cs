@@ -49,7 +49,7 @@ namespace backend.Controllers
         }
 
         [HttpGet("metrics")]
-        public async Task<IActionResult> GetMetrics([FromQuery] byte month, [FromQuery] short year, [FromQuery] string? area)
+        public async Task<IActionResult> GetMetrics([FromQuery] byte month, [FromQuery] short year, [FromQuery] string? site, [FromQuery] string? area)
         {
             var authResult = await _authorizationService.AuthorizeAsync(User, PageId, "ViewPagePolicy");
             if (!authResult.Succeeded) return Forbid();
@@ -57,21 +57,24 @@ namespace backend.Controllers
             if (month == 0 || year == 0)
                 return BadRequest("Month and Year must be greater than zero.");
 
-            var query =
+            var normalizedSite = NormalizeSite(site ?? area);
+            if (string.IsNullOrWhiteSpace(normalizedSite))
+                return Ok(Array.Empty<object>());
+
+            var rows = await (
                 from metric in _db.EnterpriseKpiMetrics.AsNoTracking()
                 join kpi in _db.EnterpriseKpis.AsNoTracking()
                     on metric.EnterpriseKpiId equals kpi.Id
                 where metric.Month == month && metric.Year == year
-                select new { metric, kpi };
+                select new { metric, kpi })
+                .ToListAsync();
 
-            if (!string.IsNullOrWhiteSpace(area))
-            {
-                var normalized = area.Trim().ToUpper();
-                query = query.Where(x => x.metric.AreaCode != null && x.metric.AreaCode.ToUpper() == normalized);
-            }
-
-            var result = await query
+            rows = rows
+                .Where(x => NormalizeSite(x.metric.Site) == normalizedSite)
                 .OrderBy(x => x.kpi.Id)
+                .ToList();
+
+            var result = rows
                 .Select(x => new
                 {
                     id = x.kpi.Id,
@@ -79,12 +82,12 @@ namespace backend.Controllers
                     division = x.kpi.Division,
                     section = x.kpi.Section,
                     kpiPercent = x.kpi.KpiPercent,
-                    area = x.metric.AreaCode ?? string.Empty,
+                    site = x.metric.Site ?? string.Empty,
                     kpi_value = x.metric.KpiValue,
                     month = x.metric.Month,
                     year = x.metric.Year
                 })
-                .ToListAsync();
+                .ToList();
 
             return Ok(result);
         }
@@ -183,27 +186,31 @@ namespace backend.Controllers
             if (dto == null) return BadRequest("Request body is required.");
             if (dto.EnterpriseKpiId <= 0) return BadRequest("EnterpriseKpiId must be > 0.");
             if (dto.Month == 0 || dto.Year == 0) return BadRequest("Month and Year must be greater than zero.");
+            if (dto.KpiValue == null) return BadRequest("KpiValue is required.");
 
             var kpi = await _db.EnterpriseKpis.FirstOrDefaultAsync(x => x.Id == dto.EnterpriseKpiId);
             if (kpi == null)
                 return NotFound($"Enterprise KPI with id '{dto.EnterpriseKpiId}' was not found.");
 
-            var normalizedArea = (dto.AreaCode ?? string.Empty).Trim().ToUpper();
-            if (string.IsNullOrWhiteSpace(normalizedArea))
-                return BadRequest("AreaCode is required.");
+            var normalizedSite = NormalizeSite(dto.Site ?? dto.AreaCode);
+            if (string.IsNullOrWhiteSpace(normalizedSite))
+                return BadRequest("Site is required.");
 
-            var metric = await _db.EnterpriseKpiMetrics.FirstOrDefaultAsync(x =>
-                x.EnterpriseKpiId == dto.EnterpriseKpiId &&
-                x.AreaCode.ToUpper() == normalizedArea &&
-                x.Month == dto.Month &&
-                x.Year == dto.Year);
+            var metricCandidates = await _db.EnterpriseKpiMetrics
+                .Where(x =>
+                    x.EnterpriseKpiId == dto.EnterpriseKpiId &&
+                    x.Month == dto.Month &&
+                    x.Year == dto.Year)
+                .ToListAsync();
+
+            var metric = metricCandidates.FirstOrDefault(x => NormalizeSite(x.Site) == normalizedSite);
 
             if (metric == null)
             {
                 metric = new EnterpriseKpiMetric
                 {
                     EnterpriseKpiId = dto.EnterpriseKpiId,
-                    AreaCode = normalizedArea,
+                    Site = normalizedSite,
                     KpiValue = dto.KpiValue,
                     Month = dto.Month,
                     Year = dto.Year
@@ -213,7 +220,7 @@ namespace backend.Controllers
             }
             else
             {
-                metric.AreaCode = normalizedArea;
+                metric.Site = normalizedSite;
                 metric.KpiValue = dto.KpiValue;
                 metric.Month = dto.Month;
                 metric.Year = dto.Year;
@@ -228,7 +235,7 @@ namespace backend.Controllers
                 division = kpi.Division,
                 section = kpi.Section,
                 kpiPercent = kpi.KpiPercent,
-                area = metric.AreaCode,
+                site = metric.Site,
                 kpi_value = metric.KpiValue,
                 month = metric.Month,
                 year = metric.Year
@@ -248,6 +255,14 @@ namespace backend.Controllers
             await _db.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        private static string NormalizeSite(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+
+            var filtered = new string(value.Where(char.IsLetterOrDigit).ToArray());
+            return filtered.ToUpperInvariant();
         }
     }
 }

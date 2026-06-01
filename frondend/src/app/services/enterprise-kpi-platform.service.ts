@@ -19,7 +19,7 @@ interface EnterpriseMetricResponse {
   division: string;
   section: string;
   kpiPercent: number;
-  area: string;
+  site: string;
   kpi_value: number;
   month: number;
   year: number;
@@ -31,7 +31,7 @@ export interface EnterpriseMetricDto {
   division: string;
   section: string;
   kpiPercent: number;
-  area: string;
+  site: string;
   kpiValue: number;
   month: number;
   year: number;
@@ -39,7 +39,7 @@ export interface EnterpriseMetricDto {
 
 export interface UpsertEnterpriseMetricRequest {
   enterpriseKpiId: number;
-  areaCode: string;
+  site: string;
   kpiValue: number | null;
   month: number;
   year: number;
@@ -62,13 +62,13 @@ export class EnterpriseKpiPlatformService {
     );
   }
 
-  getMetrics(month: number, year: number, area?: string): Observable<EnterpriseMetricDto[]> {
+  getMetrics(month: number, year: number, site?: string): Observable<EnterpriseMetricDto[]> {
     let params = new HttpParams()
       .set('month', month.toString())
       .set('year', year.toString());
 
-    if (area) {
-      params = params.set('area', area);
+    if (site) {
+      params = params.set('site', site);
     }
 
     return this.http.get<EnterpriseMetricResponse[]>(`${this.apiUrl}/metrics`, { params }).pipe(
@@ -79,7 +79,7 @@ export class EnterpriseKpiPlatformService {
           division: item.division,
           section: item.section,
           kpiPercent: item.kpiPercent,
-          area: item.area,
+          site: item.site,
           kpiValue: item.kpi_value,
           month: item.month,
           year: item.year
@@ -96,7 +96,7 @@ export class EnterpriseKpiPlatformService {
         division: item.division,
         section: item.section,
         kpiPercent: item.kpiPercent,
-        area: item.area,
+        site: item.site,
         kpiValue: item.kpi_value,
         month: item.month,
         year: item.year

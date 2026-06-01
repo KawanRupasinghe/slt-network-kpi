@@ -154,7 +154,7 @@
         <div *ngIf="isEditingAllowed" class="edit-mode-banner">
           <i class="bi bi-pencil-square me-2"></i>
           Inline editing enabled for {{ optionMapping[formValues.dropdown4] || formValues.dropdown4 }}.
-          Click a metric cell to enter a new percentage and press Enter to save.
+           Click KPI Value to enter a numeric value and press Enter to save.
         </div>
         <div class="table-responsive" *ngIf="data.length > 0; else noKpiData">
           <ng-container *ngIf="getColumnsToRender() as columns">

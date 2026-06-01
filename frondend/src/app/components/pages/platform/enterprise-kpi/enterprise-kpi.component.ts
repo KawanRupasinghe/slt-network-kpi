@@ -68,13 +68,15 @@ export class EnterpriseKpiComponent implements OnInit {
 
   nonEditableColumns = ['no', 'networkEngineerKpi', 'division', 'section', 'kpiPercent'];
   baseColumns = ['no', 'networkEngineerKpi', 'division', 'section', 'kpiPercent'];
+  readonly metricColumnKey = 'kpiValue';
 
   headerMapping: { [key: string]: string } = {
     no: 'No',
     networkEngineerKpi: 'Network Engineer KPI',
     division: 'Division',
     section: 'Section',
-    kpiPercent: 'KPI %'
+    kpiPercent: 'KPI %',
+    kpiValue: 'KPI Value'
   };
 
   optionMapping: { [key: string]: string } = {
@@ -188,11 +190,20 @@ export class EnterpriseKpiComponent implements OnInit {
     const year = Number(this.selectedYear);
     if (!month || !year) return;
 
+    const site = this.resolveAreaCode(this.formValues.dropdown4);
+    if (!site) {
+      this.metricsRows = [];
+      this.metricsLoading = false;
+      this.metricsError = null;
+      this.rebuildKpiMatrix();
+      this.cdr.detectChanges();
+      return;
+    }
+
     this.metricsLoading = true;
     this.metricsError = null;
 
-    const areaFilter = this.resolveAreaCode(this.formValues.dropdown4);
-    this.enterpriseKpiService.getMetrics(month, year, areaFilter || undefined).subscribe({
+    this.enterpriseKpiService.getMetrics(month, year, site).subscribe({
       next: (metrics) => {
         this.metricsRows = Array.isArray(metrics) ? metrics : [];
         if (this.metricsRows.length > 0 && !this.periodLockedByUser) {
@@ -313,13 +324,20 @@ export class EnterpriseKpiComponent implements OnInit {
   }
 
   private rebuildKpiMatrix() {
-    if (!this.metricsRows.length) {
+    if (!this.formValues.dropdown4) {
       this.data = this.buildBaseKpiDataFromAdmin();
       this.visibleColumns = [...this.baseColumns];
       return;
     }
+
+    if (!this.metricsRows.length) {
+      this.data = this.buildBaseKpiDataFromAdmin();
+      this.visibleColumns = [...this.baseColumns, this.metricColumnKey];
+      return;
+    }
+
     this.data = this.buildKpiDataFromMetrics(this.metricsRows);
-    this.refreshColumnsFromData();
+    this.visibleColumns = [...this.baseColumns, this.metricColumnKey];
   }
 
   private buildBaseKpiDataFromAdmin(): KpiData[] {
@@ -440,7 +458,7 @@ export class EnterpriseKpiComponent implements OnInit {
   }
 
   private applyMetricValueToRow(row: KpiData, metric: EnterpriseMetricDto) {
-    const areaCode = metric.area ? metric.area.trim().toUpperCase() : '';
+    const areaCode = metric.site ? metric.site.trim().toUpperCase() : '';
     const areaKey = this.normalizeAreaKey(areaCode);
     if (!row.areas) row.areas = {};
     row.areas[areaKey] = metric.kpiValue;
@@ -541,7 +559,15 @@ export class EnterpriseKpiComponent implements OnInit {
     return s.endsWith('%') ? s : `${s}%`;
   }
 
+  formatMetricValue(val: any): string {
+    if (val === undefined || val === null || val === '') return '-';
+    return String(val);
+  }
+
   getCellValue(item: KpiData, key: string): any {
+    if (key === this.metricColumnKey) {
+      return this.getSelectedAreaMetricValue(item);
+    }
     if (item[key] !== undefined && item[key] !== null && item[key] !== '') return item[key];
     if (item.areas && typeof item.areas === 'object' && item.areas[key] !== undefined) return item.areas[key];
     const normalizedKey = this.normalizeAreaKey(key);
@@ -576,7 +602,7 @@ export class EnterpriseKpiComponent implements OnInit {
 
   saveEdit(item: KpiData, key: string) {
     if (!this.isEditingAllowed) { this.toastr.error('You do not have permission to update this KPI value.', 'Permission Denied'); return; }
-    const areaCode = this.resolveAreaCode(key);
+    const areaCode = this.resolveAreaCode(this.formValues.dropdown4);
     if (!areaCode) { this.toastr.error('Unable to determine the selected RTOM area. Please pick an area and try again.', 'Invalid Area'); return; }
 
     const rowId = this.getRowId(item);
@@ -584,10 +610,12 @@ export class EnterpriseKpiComponent implements OnInit {
     const kpiId = this.resolveKpiIdentifier(latestRow);
     if (kpiId === null) { this.toastr.error('Unable to resolve the KPI identifier for this row.', 'Missing KPI Id'); return; }
 
-    const numericValue = parseFloat(String(this.activeEditValue ?? '').replace(/%/g, '').trim());
-    if (isNaN(numericValue)) { this.toastr.error('Please enter a valid numeric value before saving.', 'Invalid Value'); return; }
+    const normalizedValue = String(this.activeEditValue ?? '').replace(/%/g, '').trim();
+    if (!/^([0-9]+(\.[0-9]+)?|\.[0-9]+)$/.test(normalizedValue)) { this.toastr.error('Please enter a valid numeric or decimal value before saving.', 'Invalid Value'); return; }
+    const numericValue = Number(normalizedValue);
+    if (!Number.isFinite(numericValue)) { this.toastr.error('Please enter a valid numeric or decimal value before saving.', 'Invalid Value'); return; }
 
-    const request: UpsertEnterpriseMetricRequest = { enterpriseKpiId: kpiId, areaCode, kpiValue: numericValue, month: Number(this.selectedMonth), year: Number(this.selectedYear) };
+    const request: UpsertEnterpriseMetricRequest = { enterpriseKpiId: kpiId, site: areaCode, kpiValue: numericValue, month: Number(this.selectedMonth), year: Number(this.selectedYear) };
     this.metricsLoading = true;
     this.enterpriseKpiService.upsertMetric(request).subscribe({
       next: () => { this.metricsLoading = false; this.editingCell = { rowId: null, key: null }; this.activeEditValue = ''; this.cdr.detectChanges(); this.toastr.success(`Saved ${this.optionMapping[areaCode] || areaCode} metric successfully.`, 'Success'); this.loadMetrics(); },
@@ -605,7 +633,9 @@ export class EnterpriseKpiComponent implements OnInit {
         const row: any = {};
         this.getColumnsToRender().forEach(col => {
           const value = this.getCellValue(item, col);
-          row[this.headerMapping[col] || this.optionMapping[col] || col] = this.nonEditableColumns.includes(col) ? value : this.formatPercent(value);
+          row[this.headerMapping[col] || this.optionMapping[col] || col] = col === this.metricColumnKey
+            ? this.formatMetricValue(value)
+            : (this.nonEditableColumns.includes(col) ? value : this.formatPercent(value));
         });
         return row;
       });
@@ -637,11 +667,31 @@ export class EnterpriseKpiComponent implements OnInit {
 
   private refreshColumnsFromData() {
     if (this.formValues.dropdown4) {
-      const selectedAreaKey = this.resolveAreaCode(this.formValues.dropdown4) || this.formValues.dropdown4;
-      this.visibleColumns = [...this.baseColumns, selectedAreaKey];
+      this.visibleColumns = [...this.baseColumns, this.metricColumnKey];
       return;
     }
     this.visibleColumns = [...this.baseColumns];
+  }
+
+  private getSelectedAreaMetricValue(item: KpiData): any {
+    const selectedAreaKey = this.resolveAreaCode(this.formValues.dropdown4);
+    if (!selectedAreaKey) return null;
+
+    const normalizedAreaKey = this.normalizeAreaKey(selectedAreaKey);
+    if (item.areas && typeof item.areas === 'object') {
+      if (item.areas[selectedAreaKey] !== undefined) return item.areas[selectedAreaKey];
+      if (item.areas[normalizedAreaKey] !== undefined) return item.areas[normalizedAreaKey];
+    }
+
+    if (item[selectedAreaKey] !== undefined && item[selectedAreaKey] !== null && item[selectedAreaKey] !== '') {
+      return item[selectedAreaKey];
+    }
+
+    if (item[normalizedAreaKey] !== undefined && item[normalizedAreaKey] !== null && item[normalizedAreaKey] !== '') {
+      return item[normalizedAreaKey];
+    }
+
+    return null;
   }
 
   getLastUpdated(item: KpiData): string {

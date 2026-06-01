@@ -1,3 +1,4 @@
+using System;
 using System.Text.Json.Serialization;
 
 namespace backend.DTOs
@@ -22,6 +23,9 @@ namespace backend.DTOs
         [JsonPropertyName("kpiPercent")]
         public decimal? KpiPercent { get; set; }
 
+        [JsonPropertyName("areaCode")]
+        public string AreaCode { get; set; } = string.Empty;
+
         [JsonPropertyName("site")]
         public string Site { get; set; } = string.Empty;
 
@@ -43,10 +47,16 @@ namespace backend.DTOs
         [JsonPropertyName("clearedWithin4Hrs")]
         public int? ClearedWithin4Hrs { get; set; }
 
+        [JsonPropertyName("kpiValue")]
+        public decimal? KpiValue { get; set; }
+
         [JsonPropertyName("month")]
         public byte Month { get; set; }
 
         [JsonPropertyName("year")]
         public short Year { get; set; }
+
+        [JsonPropertyName("createdAt")]
+        public DateTime CreatedAt { get; set; }
     }
 }

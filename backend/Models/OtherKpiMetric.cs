@@ -1,8 +1,9 @@
 /*
  * File: OtherKpiMetric.cs
- * Entity model representing site-level metrics for Other KPI.
+ * Entity model representing direct area-level metrics for Other KPI.
  */
 
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -17,23 +18,25 @@ namespace backend.Models
         [Required]
         public int OtherKpiId { get; set; }
 
-        public string? Site { get; set; }
+        [Required]
+        [MaxLength(50)]
+        public string AreaCode { get; set; } = null!;
 
-        public int? TotalFaults { get; set; }
+        [Column(TypeName = "decimal(18,4)")]
+        public decimal? KpiValue { get; set; }
 
-        public int? FaultsWithinSla { get; set; }
-
-        public int? RepeatedFaults { get; set; }
-
-        public int? TotalCustomers { get; set; }
-
-        public int? TotalClearanceFaults { get; set; }
-
-        public int? ClearedWithin4Hrs { get; set; }
+        [NotMapped]
+        public string? Site
+        {
+            get => AreaCode;
+            set => AreaCode = value ?? string.Empty;
+        }
 
         public byte Month { get; set; }
 
         public short Year { get; set; }
+
+        public DateTime CreatedAt { get; set; }
 
         [ForeignKey(nameof(OtherKpiId))]
         public OtherKpi? OtherKpi { get; set; }

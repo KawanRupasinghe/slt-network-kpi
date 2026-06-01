@@ -92,7 +92,7 @@ namespace backend.Controllers
         // =========================================================
         private async Task<List<OverallKpiResult>> CalculateAndPersistAsync(byte month, short year)
         {
-            Console.WriteLine("month: "+month);
+            Console.WriteLine("month: " + month);
             // =========================================================
             // STEP 1: LOAD KPI DEFINITIONS
             // Fetch master KPI definitions for selected month/year
@@ -169,7 +169,7 @@ namespace backend.Controllers
             // =========================================================
             // Retrieve all distinct area codes from metrics (not RegionData)
             var allAreaCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            
+
             allAreaCodes.UnionWith(ipMetrics
                 .Select(x => x.AreaCode)
                 .Where(x => x != null && x.Trim() != string.Empty)
@@ -245,7 +245,6 @@ namespace backend.Controllers
                 .Select(x => new NamedKpi("otn2", x.Id, x.NetworkEngineerKpi ?? string.Empty))
                 .ToListAsync();
             var sfKpis = await _db.ServiceFulfilmentKpis.AsNoTracking()
-                .Where(x => x.Month == month && x.Year == year)
                 .Select(x => new NamedKpi("sf", x.Id, x.Kpi ?? string.Empty))
                 .ToListAsync();
 
@@ -308,7 +307,7 @@ namespace backend.Controllers
                     var maxPoints = hasNodeBasedWeight && totalNodes > 0m
                         ? Math.Round(((decimal)kpi.PointsApplicable * (snapshot?.TotalNodes ?? 0m)) / totalNodes, 4)
                         : Math.Round(equalShare, 4);
-                    
+
                     // Calculate pointsAchieved based on target value
                     var targetValue = TryParseTargetValue(kpi.DescriptionOfKPI);
                     var pointsAchieved = snapshot?.NormalizedAchieved is decimal normalizedAchieved
@@ -637,23 +636,7 @@ namespace backend.Controllers
 
         private static decimal CalculateOtherMetricPercentage(OtherKpiMetric row)
         {
-            if ((row.TotalFaults ?? 0) > 0 && row.FaultsWithinSla.HasValue)
-            {
-                return CalculateSlaRatio(row.TotalFaults!.Value, row.FaultsWithinSla.Value);
-            }
-
-            if ((row.TotalClearanceFaults ?? 0) > 0 && row.ClearedWithin4Hrs.HasValue)
-            {
-                return CalculateSlaRatio(row.TotalClearanceFaults!.Value, row.ClearedWithin4Hrs.Value);
-            }
-
-            if ((row.TotalCustomers ?? 0) > 0 && row.RepeatedFaults.HasValue)
-            {
-                var repeatedPct = ((decimal)row.RepeatedFaults.Value / row.TotalCustomers!.Value) * 100m;
-                return Math.Clamp(100m - repeatedPct, 0m, 100m);
-            }
-
-            return 0m;
+            return Math.Clamp(row.KpiValue ?? 0m, 0m, 100m);
         }
 
         // =========================================================

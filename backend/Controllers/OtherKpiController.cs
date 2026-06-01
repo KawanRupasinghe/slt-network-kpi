@@ -1,3 +1,4 @@
+using System;
 using backend.Data;
 using backend.DTOs;
 using backend.Models;
@@ -45,6 +46,7 @@ namespace backend.Controllers
         public async Task<ActionResult<IEnumerable<OtherKpiMetricDto>>> GetMetrics(
             [FromQuery] byte month,
             [FromQuery] short year,
+            [FromQuery] string? areaCode,
             [FromQuery] string? site)
         {
             var authResult = await _authorizationService.AuthorizeAsync(User, PageId, "ViewPagePolicy");
@@ -53,6 +55,8 @@ namespace backend.Controllers
             if (month == 0 || year == 0)
                 return BadRequest("Month and Year must be greater than zero.");
 
+            var normalizedArea = NormalizeAreaCode(areaCode ?? site);
+
             var query =
                 from metric in _db.OtherKpiMetrics.AsNoTracking()
                 join kpi in _db.OtherKpis.AsNoTracking()
@@ -60,10 +64,9 @@ namespace backend.Controllers
                 where metric.Month == month && metric.Year == year
                 select new { metric, kpi };
 
-            if (!string.IsNullOrWhiteSpace(site))
+            if (!string.IsNullOrWhiteSpace(normalizedArea))
             {
-                var normalized = NormalizeSite(site);
-                query = query.Where(x => x.metric.Site != null && x.metric.Site.ToUpper() == normalized);
+                query = query.Where(x => x.metric.AreaCode.ToUpper() == normalizedArea);
             }
 
             var result = await query
@@ -76,15 +79,12 @@ namespace backend.Controllers
                     Division = x.kpi.Division,
                     Section = x.kpi.Section,
                     KpiPercent = x.kpi.KpiPercent,
-                    Site = x.metric.Site ?? string.Empty,
-                    TotalFaults = x.metric.TotalFaults,
-                    FaultsWithinSla = x.metric.FaultsWithinSla,
-                    RepeatedFaults = x.metric.RepeatedFaults,
-                    TotalCustomers = x.metric.TotalCustomers,
-                    TotalClearanceFaults = x.metric.TotalClearanceFaults,
-                    ClearedWithin4Hrs = x.metric.ClearedWithin4Hrs,
+                    AreaCode = x.metric.AreaCode,
+                    Site = x.metric.AreaCode,
+                    KpiValue = x.metric.KpiValue,
                     Month = x.metric.Month,
-                    Year = x.metric.Year
+                    Year = x.metric.Year,
+                    CreatedAt = x.metric.CreatedAt
                 })
                 .ToListAsync();
 
@@ -181,13 +181,12 @@ namespace backend.Controllers
             var kpi = await _db.OtherKpis.FirstOrDefaultAsync(x => x.Id == dto.OtherKpiId);
             if (kpi == null) return NotFound($"Other KPI with id '{dto.OtherKpiId}' was not found.");
 
-            var normalizedSite = NormalizeSite(dto.Site);
-            if (string.IsNullOrWhiteSpace(normalizedSite)) return BadRequest("Site is required.");
+            var normalizedArea = NormalizeAreaCode(dto.AreaCode ?? dto.Site);
+            if (string.IsNullOrWhiteSpace(normalizedArea)) return BadRequest("AreaCode is required.");
 
             var metric = await _db.OtherKpiMetrics.FirstOrDefaultAsync(x =>
                 x.OtherKpiId == dto.OtherKpiId &&
-                x.Site != null &&
-                x.Site.ToUpper() == normalizedSite &&
+                x.AreaCode.ToUpper() == normalizedArea &&
                 x.Month == dto.Month &&
                 x.Year == dto.Year);
 
@@ -196,19 +195,17 @@ namespace backend.Controllers
                 metric = new OtherKpiMetric
                 {
                     OtherKpiId = dto.OtherKpiId,
-                    Site = normalizedSite,
+                    AreaCode = normalizedArea,
+                    KpiValue = dto.KpiValue,
                     Month = dto.Month,
-                    Year = dto.Year
+                    Year = dto.Year,
+                    CreatedAt = DateTime.UtcNow
                 };
                 _db.OtherKpiMetrics.Add(metric);
             }
 
-            metric.TotalFaults = dto.TotalFaults;
-            metric.FaultsWithinSla = dto.FaultsWithinSla;
-            metric.RepeatedFaults = dto.RepeatedFaults;
-            metric.TotalCustomers = dto.TotalCustomers;
-            metric.TotalClearanceFaults = dto.TotalClearanceFaults;
-            metric.ClearedWithin4Hrs = dto.ClearedWithin4Hrs;
+            metric.AreaCode = normalizedArea;
+            metric.KpiValue = dto.KpiValue;
 
             await _db.SaveChangesAsync();
 
@@ -237,17 +234,14 @@ namespace backend.Controllers
             Division = kpi.Division,
             Section = kpi.Section,
             KpiPercent = kpi.KpiPercent,
-            Site = metric.Site ?? string.Empty,
-            TotalFaults = metric.TotalFaults,
-            FaultsWithinSla = metric.FaultsWithinSla,
-            RepeatedFaults = metric.RepeatedFaults,
-            TotalCustomers = metric.TotalCustomers,
-            TotalClearanceFaults = metric.TotalClearanceFaults,
-            ClearedWithin4Hrs = metric.ClearedWithin4Hrs,
+            AreaCode = metric.AreaCode,
+            Site = metric.AreaCode,
+            KpiValue = metric.KpiValue,
             Month = metric.Month,
-            Year = metric.Year
+            Year = metric.Year,
+            CreatedAt = metric.CreatedAt
         };
 
-        private static string NormalizeSite(string? value) => (value ?? string.Empty).Trim().ToUpperInvariant();
+        private static string NormalizeAreaCode(string? value) => (value ?? string.Empty).Trim().ToUpperInvariant();
     }
 }

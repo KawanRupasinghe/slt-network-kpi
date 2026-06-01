@@ -39,11 +39,7 @@ export const platformNavOptions: NavOption[] = [
     title: 'Platform KPI — Enterprise KPI'
   },
   {
-    label: 'Other Operator KPI',
-    path: 'platform/other-operator-kpi',
-    title: 'Platform KPI — Other Operator KPI'
-  },
-  {
+    /* Removed: Other Operator KPI */
     label: 'Other KPI',
     path: 'platform/other-kpi',
     title: 'Platform KPI — Other KPI'

@@ -91,7 +91,7 @@
         <div *ngIf="isEditingAllowed" class="edit-mode-banner">
           <i class="bi bi-pencil-square me-2"></i>
           Inline editing enabled for {{ optionMapping[formValues.dropdown4] || formValues.dropdown4 }}.
-          Click a metric cell to enter a new percentage and press Enter to save.
+          Click KPI Value to enter a numeric value and press Enter to save.
         </div>
         <div class="table-responsive" *ngIf="data.length > 0; else noKpiData">
           <ng-container *ngIf="getColumnsToRender() as columns">
@@ -105,12 +105,12 @@
                       <div class="editable-cell" [class.can-edit]="isEditingAllowed" [class.is-active]="isEditingCell(row, column)">
                         <ng-container *ngIf="isEditingCell(row, column); else metricDisplay">
                           <form class="inline-edit-form" (submit)="$event.preventDefault(); saveEdit(row, column)">
-                            <input type="number" class="form-control form-control-sm" [(ngModel)]="activeEditValue" [ngModelOptions]="{ standalone: true }" min="0" max="100" step="0.01" inputmode="decimal" autofocus (focus)="selectMetricInput($event)" (keyup.escape)="cancelEdit()" />
+                            <input type="number" class="form-control form-control-sm" [(ngModel)]="activeEditValue" [ngModelOptions]="{ standalone: true }" min="0" step="0.01" inputmode="decimal" autofocus (focus)="selectMetricInput($event)" (keyup.escape)="cancelEdit()" />
                             <div class="inline-edit-actions"><button type="submit" class="icon-btn success" [disabled]="metricsLoading"><i class="bi bi-check-lg"></i><span>Save</span></button><button type="button" class="icon-btn ghost" (click)="cancelEdit()"><i class="bi bi-x-lg"></i><span>Cancel</span></button></div>
                           </form>
                         </ng-container>
                         <ng-template #metricDisplay>
-                          <div class="metric-display"><span class="metric-value">{{ formatPercent(getCellValue(row, column)) }}</span><button type="button" class="icon-btn" [disabled]="!isEditingAllowed" (click)="startEdit(row, column)"><i class="bi bi-pencil-square"></i><span>Edit</span></button></div>
+                          <div class="metric-display"><span class="metric-value">{{ formatMetricValue(getCellValue(row, column)) }}</span><button type="button" class="icon-btn" [disabled]="!isEditingAllowed" (click)="startEdit(row, column)"><i class="bi bi-pencil-square"></i><span>Edit</span></button></div>
                         </ng-template>
                       </div>
                     </ng-template>
