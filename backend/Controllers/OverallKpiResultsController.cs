@@ -98,30 +98,11 @@ namespace backend.Controllers
             // Fetch master KPI definitions for selected month/year
             // Fallback to latest definitions if none exist for selected period
             // =========================================================
+            // KpiDefinition no longer has month/year columns — load all definitions
             var kpis = await _db.KpiDefinitions
                 .AsNoTracking()
-                .Where(x => x.Month == month && x.Year == year)
                 .OrderBy(x => x.Id)
                 .ToListAsync();
-
-            if (!kpis.Any())
-            {
-                var latest = await _db.KpiDefinitions
-                    .AsNoTracking()
-                    .OrderByDescending(x => x.Year)
-                    .ThenByDescending(x => x.Month)
-                    .Select(x => new { x.Month, x.Year })
-                    .FirstOrDefaultAsync();
-
-                if (latest != null)
-                {
-                    kpis = await _db.KpiDefinitions
-                        .AsNoTracking()
-                        .Where(x => x.Month == latest.Month && x.Year == latest.Year)
-                        .OrderBy(x => x.Id)
-                        .ToListAsync();
-                }
-            }
 
             // =========================================================
             // STEP 2: LOAD ALL PLATFORM METRICS
@@ -191,8 +172,8 @@ namespace backend.Controllers
                 .Select(x => x.Trim()));
 
             allAreaCodes.UnionWith(sfMetrics
-                .Select(x => x.AreaCode)
-                .Where(x => x != null && x.Trim() != string.Empty)
+                .Select(x => x.AreaCode ?? string.Empty)
+                .Where(x => x.Trim() != string.Empty)
                 .Select(x => x.Trim()));
 
             allAreaCodes.UnionWith(entMetrics
@@ -201,8 +182,8 @@ namespace backend.Controllers
                 .Select(x => x.Trim()));
 
             allAreaCodes.UnionWith(otherMetrics
-                .Select(x => x.Site)
-                .Where(x => x != null && x.Trim() != string.Empty)
+                .Select(x => x.Site ?? string.Empty)
+                .Where(x => x.Trim() != string.Empty)
                 .Select(x => x.Trim()));
 
             // Normalize area codes

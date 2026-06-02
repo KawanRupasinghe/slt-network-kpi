@@ -68,6 +68,7 @@ builder.Services.AddCors(options =>
 
 // Register MultiTable Service for SOAP UI data fetching
 builder.Services.AddHttpClient<IMultiTableService, MultiTableService>();
+builder.Services.AddScoped<backend.Services.IKpiDefinitionService, backend.Services.KpiDefinitionService>();
 
 var app = builder.Build();
 
@@ -88,20 +89,6 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<AppDbContext>();
-
-        await context.Database.ExecuteSqlRawAsync(@"
-IF COL_LENGTH('dbo.finaldatatables', 'totalPoints') IS NULL
-BEGIN
-    ALTER TABLE dbo.finaldatatables
-    ADD totalPoints int NOT NULL CONSTRAINT DF_finaldatatables_totalPoints DEFAULT (36000) WITH VALUES;
-END");
-
-        await context.Database.ExecuteSqlRawAsync(@"
-    IF COL_LENGTH('dbo.finaldatatables', 'category') IS NULL
-    BEGIN
-        ALTER TABLE dbo.finaldatatables
-        ADD category nvarchar(50) NULL;
-    END");
 
         var roleNames = new[] { "SuperAdmin", "Admin", "PlatformAdmin", "User" };
         var existingRoles = context.Roles.Select(r => r.RoleName).ToList();

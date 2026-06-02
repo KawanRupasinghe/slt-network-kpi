@@ -364,80 +364,22 @@ namespace backend.Data
             });
 
             // KPI DEFINITIONS
-            // KPI DEFINITIONS (finaldatatables) - UPDATED (rowNumber + v removed)
             modelBuilder.Entity<KpiDefinition>(entity =>
             {
-                entity.ToTable("finaldatatables", "dbo");
+                entity.ToTable("KpiDefinition", "dbo");
                 entity.HasKey(x => x.Id);
-
-                entity.Property(x => x.Id)
-                    .HasColumnName("id")
-                    .ValueGeneratedOnAdd();
-
-                // ❌ removed: rowNumber
-
-                entity.Property(x => x.Perspectives)
-                    .HasColumnName("perspectives")
-                    .HasMaxLength(50)
-                    .IsRequired();
-
-                entity.Property(x => x.Category)
-                    .HasColumnName("category")
-                    .HasMaxLength(50)
-                    .IsRequired(false);
-
-                entity.Property(x => x.StrategicObjectives)
-                    .HasColumnName("strategicObjectives")
-                    .HasMaxLength(50)
-                    .IsRequired();
-
-                entity.Property(x => x.KeyPerformanceIndicators)
-                    .HasColumnName("keyPerformanceIndicators")
-                    .HasMaxLength(100)
-                    .IsRequired();
-
-                entity.Property(x => x.Unit)
-                    .HasColumnName("unit")
-                    .HasMaxLength(50)
-                    .IsRequired();
-
-                entity.Property(x => x.DescriptionOfKPI)
-                    .HasColumnName("descriptionOfKPI")
-                    .HasMaxLength(50)
-                    .IsRequired();
-
-                entity.Property(x => x.Weightage)
-                    .HasColumnName("weightage")
-                    .HasColumnType("decimal(10,4)")
-                    .IsRequired();
-
-                entity.Property(x => x.CreatedAt)
-                    .HasColumnName("createdAt")
-                    .HasMaxLength(50)
-                    .IsRequired();
-
-                entity.Property(x => x.UpdatedAt)
-                    .HasColumnName("updatedAt")
-                    .HasMaxLength(50)
-                    .IsRequired();
-
-                entity.Property(x => x.Month)
-                    .HasColumnName("month")
-                    .IsRequired();
-
-                entity.Property(x => x.Year)
-                    .HasColumnName("year")
-                    .IsRequired();
-
-                entity.Property(x => x.PointsApplicable)
-                    .HasColumnName("pointsApplicable")
-                    .IsRequired();
-
-                entity.Property(x => x.TotalPoints)
-                    .HasColumnName("totalPoints")
-                    .IsRequired();
-
-                // ❌ removed: v
+                entity.Property(x => x.Id).HasColumnName("id").ValueGeneratedOnAdd();
+                entity.Property(x => x.Perspectives).HasColumnName("perspectives").HasMaxLength(50).IsRequired();
+                entity.Property(x => x.Category).HasColumnName("category").HasMaxLength(50).IsRequired(false);
+                entity.Property(x => x.StrategicObjectives).HasColumnName("strategicObjectives").HasMaxLength(50).IsRequired();
+                entity.Property(x => x.KeyPerformanceIndicators).HasColumnName("keyPerformanceIndicators").HasMaxLength(100).IsRequired();
+                entity.Property(x => x.Unit).HasColumnName("unit").HasMaxLength(50).IsRequired();
+                entity.Property(x => x.DescriptionOfKPI).HasColumnName("descriptionOfKPI").HasMaxLength(50).IsRequired();
+                entity.Property(x => x.Weightage).HasColumnName("weightage").HasColumnType("decimal(10,4)").IsRequired();
+                entity.Property(x => x.PointsApplicable).HasColumnName("pointsApplicable").IsRequired();
+                entity.Property(x => x.TotalPoints).HasColumnName("totalPoints").IsRequired();
+                entity.Property(x => x.CreatedAt).HasColumnName("createdAt").HasMaxLength(50).IsRequired(false);
+                entity.Property(x => x.UpdatedAt).HasColumnName("updatedAt").HasMaxLength(50).IsRequired(false);
             });
 
             modelBuilder.Entity<OverallKpiResult>(entity =>
