@@ -23,6 +23,7 @@ interface EnterpriseMetricResponse {
   kpi_value: number;
   month: number;
   year: number;
+  isNew?: boolean;
 }
 
 export interface EnterpriseMetricDto {
@@ -35,10 +36,12 @@ export interface EnterpriseMetricDto {
   kpiValue: number;
   month: number;
   year: number;
+  isNew?: boolean;
 }
 
 export interface UpsertEnterpriseMetricRequest {
   enterpriseKpiId: number;
+  kpiName: string;
   areaCode: string;
   kpiValue: number | null;
   month: number;
@@ -99,7 +102,8 @@ export class EnterpriseKpiPlatformService {
         area: item.area,
         kpiValue: item.kpi_value,
         month: item.month,
-        year: item.year
+        year: item.year,
+        isNew: item.isNew
       }))
     );
   }

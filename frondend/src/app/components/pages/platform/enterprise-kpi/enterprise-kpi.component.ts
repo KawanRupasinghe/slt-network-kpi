@@ -587,10 +587,10 @@ export class EnterpriseKpiComponent implements OnInit {
     const numericValue = parseFloat(String(this.activeEditValue ?? '').replace(/%/g, '').trim());
     if (isNaN(numericValue)) { this.toastr.error('Please enter a valid numeric value before saving.', 'Invalid Value'); return; }
 
-    const request: UpsertEnterpriseMetricRequest = { enterpriseKpiId: kpiId, areaCode, kpiValue: numericValue, month: Number(this.selectedMonth), year: Number(this.selectedYear) };
+    const request: UpsertEnterpriseMetricRequest = { enterpriseKpiId: kpiId, kpiName: latestRow.networkEngineerKpi ?? '', areaCode, kpiValue: numericValue, month: Number(this.selectedMonth), year: Number(this.selectedYear) };
     this.metricsLoading = true;
     this.enterpriseKpiService.upsertMetric(request).subscribe({
-      next: () => { this.metricsLoading = false; this.editingCell = { rowId: null, key: null }; this.activeEditValue = ''; this.cdr.detectChanges(); this.toastr.success(`Saved ${this.optionMapping[areaCode] || areaCode} metric successfully.`, 'Success'); this.loadMetrics(); },
+      next: (result) => { this.metricsLoading = false; this.editingCell = { rowId: null, key: null }; this.activeEditValue = ''; this.cdr.detectChanges(); const msg = result.isNew ? 'Saved successfully.' : 'Updated successfully.'; this.toastr.success(msg, 'Success'); this.loadMetrics(); },
       error: (err) => { this.metricsLoading = false; console.error('Failed to save Enterprise KPI metric value', err); this.cdr.detectChanges(); this.toastr.error('Saving metric failed. Please try again.', 'Save Failed'); }
     });
   }
