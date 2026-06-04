@@ -68,6 +68,7 @@ export class ServiceFulfilmentComponent implements OnInit {
   
   // Columns
   visibleColumns: string[] = [];
+  readonly metricColumnKey = 'kpiValue';
   
   // States
   loading = true;
@@ -96,7 +97,8 @@ export class ServiceFulfilmentComponent implements OnInit {
     responsibledgm: 'Responsible DGM',
     definedoladetails: 'Defined OLA Details',
     weightage: 'Weightage',
-    datasources: 'Data Sources'
+    datasources: 'Data Sources',
+    kpiValue: 'KPI Value'
   };
 
   optionMapping: { [key: string]: string } = {
@@ -407,10 +409,16 @@ export class ServiceFulfilmentComponent implements OnInit {
   }
 
   private rebuildKpiMatrix() {
+    if (!this.formValues.dropdown4) {
+      this.data = this.buildBaseKpiDataFromAdmin();
+      this.visibleColumns = [...this.baseColumns];
+      return;
+    }
+
     if (!this.metricsRows.length) {
       console.log('Service Fulfilment: No metrics, building base data from admin rows', { adminRows: this.adminKpiRows.length });
       this.data = this.buildBaseKpiDataFromAdmin();
-      this.visibleColumns = [...this.baseColumns];
+      this.visibleColumns = [...this.baseColumns, this.metricColumnKey];
       return;
     }
     console.log('Service Fulfilment: Building KPI matrix from metrics', { metricsCount: this.metricsRows.length });
@@ -842,7 +850,34 @@ export class ServiceFulfilmentComponent implements OnInit {
     return s.endsWith('%') ? s : `${s}%`;
   }
 
+  private getSelectedAreaMetricValue(item: KpiData): any {
+    const selectedAreaKey = this.resolveAreaCode(this.formValues.dropdown4);
+    if (!selectedAreaKey) {
+      return null;
+    }
+
+    const normalizedAreaKey = this.normalizeAreaKey(selectedAreaKey);
+    if (item.areas && typeof item.areas === 'object') {
+      if (item.areas[selectedAreaKey] !== undefined) return item.areas[selectedAreaKey];
+      if (item.areas[normalizedAreaKey] !== undefined) return item.areas[normalizedAreaKey];
+    }
+
+    if (item[selectedAreaKey] !== undefined && item[selectedAreaKey] !== null && item[selectedAreaKey] !== '') {
+      return item[selectedAreaKey];
+    }
+
+    if (item[normalizedAreaKey] !== undefined && item[normalizedAreaKey] !== null && item[normalizedAreaKey] !== '') {
+      return item[normalizedAreaKey];
+    }
+
+    return null;
+  }
+
   getCellValue(item: KpiData, key: string): any {
+    if (key === this.metricColumnKey) {
+      return this.getSelectedAreaMetricValue(item);
+    }
+
     // First check direct property
     if (item[key] !== undefined && item[key] !== null && item[key] !== '') {
       return item[key];
@@ -941,7 +976,7 @@ export class ServiceFulfilmentComponent implements OnInit {
       return;
     }
 
-    const areaCode = this.resolveAreaCode(key);
+    const areaCode = this.resolveAreaCode(this.formValues.dropdown4);
     if (!areaCode) {
       this.toastr.error('Unable to determine the selected RTOM area. Please pick an area and try again.', 'Invalid Area');
       return;
@@ -1098,18 +1133,9 @@ export class ServiceFulfilmentComponent implements OnInit {
 
   private refreshColumnsFromData() {
     if (this.formValues.dropdown4) {
-      // When a specific area is selected, use the resolved area code
-      const selectedAreaKey = this.resolveAreaCode(this.formValues.dropdown4) || this.formValues.dropdown4;
-      console.log('Service Fulfilment: Refreshing columns with selected area', {
-        dropdown4: this.formValues.dropdown4,
-        selectedAreaKey,
-        hasData: this.data.length > 0,
-        firstRowAreas: this.data[0]?.areas
-      });
-      this.visibleColumns = [...this.baseColumns, selectedAreaKey];
+      this.visibleColumns = [...this.baseColumns, this.metricColumnKey];
       return;
     }
-    console.log('Service Fulfilment: Refreshing columns - base columns only');
     this.visibleColumns = [...this.baseColumns];
   }
 

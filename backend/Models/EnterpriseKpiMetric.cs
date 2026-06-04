@@ -18,11 +18,15 @@ namespace backend.Models
         public int EnterpriseKpiId { get; set; }
 
         [Required]
-        [MaxLength(255)]
-        public string KpiName { get; set; } = string.Empty;
+        [MaxLength(50)]
+        public string Site { get; set; } = null!;
 
-        [Required]
-        public string AreaCode { get; set; } = null!;
+        [NotMapped]
+        public string? AreaCode
+        {
+            get => Site;
+            set => Site = value ?? string.Empty;
+        }
 
         public decimal? KpiValue { get; set; }
 

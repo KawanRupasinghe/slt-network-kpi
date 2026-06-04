@@ -5,8 +5,8 @@
 */
 
 import { Routes } from '@angular/router';
-import { AuthGuard } from './guards/auth.guard';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { AuthGuard } from './guards/auth.guard';
 
 /* ========== ROUTE COMPONENT IMPORTS ========== */
 
@@ -14,33 +14,32 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { CurrentMonthComponent } from './components/pages/overall/current-month/current-month.component';
 // Placeholder for future previous month component
 /* Platform KPI Components */
-import { ServiceFulfilmentComponent } from './components/pages/platform/service-fulfilment/service-fulfilment.component';
-import { EnterpriseKpiComponent } from './components/pages/platform/enterprise-kpi/enterprise-kpi.component';
-import { OtherKpiComponent } from './components/pages/platform/other-kpi/other-kpi.component';
-import { OtherOperatorKpiComponent } from './components/pages/platform/other-operator-kpi/other-operator-kpi.component';
-import { IpNwOpComponent } from './components/pages/platform/ip-nw-op/ip-nw-op.component';
 import { BbAnwComponent } from './components/pages/platform/bb-anw/bb-anw.component';
+import { EnterpriseKpiComponent } from './components/pages/platform/enterprise-kpi/enterprise-kpi.component';
+import { IpNwOpComponent } from './components/pages/platform/ip-nw-op/ip-nw-op.component';
+import { OtherKpiComponent } from './components/pages/platform/other-kpi/other-kpi.component';
 import { OtnOpComponent } from './components/pages/platform/otn-op/otn-op.component';
-import { TmActivityPlanComponent } from './components/pages/platform/tm-activity-plan/tm-activity-plan.component';
 import { RoutineMtncComponent } from './components/pages/platform/routine-mtnc/routine-mtnc.component';
+import { ServiceFulfilmentComponent } from './components/pages/platform/service-fulfilment/service-fulfilment.component';
+import { TmActivityPlanComponent } from './components/pages/platform/tm-activity-plan/tm-activity-plan.component';
 import { TowerMtceAchievementComponent } from './components/pages/platform/tower-mtce-achievement/tower-mtce-achievement.component';
 /* Admin Components */
+import { MsalGuard } from '@azure/msal-angular';
 import { AdminRegistrationComponent } from './components/pages/admin/admin-registration/admin-registration.component';
-import { UserRegistrationComponent } from './components/pages/admin/user-registration/user-registration.component';
-import { AdminServiceFulfilmentComponent } from './components/pages/admin/service-fulfilment/service-fulfilment.component';
-import { RegionManagementComponent } from './components/pages/admin/region-management/region-management.component';
-import { AdminIpNwOpComponent } from './components/pages/admin/ip-nw-op/ip-nw-op.component';
 import { BbAnwComponent as AdminBbAnwComponent } from './components/pages/admin/bb-anw/bb-anw.component';
+import { EmailServiceComponent } from './components/pages/admin/email-service/email-service.component';
+import { EnterpriseKpiComponent as AdminEnterpriseKpiComponent } from './components/pages/admin/enterprise-kpi/enterprise-kpi.component';
+import { FinalTableComponent } from './components/pages/admin/final-table/final-table.component';
+import { AdminIpNwOpComponent } from './components/pages/admin/ip-nw-op/ip-nw-op.component';
+import { OtherKpiComponent as AdminOtherKpiComponent } from './components/pages/admin/other-kpi/other-kpi.component';
 import { OtnOp1Component } from './components/pages/admin/otn-op-1/otn-op-1.component';
 import { OtnOp2Component } from './components/pages/admin/otn-op-2/otn-op-2.component';
-import { EnterpriseKpiComponent as AdminEnterpriseKpiComponent } from './components/pages/admin/enterprise-kpi/enterprise-kpi.component';
-import { OtherKpiComponent as AdminOtherKpiComponent } from './components/pages/admin/other-kpi/other-kpi.component';
-import { TowerMtceAchievementComponent as AdminTowerMtceAchievementComponent } from './components/pages/admin/tower-mtce-achievement/tower-mtce-achievement.component';
-import { AdminTmActivityPlanComponent } from './components/pages/admin/tm-activity-plan/tm-activity-plan.component';
+import { RegionManagementComponent } from './components/pages/admin/region-management/region-management.component';
 import { AdminRoutineMtncComponent } from './components/pages/admin/routine-mtnc/routine-mtnc.component';
-import { EmailServiceComponent } from './components/pages/admin/email-service/email-service.component';
-import { FinalTableComponent } from './components/pages/admin/final-table/final-table.component';
-import { MsalGuard } from '@azure/msal-angular';
+import { AdminServiceFulfilmentComponent } from './components/pages/admin/service-fulfilment/service-fulfilment.component';
+import { AdminTmActivityPlanComponent } from './components/pages/admin/tm-activity-plan/tm-activity-plan.component';
+import { TowerMtceAchievementComponent as AdminTowerMtceAchievementComponent } from './components/pages/admin/tower-mtce-achievement/tower-mtce-achievement.component';
+import { UserRegistrationComponent } from './components/pages/admin/user-registration/user-registration.component';
 
 /* ========== ROUTE DEFINITIONS ========== */
 
@@ -57,7 +56,6 @@ export const routes: Routes = [
   /* Platform KPI Routes */
   { path: 'platform/service-fulfilment', component: ServiceFulfilmentComponent, canActivate: [AuthGuard] },
   { path: 'platform/enterprise-kpi', component: EnterpriseKpiComponent, canActivate: [AuthGuard] },
-  { path: 'platform/other-operator-kpi', component: OtherOperatorKpiComponent, canActivate: [AuthGuard] },
   { path: 'platform/other-kpi', component: OtherKpiComponent, canActivate: [AuthGuard] },
   { path: 'platform/ip-nw-op', component: IpNwOpComponent, canActivate: [AuthGuard] },
   { path: 'platform/bb-anw', component: BbAnwComponent, canActivate: [AuthGuard] },
