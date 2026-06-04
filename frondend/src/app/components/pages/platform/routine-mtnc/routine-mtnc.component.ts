@@ -34,7 +34,6 @@ type PlatformRecord = {
   };
   details?: any[];   // optional (since it exists in API)
 };
-``
 
 type PlatformKey = 'msan' | 'vpn' | 'slbn';
 
@@ -147,17 +146,15 @@ export class RoutineMtncComponent implements OnInit {
     this.errorMessage = '';
 
     forkJoin({
-      msan: this.http.get<PlatformRecord[]>('/kpi/api/multi-table/fetchMsan').pipe(catchError(() => of([]))),
-      vpn: this.http.get<PlatformRecord[]>('/kpi/api/multi-table/fetchVpn').pipe(catchError(() => of([]))),
-      slbn: this.http.get<PlatformRecord[]>('/kpi/api/multi-table/fetchSlbn').pipe(catchError(() => of([]))),
+      msan: this.http.get<PlatformRecord[]>(`${environment.apiUrl}/multi-table/fetchMsan`).pipe(catchError(() => of([]))),
+      vpn: this.http.get<PlatformRecord[]>(`${environment.apiUrl}/multi-table/fetchVpn`).pipe(catchError(() => of([]))),
+      slbn: this.http.get<PlatformRecord[]>(`${environment.apiUrl}/multi-table/fetchSlbn`).pipe(catchError(() => of([]))),
       routine: this.http.get<RoutineRecord[]>(`${environment.apiUrl}/mtnc-routine`).pipe(
-
         catchError((err: HttpErrorResponse) => {
           console.error(err.message);
           this.setError('Unable to load routine KPI definitions.');
           return of([]);
         })
-
       )
     })
       .pipe(finalize(() => {
@@ -306,7 +303,7 @@ export class RoutineMtncComponent implements OnInit {
 
         if (detail) {
           achieved += Number(detail.column3) || 0;
-          total += Number(platform === 'msan' ? detail.Column4 : detail.column2) || 0;
+          total += Number(detail.column2) || 0;
         }
       });
 

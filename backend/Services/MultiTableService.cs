@@ -1,4 +1,4 @@
-﻿/*
+/*
  * File: MultiTableService.cs
  * Implements data fetching from SOAP UI endpoints for multiple platform types.
  * Provides fallback mock data when endpoints are unavailable.
@@ -136,14 +136,12 @@ namespace backend.Services
                 return new List<PlatformRecordDto>();
             }
 
-            // ✅ Now all have SAME SHAPE
-
             var result = data
-    .GroupBy(x => ((dynamic)x).Month)
+    .GroupBy(x => NormalizeMonth(((dynamic)x).Month))
     .Select(g => new PlatformRecordDto
     {
         Month = g.Key,
-        Details = new List<PlatformDetailDto>(), // optional if not used
+        Details = new List<PlatformDetailDto>(),
         Data = g.ToDictionary(
             x => ((dynamic)x).Designation.Trim(),
             x =>
@@ -153,21 +151,45 @@ namespace backend.Services
                 int scheduled = item.Scheduled ?? 0;
                 int attended = item.Attended ?? 0;
 
-                string percentage = (scheduled > 0 && scheduled == attended)
-                    ? "100.00%"
-                    : (scheduled > 0
-                        ? (attended * 100.0 / scheduled).ToString("0.00") + "%"
-                        : "0%");
-
                 return new PlatformDetailDto
                 {
                     Column2 = scheduled.ToString(),   // Distribution
-                    Column3 = attended.ToString()              // Achievement
+                    Column3 = attended.ToString()     // Achievement
                 };
             })
     }).ToList();
 
             return result;
+        }
+
+        /// <summary>
+        /// Converts any stored month value to a full English month name.
+        /// Handles: numeric ("1"–"12"), zero-padded ("01"–"12"),
+        /// short abbreviations ("Jan", "Feb"), and full names ("January").
+        /// Returns the original value unchanged if format is unrecognised.
+        /// </summary>
+        private static string NormalizeMonth(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+
+            var trimmed = raw.Trim();
+
+            // Numeric month: "1" to "12" or zero-padded "01"–"12"
+            if (int.TryParse(trimmed, out int monthNum) && monthNum >= 1 && monthNum <= 12)
+                return new DateTime(2000, monthNum, 1).ToString("MMMM");
+
+            // Try parsing as a date-like string e.g. "2026-05", "May 2026", "01/2026"
+            if (DateTime.TryParse(trimmed, out DateTime parsed))
+                return parsed.ToString("MMMM");
+
+            // Short abbreviation e.g. "Jan", "Feb" — try parsing as month name
+            if (DateTime.TryParseExact(trimmed, new[] { "MMM", "MMMM" },
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out DateTime abbr))
+                return abbr.ToString("MMMM");
+
+            // Already a full name or unrecognised — return as-is
+            return trimmed;
         }
 
     }
