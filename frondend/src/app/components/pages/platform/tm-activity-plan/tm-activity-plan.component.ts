@@ -378,7 +378,7 @@ export class TmActivityPlanComponent implements OnInit {
   private readonly tmActivityService = inject(TmActivityService);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  pageTitle = 'Other Operator';
+  pageTitle = 'Tower Maintenance';
   headers: string[] = [];
   towerSums: TowerSums = {};
   calculatedValues: string[] = [];
@@ -401,7 +401,7 @@ export class TmActivityPlanComponent implements OnInit {
     this.tmActivityService.getAll().pipe(
       catchError(err => {
         console.error('Failed to fetch TM Activity plans from service', err);
-        this.setError('Unable to load Other Operator KPI definitions. Showing cached snapshot.');
+        this.setError('Unable to load Tower Maintenance KPI definitions. Showing cached snapshot.');
         return of([...MOCK_HARDCODED_DATA]);
       }),
       finalize(() => {

@@ -38,7 +38,7 @@ export class AdminTmActivityPlanComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  pageTitle = 'Other Operator';
+  pageTitle = 'Tower Maintenance';
   records: ActivityRecord[] = [];
   editingId: number | null = null;
   loading = false;
@@ -74,7 +74,7 @@ export class AdminTmActivityPlanComponent implements OnInit {
         },
         error: err => {
           console.error('Failed to fetch data', err);
-          this.errorMessage = 'Unable to load Other Operator activities.';
+          this.errorMessage = 'Unable to load Tower Maintenance activities.';
         }
       });
   }
