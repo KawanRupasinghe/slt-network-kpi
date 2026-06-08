@@ -72,6 +72,8 @@ builder.Services.AddScoped<backend.Services.IKpiDefinitionService, backend.Servi
 builder.Services.AddScoped<IMsanMtcDataCumulativeService, MsanMtcDataCumulativeService>();
 builder.Services.AddScoped<ISlbnMtcDataCumulativeService, SlbnMtcDataCumulativeService>();
 
+builder.Services.AddScoped<IIpnwMtcDataCumulativeService, IpnwMtcDataCumulativeService>();
+
 var app = builder.Build();
 
 app.UseSwagger();
