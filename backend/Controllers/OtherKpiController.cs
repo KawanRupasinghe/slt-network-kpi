@@ -169,7 +169,7 @@ namespace backend.Controllers
         }
 
         [HttpPost("metrics")]
-        public async Task<ActionResult<OtherKpiMetricDto>> UpsertMetrics([FromBody] UpsertOtherKpiMetricDto dto)
+        public async Task<ActionResult<OtherKpiMetricDto>> UpsertMetrics([FromBody] OtherKpiMetricDto dto)
         {
             var authResult = await _authorizationService.AuthorizeAsync(User, PageId, "EditPlatformKpiPolicy");
             if (!authResult.Succeeded) return Forbid();

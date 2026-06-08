@@ -434,7 +434,7 @@ export class OtherOperatorComponent implements OnInit {
 
   private getRowMatchKey(source: Partial<KpiData | AdminKpiRow | OtherMetricDto> | null | undefined): string | null {
     if (!source) return null;
-    const numericKey = this.resolveNumericId((source as any).kpiId ?? (source as any).id ?? (source as any).otherKpiId ?? undefined);
+    const numericKey = this.resolveNumericId((source as any).kpiId ?? (source as any).otherKpiId ?? (source as any).otherOperatorKpiId ?? undefined);
     if (numericKey !== undefined) return `num:${numericKey}`;
     const rawId = (source as any).id ?? (source as any)._id;
     if (typeof rawId === 'string' && rawId.trim()) return `str:${rawId.trim()}`;
@@ -444,9 +444,10 @@ export class OtherOperatorComponent implements OnInit {
   }
 
   private createRowFromMetric(metric: OtherMetricDto, fallbackOrder: number): KpiData {
-    const numericId = this.resolveNumericId(metric.id);
+    const kpiId = metric.otherKpiId ?? (metric as any).otherOperatorKpiId ?? metric.id;
+    const numericId = this.resolveNumericId(kpiId);
     return {
-      _id: this.buildRowId(metric.id, fallbackOrder),
+      _id: this.buildRowId(kpiId, fallbackOrder),
       kpiId: numericId,
       no: fallbackOrder,
       networkEngineerKpi: metric.networkEngineerKpi ?? '',

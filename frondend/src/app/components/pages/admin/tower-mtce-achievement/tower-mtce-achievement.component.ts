@@ -1,42 +1,27 @@
 /*
  File: tower-mtce-achievement.component.ts
- Description: Tower maintenance achievement admin page
- Purpose: CRUD operations for tower maintenance KPI targets and performance.
- Features: Data table management, target configuration, achievement tracking
+ Description: Other Operator KPI admin management page (historically named tower-mtce-achievement)
+ Purpose: CRUD operations for Other Operator KPI definitions.
 */
 
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../../environments/environment';
-
-/* ========== DATA INTERFACES ========== */
-
-/* Tower maintenance KPI entity */
-interface TowerKpi {
-  id: number;  // Changed from string to number (int identity)
-  responsibility: string;
-  frequency: string;
-  weightage: string;
-  kpi: string;
-  month?: number;
-  year?: number;
-}
+import { OtherOperatorKpiService, OtherOperatorKpiRecord, CreateOtherOperatorKpi } from '../../../../services/other-operator-kpi.service';
 
 @Component({
   selector: 'app-tower-mtce-achievement',
   standalone: true,
   imports: [
-    CommonModule,          // ngIf, ngFor
-    ReactiveFormsModule    // formGroup
+    CommonModule,
+    ReactiveFormsModule
   ],
   templateUrl: './tower-mtce-achievement.component.html',
   styleUrls: ['./tower-mtce-achievement.component.scss']
 })
 export class TowerMtceAchievementComponent implements OnInit {
   pageTitle = 'Other Operator';
-  records: TowerKpi[] = [];
+  records: OtherOperatorKpiRecord[] = [];
 
   form!: FormGroup;
   loading = false;
@@ -44,23 +29,18 @@ export class TowerMtceAchievementComponent implements OnInit {
   errorMessage = '';
   editingId: number | null = null;
 
-  // MUST MATCH BACKEND CONTROLLER
-  //private apiUrl = 'http://localhost:5043/api/kpitower';
-  private apiUrl = `${environment.apiUrl}/kpitower`;
   constructor(
     private fb: FormBuilder,
-    private http: HttpClient,
+    private service: OtherOperatorKpiService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      responsibility: ['', Validators.required],
-      frequency: ['', Validators.required],
-      weightage: ['', Validators.required],
-      kpi: ['', Validators.required],
-      month: [''],
-      year: ['']
+      networkEngineerKpi: ['', Validators.required],
+      division: [''],
+      section: [''],
+      kpiPercent: ['']
     });
 
     this.loadData();
@@ -73,8 +53,8 @@ export class TowerMtceAchievementComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
-    this.http.get<TowerKpi[]>(this.apiUrl).subscribe({
-      next: (data: TowerKpi[]) => {
+    this.service.getAll().subscribe({
+      next: (data: OtherOperatorKpiRecord[]) => {
         this.records = data;
         this.loading = false;
         this.cdr.detectChanges();
@@ -90,53 +70,57 @@ export class TowerMtceAchievementComponent implements OnInit {
   // =========================
   // CREATE / UPDATE
   // =========================
- onSubmit(): void {
-  if (this.form.invalid) return;
+  onSubmit(): void {
+    if (this.form.invalid) return;
 
-  this.saving = true;
+    this.saving = true;
+    const payload: CreateOtherOperatorKpi = {
+      networkEngineerKpi: this.form.value.networkEngineerKpi,
+      division: this.form.value.division || undefined,
+      section: this.form.value.section || undefined,
+      kpiPercent: this.form.value.kpiPercent ? Number(this.form.value.kpiPercent) : undefined
+    };
 
-  // ✅ FIX: normalize empty strings → null
-  const payload = {
-    ...this.form.value,
-    month: this.form.value.month || null,
-  year: this.form.value.year || null
-  };
-
-  if (this.editingId) {
-    this.http.put(`${this.apiUrl}/${this.editingId}`, payload).subscribe({
-      next: () => {
-        this.resetForm();
-        this.loadData();
-      },
-      error: (err: any) => {
-        console.error(err);
-        this.errorMessage = err?.error ?? 'Failed to update KPI';
-        this.saving = false;
-        this.cdr.detectChanges();
-      }
-    });
-  } else {
-    this.http.post(this.apiUrl, payload).subscribe({
-      next: () => {
-        this.resetForm();
-        this.loadData();
-      },
-      error: (err: any) => {
-        console.error(err);
-        this.errorMessage = err?.error ?? 'Failed to add KPI';
-        this.saving = false;
-        this.cdr.detectChanges();
-      }
-    });
+    if (this.editingId) {
+      this.service.update(this.editingId, payload).subscribe({
+        next: () => {
+          this.resetForm();
+          this.loadData();
+        },
+        error: (err: any) => {
+          console.error(err);
+          this.errorMessage = 'Failed to update KPI';
+          this.saving = false;
+          this.cdr.detectChanges();
+        }
+      });
+    } else {
+      this.service.create(payload).subscribe({
+        next: () => {
+          this.resetForm();
+          this.loadData();
+        },
+        error: (err: any) => {
+          console.error(err);
+          this.errorMessage = 'Failed to add KPI';
+          this.saving = false;
+          this.cdr.detectChanges();
+        }
+      });
+    }
   }
-}
 
   // =========================
   // EDIT
   // =========================
-  onEdit(record: TowerKpi): void {
+  onEdit(record: OtherOperatorKpiRecord): void {
     this.editingId = record.id;
-    this.form.patchValue(record);
+    this.form.patchValue({
+      networkEngineerKpi: record.networkEngineerKpi,
+      division: record.division || '',
+      section: record.section || '',
+      kpiPercent: record.kpiPercent || ''
+    });
   }
 
   onCancelEdit(): void {
@@ -151,7 +135,7 @@ export class TowerMtceAchievementComponent implements OnInit {
 
     this.saving = true;
 
-    this.http.delete(`${this.apiUrl}/${id}`).subscribe({
+    this.service.delete(id).subscribe({
       next: () => this.loadData(),
       error: (err: any) => {
         this.errorMessage = 'Failed to delete KPI';

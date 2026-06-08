@@ -21,12 +21,6 @@ export interface OtherMetricDto {
   section?: string;
   kpiPercent?: number;
   site: string;
-  totalFaults?: number | null;
-  faultsWithinSla?: number | null;
-  repeatedFaults?: number | null;
-  totalCustomers?: number | null;
-  totalClearanceFaults?: number | null;
-  clearedWithin4Hrs?: number | null;
   kpiValue?: number | null;
   month: number;
   year: number;
@@ -35,12 +29,6 @@ export interface OtherMetricDto {
 export interface UpsertOtherMetricRequest {
   otherKpiId: number;
   site: string;
-  totalFaults?: number | null;
-  faultsWithinSla?: number | null;
-  repeatedFaults?: number | null;
-  totalCustomers?: number | null;
-  totalClearanceFaults?: number | null;
-  clearedWithin4Hrs?: number | null;
   kpiValue?: number | null;
   month: number;
   year: number;
