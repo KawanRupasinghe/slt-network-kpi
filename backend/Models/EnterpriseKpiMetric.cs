@@ -30,9 +30,9 @@ namespace backend.Models
 
         public decimal? KpiValue { get; set; }
 
-        public byte Month { get; set; }
+        public int Month { get; set; }
 
-        public short Year { get; set; }
+        public int Year { get; set; }
 
         public DateTime CreatedAt { get; set; }
 

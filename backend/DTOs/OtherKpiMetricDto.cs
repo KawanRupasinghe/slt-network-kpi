@@ -51,10 +51,10 @@ namespace backend.DTOs
         public decimal? KpiValue { get; set; }
 
         [JsonPropertyName("month")]
-        public byte Month { get; set; }
+        public int Month { get; set; }
 
         [JsonPropertyName("year")]
-        public short Year { get; set; }
+        public int Year { get; set; }
 
         [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; }

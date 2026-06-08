@@ -178,70 +178,78 @@ namespace backend.Controllers
         }
 
         [HttpPost("metrics")]
-        public async Task<IActionResult> UpsertMetrics([FromBody] UpsertEnterpriseKpiMetricDto dto)
+        public async Task<IActionResult> UpsertMetrics([FromBody] EnterpriseKpiMetricDto dto)
         {
-            var authResult = await _authorizationService.AuthorizeAsync(User, PageId, "EditPlatformKpiPolicy");
-            if (!authResult.Succeeded) return Forbid();
-
-            if (dto == null) return BadRequest("Request body is required.");
-            if (dto.EnterpriseKpiId <= 0) return BadRequest("EnterpriseKpiId must be > 0.");
-            if (dto.Month == 0 || dto.Year == 0) return BadRequest("Month and Year must be greater than zero.");
-            if (dto.KpiValue == null) return BadRequest("KpiValue is required.");
-
-            var kpi = await _db.EnterpriseKpis.FirstOrDefaultAsync(x => x.Id == dto.EnterpriseKpiId);
-            if (kpi == null)
-                return NotFound($"Enterprise KPI with id '{dto.EnterpriseKpiId}' was not found.");
-
-            var normalizedSite = NormalizeSite(dto.Site ?? dto.AreaCode);
-            if (string.IsNullOrWhiteSpace(normalizedSite))
-                return BadRequest("Site is required.");
-
-            var metricCandidates = await _db.EnterpriseKpiMetrics
-                .Where(x =>
-                    x.EnterpriseKpiId == dto.EnterpriseKpiId &&
-                    x.Month == dto.Month &&
-                    x.Year == dto.Year)
-                .ToListAsync();
-
-            var metric = metricCandidates.FirstOrDefault(x => NormalizeSite(x.Site) == normalizedSite);
-
-            bool isNew = metric == null;
-            if (isNew)
+            try
             {
-                metric = new EnterpriseKpiMetric
+                var authResult = await _authorizationService.AuthorizeAsync(User, PageId, "EditPlatformKpiPolicy");
+                if (!authResult.Succeeded) return Forbid();
+
+                if (dto == null) return BadRequest("Request body is required.");
+                if (dto.EnterpriseKpiId <= 0) return BadRequest("EnterpriseKpiId must be > 0.");
+                if (dto.Month == 0 || dto.Year == 0) return BadRequest("Month and Year must be greater than zero.");
+                if (dto.KpiValue == null) return BadRequest("KpiValue is required.");
+
+                var kpi = await _db.EnterpriseKpis.FirstOrDefaultAsync(x => x.Id == dto.EnterpriseKpiId);
+                if (kpi == null)
+                    return NotFound($"Enterprise KPI with id '{dto.EnterpriseKpiId}' was not found.");
+
+                var normalizedSite = NormalizeSite(dto.Site ?? dto.AreaCode);
+                if (string.IsNullOrWhiteSpace(normalizedSite))
+                    return BadRequest("Site is required.");
+
+                var metricCandidates = await _db.EnterpriseKpiMetrics
+                    .Where(x =>
+                        x.EnterpriseKpiId == dto.EnterpriseKpiId &&
+                        x.Month == dto.Month &&
+                        x.Year == dto.Year)
+                    .ToListAsync();
+
+                var metric = metricCandidates.FirstOrDefault(x => NormalizeSite(x.Site) == normalizedSite);
+
+                bool isNew = metric == null;
+                if (isNew)
                 {
-                    EnterpriseKpiId = dto.EnterpriseKpiId,
-                    Site = normalizedSite,
-                    KpiValue = dto.KpiValue,
-                    Month = dto.Month,
-                    Year = dto.Year,
-                    CreatedAt = DateTime.UtcNow
-                };
-                _db.EnterpriseKpiMetrics.Add(metric);
-            }
-            else
-            {
-                metric.Site = normalizedSite;
-                metric.KpiValue = dto.KpiValue;
-                metric.Month = dto.Month;
-                metric.Year = dto.Year;
-            }
+                    metric = new EnterpriseKpiMetric
+                    {
+                        EnterpriseKpiId = dto.EnterpriseKpiId,
+                        Site = normalizedSite,
+                        KpiValue = dto.KpiValue,
+                        Month = dto.Month,
+                        Year = dto.Year,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _db.EnterpriseKpiMetrics.Add(metric);
+                }
+                else
+                {
+                    metric.Site = normalizedSite;
+                    metric.KpiValue = dto.KpiValue;
+                    metric.Month = dto.Month;
+                    metric.Year = dto.Year;
+                }
 
-            await _db.SaveChangesAsync();
+                await _db.SaveChangesAsync();
 
-            return Ok(new
+                return Ok(new
+                {
+                    id = kpi.Id,
+                    networkEngineerKpi = kpi.NetworkEngineerKpi,
+                    division = kpi.Division,
+                    section = kpi.Section,
+                    kpiPercent = kpi.KpiPercent,
+                    site = metric.Site,
+                    kpi_value = metric.KpiValue,
+                    month = metric.Month,
+                    year = metric.Year,
+                    isNew
+                });
+            }
+            catch (Exception ex)
             {
-                id = kpi.Id,
-                networkEngineerKpi = kpi.NetworkEngineerKpi,
-                division = kpi.Division,
-                section = kpi.Section,
-                kpiPercent = kpi.KpiPercent,
-                site = metric.Site,
-                kpi_value = metric.KpiValue,
-                month = metric.Month,
-                year = metric.Year,
-                isNew
-            });
+                var innerMsg = ex.InnerException != null ? ex.InnerException.Message : "";
+                return StatusCode(500, new { message = ex.Message, inner = innerMsg, details = ex.ToString() });
+            }
         }
 
         [HttpDelete("metrics/{metricId:int}")]

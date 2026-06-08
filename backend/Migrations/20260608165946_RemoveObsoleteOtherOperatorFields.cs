@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -16,10 +16,7 @@ namespace backend.Migrations
                 schema: "dbo",
                 table: "OtherKpiMetrics");
 
-            migrationBuilder.DropIndex(
-                name: "UQ_EnterpriseKpiMetrics_Row",
-                schema: "dbo",
-                table: "EnterpriseKpiMetrics");
+            migrationBuilder.Sql("IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'UQ_EnterpriseKpiMetrics_Row' AND object_id = OBJECT_ID('dbo.EnterpriseKpiMetrics')) DROP INDEX UQ_EnterpriseKpiMetrics_Row ON dbo.EnterpriseKpiMetrics;");
 
             migrationBuilder.DropPrimaryKey(
                 name: "PK_finaldatatables",
