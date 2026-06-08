@@ -69,6 +69,7 @@ builder.Services.AddCors(options =>
 // Register MultiTable Service for SOAP UI data fetching
 builder.Services.AddHttpClient<IMultiTableService, MultiTableService>();
 builder.Services.AddScoped<backend.Services.IKpiDefinitionService, backend.Services.KpiDefinitionService>();
+builder.Services.AddScoped<IMsanMtcDataCumulativeService, MsanMtcDataCumulativeService>();
 
 var app = builder.Build();
 
@@ -195,6 +196,45 @@ using (var scope = app.Services.CreateScope())
                 }
             }
         }
+
+        await context.Database.ExecuteSqlRawAsync(@"
+IF OBJECT_ID(N'dbo.msanmtcdata', N'U') IS NOT NULL
+AND EXISTS (
+    SELECT 1
+    FROM sys.columns c
+    INNER JOIN sys.types t ON c.user_type_id = t.user_type_id
+    WHERE c.object_id = OBJECT_ID(N'dbo.msanmtcdata')
+      AND c.name = N'year'
+      AND t.name IN (N'varchar', N'nvarchar', N'char', N'nchar')
+)
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM dbo.msanmtcdata
+        WHERE [year] IS NOT NULL
+          AND LTRIM(RTRIM([year])) <> ''
+          AND TRY_CONVERT(int, LTRIM(RTRIM([year]))) IS NULL
+    )
+    BEGIN
+        THROW 50001, 'Cannot convert dbo.msanmtcdata.year to int because one or more values are not numeric.', 1;
+    END;
+
+    UPDATE dbo.msanmtcdata
+    SET [year] = NULL
+    WHERE [year] IS NOT NULL
+      AND LTRIM(RTRIM([year])) = '';
+
+    ALTER TABLE dbo.msanmtcdata ALTER COLUMN [year] int NULL;
+END;
+");
+
+        var msanBackfill = services.GetRequiredService<IMsanMtcDataCumulativeService>();
+        var msanBackfillResult = await msanBackfill.RecalculateAllAsync();
+        Console.WriteLine(
+            "MSAN cumulative backfill completed. Records: {0}, Groups: {1}, Rows updated: {2}.",
+            msanBackfillResult.TotalRecords,
+            msanBackfillResult.GroupsProcessed,
+            msanBackfillResult.RecordsUpdated);
     }
     catch (Exception ex)
     {
