@@ -391,6 +391,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		};
 
 		(dto.nodes ?? []).forEach((node) => {
+			console.log('DTO node:', node?.month, node?.year);
 			const code = this.norm(node.nodeCode);
 			if (!code) return;
 			entry.unavailableMinutes[code] = node.unavailableMinutes ?? null;
@@ -447,9 +448,11 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 	}
 
 	private normalizeNodeMeta(month?: number | null, year?: number | null): NodeMeta {
+		// Prefer the currently selected reporting period as the fallback so
+		// missing node metadata aligns with the UI period the user is viewing.
 		const now = new Date();
-		const fallbackMonth = now.getMonth() + 1;
-		const fallbackYear = now.getFullYear();
+		const fallbackMonth = typeof this.selectedMonth === 'number' ? this.selectedMonth : now.getMonth() + 1;
+		const fallbackYear = typeof this.selectedYear === 'number' ? this.selectedYear : now.getFullYear();
 		const safeMonth =
 			typeof month === 'number' && month >= 1 && month <= 12 ? month : fallbackMonth;
 		const safeYear = typeof year === 'number' && year >= 1900 ? year : fallbackYear;
@@ -790,8 +793,9 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 
 			if (parentKey === 'totalNodes') {
 				const nodes = Number(newValue) || 0;
-				const meta = this.ensureNodeMeta(next, childKey);
-				const days = this.getDaysInMonth(meta.month, meta.year);
+				// Use the selected reporting period for Total Minutes calculation
+				// so edits follow the currently viewed month/year.
+				const days = this.getDaysInMonth(this.selectedMonth, this.selectedYear);
 				const computed = 24 * 60 * days * nodes;
 				next.totalMinutes = {
 					...(next.totalMinutes || {}),
@@ -827,7 +831,8 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 
 			if (parentKey === 'totalNodes') {
 				const nodes = Number(newValue) || 0;
-				const days = this.getDaysInMonth(meta.month, meta.year);
+				// Use selected reporting period here as well.
+				const days = this.getDaysInMonth(this.selectedMonth, this.selectedYear);
 				next.totalMinutes = {
 					...next.totalMinutes,
 					[childKey]: 24 * 60 * days * nodes,
