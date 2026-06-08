@@ -1,6 +1,6 @@
 namespace backend.DTOs
 {
-    public class UpsertEnterpriseKpiMetricDto
+    public class EnterpriseKpiMetricDto
     {
         public int EnterpriseKpiId { get; set; }
         public string Site { get; set; } = string.Empty;

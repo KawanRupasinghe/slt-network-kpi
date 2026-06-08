@@ -14,18 +14,6 @@ namespace backend.Models
 
         public string? Site { get; set; }
 
-        public int? TotalFaults { get; set; }
-
-        public int? FaultsWithinSla { get; set; }
-
-        public int? RepeatedFaults { get; set; }
-
-        public int? TotalCustomers { get; set; }
-
-        public int? TotalClearanceFaults { get; set; }
-
-        public int? ClearedWithin4Hrs { get; set; }
-
         public short Year { get; set; }
 
         public byte Month { get; set; }
