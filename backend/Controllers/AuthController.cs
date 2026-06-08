@@ -165,7 +165,6 @@ namespace backend.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        // Map platform page names to system page IDs
         private static byte? MapKnownPageId(string? input)
         {
             var key = NormalizeKey(input);
@@ -183,6 +182,10 @@ namespace backend.Controllers
                 "otheroperator" => (byte)5,
                 "routinemtnc" => (byte)6,
                 "towermtceachievement" => (byte)7,
+                "towermtce" => (byte)7,
+                "enterprisekpi" => (byte)8,
+                "otheroperatorkpi" => (byte)9,
+                "otherkpi" => (byte)10,
                 _ => null
             };
         }

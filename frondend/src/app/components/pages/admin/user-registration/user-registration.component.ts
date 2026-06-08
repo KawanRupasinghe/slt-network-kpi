@@ -47,12 +47,12 @@ export class UserRegistrationComponent implements OnInit {
     'IP NW OP',
     'BB ANW',
     'OTN OP',
-    'Tower Maintenance',
-    'Tower Maintenance KPI',
-    'Other KPI',
+    'Other Operator',
     'ROUTINE MTNC',
     'TOWER MTCE ACHIEVEMENT',
-    'Enterprise KPI'
+    'Enterprise KPI',
+    'Other Operator KPI',
+    'Other KPI'
   ];
 
   constructor(private userService: UserService) { }
