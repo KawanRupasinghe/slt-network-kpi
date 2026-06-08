@@ -22,7 +22,7 @@ import { OtnOpComponent } from './components/pages/platform/otn-op/otn-op.compon
 import { RoutineMtncComponent } from './components/pages/platform/routine-mtnc/routine-mtnc.component';
 import { ServiceFulfilmentComponent } from './components/pages/platform/service-fulfilment/service-fulfilment.component';
 import { TmActivityPlanComponent } from './components/pages/platform/tm-activity-plan/tm-activity-plan.component';
-import { TowerMtceAchievementComponent } from './components/pages/platform/tower-mtce-achievement/tower-mtce-achievement.component';
+import { OtherOperatorComponent } from './components/pages/platform/other-operator/other-operator.component';
 /* Admin Components */
 import { MsalGuard } from '@azure/msal-angular';
 import { AdminRegistrationComponent } from './components/pages/admin/admin-registration/admin-registration.component';
@@ -62,7 +62,7 @@ export const routes: Routes = [
   { path: 'platform/otn-op', component: OtnOpComponent, canActivate: [AuthGuard] },
   { path: 'platform/tm-activity-plan', component: TmActivityPlanComponent, canActivate: [AuthGuard] },
   { path: 'platform/routine-mtnc', component: RoutineMtncComponent, canActivate: [AuthGuard] },
-  { path: 'platform/tower-mtce-achievement', component: TowerMtceAchievementComponent, canActivate: [AuthGuard] },
+  { path: 'platform/tower-mtce-achievement', component: OtherOperatorComponent, canActivate: [AuthGuard] },
   /* Admin Routes - requires Admin or SuperAdmin role */
   { path: 'admin/admin-registration', component: AdminRegistrationComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
   { path: 'admin/user-registration', component: UserRegistrationComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
