@@ -81,6 +81,7 @@ namespace backend.Controllers
                     TotalCustomers = x.metric.TotalCustomers,
                     TotalClearanceFaults = x.metric.TotalClearanceFaults,
                     ClearedWithin4Hrs = x.metric.ClearedWithin4Hrs,
+                    KpiValue = x.metric.KpiValue,
                     Month = x.metric.Month,
                     Year = x.metric.Year
                 })
@@ -130,6 +131,7 @@ namespace backend.Controllers
             metric.TotalCustomers = dto.TotalCustomers;
             metric.TotalClearanceFaults = dto.TotalClearanceFaults;
             metric.ClearedWithin4Hrs = dto.ClearedWithin4Hrs;
+            metric.KpiValue = dto.KpiValue;
 
             await _db.SaveChangesAsync();
 
@@ -165,6 +167,7 @@ namespace backend.Controllers
             TotalCustomers = metric.TotalCustomers,
             TotalClearanceFaults = metric.TotalClearanceFaults,
             ClearedWithin4Hrs = metric.ClearedWithin4Hrs,
+            KpiValue = metric.KpiValue,
             Month = metric.Month,
             Year = metric.Year
         };

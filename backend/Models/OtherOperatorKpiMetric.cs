@@ -30,6 +30,9 @@ namespace backend.Models
 
         public byte Month { get; set; }
 
+        [Column("kpi_value", TypeName = "decimal(18,4)")]
+        public decimal? KpiValue { get; set; }
+
         [ForeignKey(nameof(OtherOperatorKpiId))]
         public OtherOperatorKpi? OtherOperatorKpi { get; set; }
     }
