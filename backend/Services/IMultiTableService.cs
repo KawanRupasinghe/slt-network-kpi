@@ -33,7 +33,7 @@ namespace backend.Services
 
         // Collection of platform details for the month
         public List<PlatformDetailDto> Details { get; set; } = new();
-        public Dictionary<dynamic, PlatformDetailDto>? Data { get; internal set; }
+        public Dictionary<string, PlatformDetailDto>? Data { get; internal set; }
     }
 
     // =========================================================
