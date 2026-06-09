@@ -41,29 +41,17 @@ namespace backend.Services
 
         
 
-        // Fetches MSAN (Metro Software Area Network) platform data
-        public async Task<List<PlatformRecordDto>> FetchMsanDataAsync()
-        {
-            return await GetDataFromDatabaseAsync("Msan");
-        }
+        public async Task<List<PlatformRecordDto>> FetchMsanDataAsync(int? year = null)
+            => await GetDataFromDatabaseAsync("Msan", year);
 
-        // Fetches VPN (Virtual Private Network) platform data
-        public async Task<List<PlatformRecordDto>> FetchVpnDataAsync()
-        {
-            return await GetDataFromDatabaseAsync("Vpn");
-        }
+        public async Task<List<PlatformRecordDto>> FetchVpnDataAsync(int? year = null)
+            => await GetDataFromDatabaseAsync("Vpn", year);
 
-        // Fetches SLBN (Service Level Backbone Network) platform data
-        public async Task<List<PlatformRecordDto>> FetchSlbnDataAsync()
-        {
-            return await GetDataFromDatabaseAsync("Slbn");
-        }
+        public async Task<List<PlatformRecordDto>> FetchSlbnDataAsync(int? year = null)
+            => await GetDataFromDatabaseAsync("Slbn", year);
 
-        // Fetches Tower (Service Level Backbone Network) platform data
-        public async Task<List<PlatformRecordDto>> FetchTowerDataAsync()
-        {
-            return await GetDataFromDatabaseAsync("Tower");
-        }
+        public async Task<List<PlatformRecordDto>> FetchTowerDataAsync(int? year = null)
+            => await GetDataFromDatabaseAsync("Tower", year);
 
         /// <summary>
         /// Fetches data from configured SOAP UI endpoint for the specified platform type.
@@ -84,13 +72,14 @@ namespace backend.Services
         /// </summary>
 
 
-        private async Task<List<PlatformRecordDto>> GetDataFromDatabaseAsync(string platformType)
+        private async Task<List<PlatformRecordDto>> GetDataFromDatabaseAsync(string platformType, int? year = null)
         {
             IEnumerable<object> data;
 
             if (platformType == "Msan")
             {
                 data = await _context.MsanMtcData
+                    .Where(x => year == null || x.Year == year)
                     .Select(x => new
                     {
                         x.Designation,
@@ -102,6 +91,7 @@ namespace backend.Services
             else if (platformType == "Vpn")
             {
                 data = await _context.IpnwMtcData
+                    .Where(x => year == null || x.Year == year)
                     .Select(x => new
                     {
                         x.Designation,
@@ -113,6 +103,7 @@ namespace backend.Services
             else if (platformType == "Slbn")
             {
                 data = await _context.SlbnMtcData
+                    .Where(x => year == null || x.Year == year)
                     .Select(x => new
                     {
                         x.Designation,
@@ -123,6 +114,7 @@ namespace backend.Services
             }
             else if (platformType == "Tower") {
                 data = await _context.TowerMtcData
+                    .Where(x => year == null || x.Year == (short)year)
                    .Select(x => new
                    {
                        x.Designation,

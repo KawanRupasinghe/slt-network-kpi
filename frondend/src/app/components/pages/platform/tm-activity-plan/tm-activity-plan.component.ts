@@ -410,7 +410,7 @@ export class TmActivityPlanComponent implements OnInit {
 
   onYearChange(year: number): void {
     this.selectedYear = Number(year);
-    this.applyFilters();
+    this.fetchData();
   }
 
   private applyFilters(): void {
@@ -444,7 +444,7 @@ export class TmActivityPlanComponent implements OnInit {
       // Use processed mock data (since /api/ProcessedDataFetch1 doesn't exist)
       //this.tableData = [...MOCK_PROCESSED_DATA];/
       this.loading = false;
-      this.http.get<any[]>(`${environment.apiUrl}/tower-mtc/fetchTower`)
+      this.http.get<any[]>(`${environment.apiUrl}/tower-mtc/fetchTower?year=${this.selectedYear}`)
         .pipe(
           catchError(err => {
             console.error('Tower API error:', err);

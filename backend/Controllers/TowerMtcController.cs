@@ -16,11 +16,11 @@ namespace backend.Controllers
         }
 
         [HttpGet("fetchTower")]
-        public async Task<IActionResult> FetchTower()
+        public async Task<IActionResult> FetchTower([FromQuery] int? year)
         {
             try
             {
-                var data = await _multiTableService.FetchTowerDataAsync();
+                var data = await _multiTableService.FetchTowerDataAsync(year);
                 return Ok(data);
             }
             catch (Exception ex)
