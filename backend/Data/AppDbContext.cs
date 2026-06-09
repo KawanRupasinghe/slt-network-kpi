@@ -626,8 +626,8 @@ namespace backend.Data
 
                 entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(x => x.EnterpriseKpiId).HasColumnName("EnterpriseKpiId").IsRequired();
-                entity.Property(x => x.Site).HasColumnName("area_code").HasMaxLength(50).IsRequired();
-                entity.Property(x => x.KpiValue).HasColumnName("kpi_value").HasColumnType("decimal(18,4)");
+                entity.Property(x => x.Site).HasColumnName("Site").HasMaxLength(50).IsRequired();
+                entity.Property(x => x.KpiValue).HasColumnName("KpiValue").HasColumnType("decimal(18,4)");
                 entity.Property(x => x.Month).HasColumnName("month");
                 entity.Property(x => x.Year).HasColumnName("year");
                 entity.Property(x => x.CreatedAt).HasColumnName("CreatedAt");
@@ -665,8 +665,8 @@ namespace backend.Data
 
                 entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(x => x.OtherKpiId).HasColumnName("OtherKpiId").IsRequired();
-                entity.Property(x => x.AreaCode).HasColumnName("area_code").HasMaxLength(50).IsRequired();
-                entity.Property(x => x.KpiValue).HasColumnName("kpi_value").HasColumnType("decimal(18,4)");
+                entity.Property(x => x.AreaCode).HasColumnName("AreaCode").HasMaxLength(50).IsRequired();
+                entity.Property(x => x.KpiValue).HasColumnName("KpiValue").HasColumnType("decimal(18,4)");
                 entity.Property(x => x.Year).HasColumnName("year");
                 entity.Property(x => x.Month).HasColumnName("month");
                 entity.Property(x => x.CreatedAt).HasColumnName("createdAt");
