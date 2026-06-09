@@ -164,7 +164,7 @@ export class RoutineMtncComponent implements OnInit {
 
   onYearChange(year: number): void {
     this.selectedYear = Number(year);
-    this.applyFiltersAndRecalculate();
+    this.fetchData();
   }
 
   private applyFiltersAndRecalculate(): void {
@@ -198,9 +198,9 @@ export class RoutineMtncComponent implements OnInit {
     this.errorMessage = '';
 
     forkJoin({
-      msan: this.http.get<PlatformRecord[]>(`${environment.apiUrl}/multi-table/fetchMsan`).pipe(catchError(() => of([]))),
-      vpn: this.http.get<PlatformRecord[]>(`${environment.apiUrl}/multi-table/fetchVpn`).pipe(catchError(() => of([]))),
-      slbn: this.http.get<PlatformRecord[]>(`${environment.apiUrl}/multi-table/fetchSlbn`).pipe(catchError(() => of([]))),
+      msan: this.http.get<PlatformRecord[]>(`${environment.apiUrl}/multi-table/fetchMsan?year=${this.selectedYear}`).pipe(catchError(() => of([]))),
+      vpn: this.http.get<PlatformRecord[]>(`${environment.apiUrl}/multi-table/fetchVpn?year=${this.selectedYear}`).pipe(catchError(() => of([]))),
+      slbn: this.http.get<PlatformRecord[]>(`${environment.apiUrl}/multi-table/fetchSlbn?year=${this.selectedYear}`).pipe(catchError(() => of([]))),
       routine: this.http.get<RoutineRecord[]>(`${environment.apiUrl}/mtnc-routine`).pipe(
         catchError((err: HttpErrorResponse) => {
           console.error(err.message);

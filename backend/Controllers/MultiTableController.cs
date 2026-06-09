@@ -33,55 +33,43 @@ namespace backend.Controllers
         // FETCH MSAN PLATFORM DATA
         // =========================================================
         [HttpGet("fetchMsan")]
-        public async Task<IActionResult> FetchMsan()
+        public async Task<IActionResult> FetchMsan([FromQuery] int? year)
         {
             try
             {
-                // Retrieve MSAN data from service layer
-                var data = await _multiTableService.FetchMsanDataAsync();
+                var data = await _multiTableService.FetchMsanDataAsync(year);
                 return Ok(data);
             }
             catch (Exception ex)
             {
-                // Return error response if retrieval fails
                 return BadRequest(new { error = ex.Message });
             }
         }
 
-        // =========================================================
-        // FETCH VPN PLATFORM DATA
-        // =========================================================
         [HttpGet("fetchVpn")]
-        public async Task<IActionResult> FetchVpn()
+        public async Task<IActionResult> FetchVpn([FromQuery] int? year)
         {
             try
             {
-                // Retrieve VPN data from service layer
-                var data = await _multiTableService.FetchVpnDataAsync();
+                var data = await _multiTableService.FetchVpnDataAsync(year);
                 return Ok(data);
             }
             catch (Exception ex)
             {
-                // Return error response if retrieval fails
                 return BadRequest(new { error = ex.Message });
             }
         }
 
-        // =========================================================
-        // FETCH SLBN PLATFORM DATA
-        // =========================================================
         [HttpGet("fetchSlbn")]
-        public async Task<IActionResult> FetchSlbn()
+        public async Task<IActionResult> FetchSlbn([FromQuery] int? year)
         {
             try
             {
-                // Retrieve SLBN data from service layer
-                var data = await _multiTableService.FetchSlbnDataAsync();
+                var data = await _multiTableService.FetchSlbnDataAsync(year);
                 return Ok(data);
             }
             catch (Exception ex)
             {
-                // Return error response if retrieval fails
                 return BadRequest(new { error = ex.Message });
             }
         }
