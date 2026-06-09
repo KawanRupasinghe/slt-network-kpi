@@ -1,4 +1,4 @@
-﻿/*
+/*
  * File: UsersController.cs
  * Provides API endpoints for managing users, roles, page access,
  * and platform KPI assignments within the system.
@@ -494,11 +494,18 @@ namespace backend.Controllers
             {
                 "ipnwop" => 1,
                 "servicefulfilment" => 2,
+                "servicefulfillment" => 2,
                 "bbanw" => 3,
+                "otnop" => 4,
                 "otonop" => 4,
                 "tmactivityplan" => 5,
+                "otheroperator" => 5,
                 "routinemtnc" => 6,
                 "towermtceachievement" => 7,
+                "towermtce" => 7,
+                "enterprisekpi" => 8,
+                "otheroperatorkpi" => 9,
+                "otherkpi" => 10,
                 _ => null
             };
         }

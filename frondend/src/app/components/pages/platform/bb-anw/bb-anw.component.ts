@@ -11,8 +11,12 @@ import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RegionService, Region } from '../../../../services/region.service';
 import { BbAnwService, BbAnwDto } from '../../../../services/bb-anw.service';
+import { AgedNetworkFailureService } from '../../../../services/aged-network-failure.service';
 import * as ExcelJS from 'exceljs';
 import { firstValueFrom } from 'rxjs';
+
+const AGED_FAILURE_KPI = 'Unavailability of Aged Network Failures - BB ANW';
+const AGED_FAILURE_PLATFORM = 'BB_ANW';
 
 /* ========== DATA TYPES ========== */
 
@@ -160,6 +164,10 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		komltmbva: 'KO / MLT / MB / VA',
 	};
 
+	// Tracks has_unavailability value per area for aged-failure KPI rows
+	agedFailureValues: Record<string, number> = {}; // key = areaCode, value = 0|1
+	agedFailureSaving = false;
+
 	private metricLabelMap: Record<MetricKey, string> = {
 		unavailableMinutes: 'Unavailable minutes',
 		totalMinutes: 'Total minutes',
@@ -173,6 +181,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		private regionService: RegionService,
 		private bbAnwService: BbAnwService,
 		private authService: AuthService,
+		private agedFailureService: AgedNetworkFailureService,
 		private cdr: ChangeDetectorRef
 	) {}
 
@@ -183,6 +192,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		this.loadRegionTable();
 		this.initializeFilters();
 		this.loadData();
+		this.loadAgedFailureData();
 
 		this.permissionTimer = setInterval(() => this.refreshEditPermission(), 60000);
 	}
@@ -621,11 +631,62 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 
 		this.formValues.dropdown4 = value;
 		this.cancelEdit();
+		this.loadAgedFailureData();
+	}
+
+	isAgedFailureKpi(name: string): boolean {
+		return name?.includes('Unavailability of Aged Network Failures') ?? false;
+	}
+
+	getAgedFailureValue(areaCode: string): number {
+		return this.agedFailureValues[areaCode] ?? 0;
+	}
+
+	setAgedFailureValue(areaCode: string, value: number): void {
+		this.agedFailureValues[areaCode] = value;
+	}
+
+	async saveAgedFailure(areaCode: string): Promise<void> {
+		if (!areaCode) return;
+		this.agedFailureSaving = true;
+		try {
+			const result: any = await firstValueFrom(this.agedFailureService.upsert({
+				areaCode,
+				platformType: AGED_FAILURE_PLATFORM,
+				hasUnavailability: this.agedFailureValues[areaCode] ?? 0,
+				month: this.selectedMonth,
+				year: this.selectedYear,
+			}));
+			this.showToast('success', result?.message ?? 'Saved successfully.');
+		} catch {
+			this.showToast('danger', 'Failed to save Has Unavailability.');
+		} finally {
+			this.agedFailureSaving = false;
+		}
+	}
+
+	private loadAgedFailureData(): void {
+		const key = this.selectedKey;
+		if (!key) return;
+		this.agedFailureService
+			.get(key, this.selectedMonth, this.selectedYear, AGED_FAILURE_PLATFORM)
+			.subscribe({
+				next: (rows) => {
+					rows.forEach((r) => {
+						// normalise key: strip non-alphanumeric, lowercase
+						const k = r.areaCode?.replace(/[^A-Za-z0-9]/g, '').toLowerCase() ?? '';
+						if (k) this.agedFailureValues[k] = r.hasUnavailability;
+					});
+					this.cdr.detectChanges();
+				},
+				error: () => {},
+			});
 	}
 
 	onPeriodChange(): void {
 		this.cancelEdit();
 		this.applyPeriodFilter();
+		this.loadAgedFailureData();
 	}
 
 	calculatePercentage(

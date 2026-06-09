@@ -32,9 +32,8 @@ namespace backend.Models
             set => AreaCode = value ?? string.Empty;
         }
 
-        public byte Month { get; set; }
-
-        public short Year { get; set; }
+        public int Month { get; set; }
+        public int Year { get; set; }
 
         public DateTime CreatedAt { get; set; }
 

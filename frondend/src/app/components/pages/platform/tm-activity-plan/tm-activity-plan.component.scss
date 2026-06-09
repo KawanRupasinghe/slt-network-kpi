@@ -69,6 +69,51 @@
 
 
 
+/* ===================== FILTER BAR ===================== */
+
+.filter-bar {
+  margin-bottom: 1.25rem;
+}
+
+.header-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #102136;
+    white-space: nowrap;
+  }
+}
+
+.filter-select {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #c8d8ea;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #102136;
+  font-size: 0.875rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: #3b7dbf;
+    box-shadow: 0 0 0 3px rgba(59, 125, 191, 0.15);
+  }
+}
+
 .table-section {
   position: relative;
   z-index: 1;

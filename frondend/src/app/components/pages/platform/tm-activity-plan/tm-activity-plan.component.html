@@ -22,9 +22,35 @@
         <header>
           <div>
             <h2>1. Strategic KPI Overview</h2>
-            <p>Definitions retrieved from Other Operator (hardcoded) dataset.</p>
+            <p>Definitions retrieved from Tower Maintenance (hardcoded) dataset.</p>
           </div>
         </header>
+
+        <!-- ✅ FILTER BAR -->
+        <div class="filter-bar">
+          <div class="header-filters">
+            <div class="filter-group">
+              <label for="tm-activity-month-select">Month:</label>
+              <select id="tm-activity-month-select" class="filter-select"
+                      [(ngModel)]="selectedMonth"
+                      (ngModelChange)="onMonthChange($event)">
+                <option *ngFor="let month of monthOptions" [ngValue]="month.value">
+                  {{ month.label }}
+                </option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="tm-activity-year-select">Year:</label>
+              <select id="tm-activity-year-select" class="filter-select"
+                      [(ngModel)]="selectedYear"
+                      (ngModelChange)="onYearChange($event)">
+                <option *ngFor="let year of yearOptions" [ngValue]="year">
+                  {{ year }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
 
         <ng-container *ngIf="hardcodedTableData.length; else noKpiRows">
           <div class="table-wrapper">
@@ -35,10 +61,6 @@
                   <th>KPI</th>
                   <th>Target</th>
                   <th>Calculation</th>
-                  <th>Platform</th>
-                  <th>Responsible DGM</th>
-                  <th>Defined OLA Details</th>
-                  <th>Data Sources</th>
                   <th *ngFor="let header of headers; trackBy: trackByHeader">{{ header }}</th>
                 </tr>
               </thead>
@@ -48,10 +70,6 @@
                   <td>{{ row.kpi || '-' }}</td>
                   <td>{{ row.target || '-' }}</td>
                   <td>{{ row.calculation || '-' }}</td>
-                  <td>{{ row.platform || '-' }}</td>
-                  <td>{{ row.responsibleDGM || '-' }}</td>
-                  <td>{{ row.definedOLADetails || '-' }}</td>
-                  <td>{{ row.dataSources || '-' }}</td>
                   <td *ngFor="let value of calculatedValues">
                     {{ value || '0.00' }}%
                   </td>

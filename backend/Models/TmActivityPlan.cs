@@ -35,25 +35,10 @@ namespace backend.Models
         // Calculation methodology (optional)
         public string? Calculation { get; set; }
 
-        // Platform or system where activity is performed (optional)
-        public string? Platform { get; set; }
-
-        // DGM (Deputy General Manager) responsible for the activity (optional)
-        public string? ResponsibleDGM { get; set; }
-
-        // Defined OLA (Operating Level Agreement) details (optional)
-        public string? DefinedOLADetails { get; set; }
-
-        // Data sources for the activity (optional)
-        public string? DataSources { get; set; }
-
         // Timestamp when the activity plan was created (optional, stored as text)
         public string? CreatedAt { get; set; }
 
         // Timestamp when the activity plan was last updated (optional, stored as text)
         public string? UpdatedAt { get; set; }
-
-        // Version or status field
-        public byte? V { get; set; }
     }
 }

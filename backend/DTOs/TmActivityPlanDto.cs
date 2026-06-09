@@ -29,18 +29,6 @@ namespace backend.DTOs
 
         // Calculation methodology
         public string? Calculation { get; set; }
-
-        // Platform or system where activity is performed
-        public string? Platform { get; set; }
-
-        // DGM (Deputy General Manager) responsible for the activity
-        public string? ResponsibleDGM { get; set; }
-
-        // Defined OLA (Operating Level Agreement) details
-        public string? DefinedOLADetails { get; set; }
-
-        // Data sources for the activity
-        public string? DataSources { get; set; }
     }
 
     // =========================================================
@@ -61,18 +49,6 @@ namespace backend.DTOs
 
         // Calculation methodology (optional)
         public string? Calculation { get; set; }
-
-        // Platform or system where activity is performed (optional)
-        public string? Platform { get; set; }
-
-        // DGM (Deputy General Manager) responsible for the activity (optional)
-        public string? ResponsibleDGM { get; set; }
-
-        // Defined OLA (Operating Level Agreement) details (optional)
-        public string? DefinedOLADetails { get; set; }
-
-        // Data sources for the activity (optional)
-        public string? DataSources { get; set; }
     }
 
     // =========================================================

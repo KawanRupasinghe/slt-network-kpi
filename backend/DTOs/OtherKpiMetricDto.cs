@@ -6,13 +6,13 @@ namespace backend.DTOs
     public class OtherKpiMetricDto
     {
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        public int? Id { get; set; }
 
         [JsonPropertyName("otherKpiId")]
         public int OtherKpiId { get; set; }
 
         [JsonPropertyName("networkEngineerKpi")]
-        public string NetworkEngineerKpi { get; set; } = string.Empty;
+        public string? NetworkEngineerKpi { get; set; }
 
         [JsonPropertyName("division")]
         public string? Division { get; set; }
@@ -51,10 +51,10 @@ namespace backend.DTOs
         public decimal? KpiValue { get; set; }
 
         [JsonPropertyName("month")]
-        public byte Month { get; set; }
+        public int Month { get; set; }
 
         [JsonPropertyName("year")]
-        public short Year { get; set; }
+        public int Year { get; set; }
 
         [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; }

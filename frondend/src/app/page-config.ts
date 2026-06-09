@@ -60,9 +60,9 @@ export const platformNavOptions: NavOption[] = [
     title: 'Platform KPI — OTN OP'
   },
   {
-    label: 'Other Operator',
+    label: 'Tower Maintenance',
     path: 'platform/tm-activity-plan',
-    title: 'Platform KPI — Other Operator'
+    title: 'Platform KPI — Tower Maintenance'
   },
   {
     label: 'Routine MTNC',
@@ -70,9 +70,9 @@ export const platformNavOptions: NavOption[] = [
     title: 'Platform KPI — Routine MTNC'
   },
   {
-    label: 'Tower MTCE Achievement',
+    label: 'Other Operator',
     path: 'platform/tower-mtce-achievement',
-    title: 'Platform KPI — Tower MTCE Achievement'
+    title: 'Platform KPI — Other Operator'
   }
 ];
 
@@ -120,14 +120,14 @@ export const adminNavOptions: NavOption[] = [
     title: 'Admin — OTN OP 2'
   },
   {
-    label: 'Tower MTCE Achievement',
+    label: 'Other Operator',
     path: 'admin/tower-mtce-achievement',
-    title: 'Admin — Tower MTCE Achievement'
+    title: 'Admin — Other Operator'
   },
   {
-    label: 'Other Operator',
+    label: 'Tower Maintenance',
     path: 'admin/tm-activity-plan',
-    title: 'Admin — Other Operator'
+    title: 'Admin — Tower Maintenance'
   },
   {
     label: 'Routine MTNC',

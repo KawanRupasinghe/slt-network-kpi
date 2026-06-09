@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import * as ExcelJS from 'exceljs';
 import { of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
@@ -25,10 +26,6 @@ type HardcodedRecord = {
   kpi: string;
   target: string;
   calculation: string;
-  platform: string;
-  responsibleDGM: string;
-  definedOLADetails: string;
-  dataSources: string;
 };
 
 type TowerSums = Partial<Record<string, number>>;
@@ -332,31 +329,19 @@ const MOCK_HARDCODED_DATA: HardcodedRecord[] = [
     no: 1,
     kpi: 'Proper maintaining and cleaning of tower sites',
     target: '100% adherence',
-    calculation: 'Completed visits / Planned visits',
-    platform: 'Tower Maintenance',
-    responsibleDGM: 'DGM - TM',
-    definedOLADetails: 'Visits completed within 30 days',
-    dataSources: 'FieldOps Tracker'
+    calculation: 'Completed visits / Planned visits'
   },
   {
     no: 2,
     kpi: 'Visual inspection of aviation lighting systems',
     target: '95% compliance',
-    calculation: 'Sites with compliant lighting / Total inspected',
-    platform: 'Tower Maintenance',
-    responsibleDGM: 'DGM - O&M',
-    definedOLADetails: 'Inspection cycle 14 days',
-    dataSources: 'Inspection Mobile App'
+    calculation: 'Sites with compliant lighting / Total inspected'
   },
   {
     no: 3,
     kpi: 'Earthing resistance measurement',
     target: '< 2 Ohms',
-    calculation: 'Sites within threshold / Total measured',
-    platform: 'Tower Maintenance',
-    responsibleDGM: 'DGM - Infra Reliability',
-    definedOLADetails: 'Quarterly measurement schedule',
-    dataSources: 'Power & Infra Tracker'
+    calculation: 'Sites within threshold / Total measured'
   }
 ];
 
@@ -369,7 +354,7 @@ const TABLE_TITLES = [
 @Component({
   selector: 'app-tm-activity-plan',
   standalone: true,
-  imports: [CommonModule, HttpClientModule],
+  imports: [CommonModule, HttpClientModule, FormsModule],
   templateUrl: './tm-activity-plan.component.html',
   styleUrls: ['./tm-activity-plan.component.scss']
 })
@@ -378,7 +363,7 @@ export class TmActivityPlanComponent implements OnInit {
   private readonly tmActivityService = inject(TmActivityService);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  pageTitle = 'Other Operator';
+  pageTitle = 'Tower Maintenance';
   headers: string[] = [];
   towerSums: TowerSums = {};
   calculatedValues: string[] = [];
@@ -387,6 +372,53 @@ export class TmActivityPlanComponent implements OnInit {
   loading = false;
   errorMessage = '';
   readonly tableTitles = TABLE_TITLES;
+
+  /* ===================== FILTER STATE ===================== */
+
+  private readonly now = new Date();
+
+  selectedMonth: number = this.now.getMonth() + 1;   // 1-indexed (1 = January)
+  selectedYear: number  = this.now.getFullYear();
+
+  readonly monthOptions: { value: number; label: string }[] = [
+    { value:  1, label: 'January'   },
+    { value:  2, label: 'February'  },
+    { value:  3, label: 'March'     },
+    { value:  4, label: 'April'     },
+    { value:  5, label: 'May'       },
+    { value:  6, label: 'June'      },
+    { value:  7, label: 'July'      },
+    { value:  8, label: 'August'    },
+    { value:  9, label: 'September' },
+    { value: 10, label: 'October'   },
+    { value: 11, label: 'November'  },
+    { value: 12, label: 'December'  }
+  ];
+
+  yearOptions: number[] = [
+    this.now.getFullYear(),
+    this.now.getFullYear() - 1,
+    this.now.getFullYear() - 2
+  ];
+
+  /* ===================== FILTER HANDLERS ===================== */
+
+  onMonthChange(month: number): void {
+    this.selectedMonth = Number(month);
+    this.applyFilters();
+  }
+
+  onYearChange(year: number): void {
+    this.selectedYear = Number(year);
+    this.applyFilters();
+  }
+
+  private applyFilters(): void {
+    this.calculatedValues = this.calculateFirstTableValues(this.tableData, this.headers);
+    this.cdr.detectChanges();
+  }
+
+  /* ------------------------------------------------- */
 
   ngOnInit(): void {
     this.processDerivedData(this.tableData);
@@ -401,7 +433,7 @@ export class TmActivityPlanComponent implements OnInit {
     this.tmActivityService.getAll().pipe(
       catchError(err => {
         console.error('Failed to fetch TM Activity plans from service', err);
-        this.setError('Unable to load Other Operator KPI definitions. Showing cached snapshot.');
+        this.setError('Unable to load Tower Maintenance KPI definitions. Showing cached snapshot.');
         return of([...MOCK_HARDCODED_DATA]);
       }),
       finalize(() => {
@@ -442,11 +474,7 @@ export class TmActivityPlanComponent implements OnInit {
             no: typeof activity.no === 'string' ? parseInt(activity.no) : activity.no,
             kpi: activity.kpi,
             target: activity.target,
-            calculation: activity.calculation,
-            platform: activity.platform,
-            responsibleDGM: activity.responsibleDGM,
-            definedOLADetails: activity.definedOLADetails,
-            dataSources: activity.dataSources
+            calculation: activity.calculation
           }))
         : [...MOCK_HARDCODED_DATA];
       this.processDerivedData(this.tableData);
@@ -465,11 +493,7 @@ export class TmActivityPlanComponent implements OnInit {
       'No',
       'KPI',
       'Target',
-      'Calculation',
-      'Platform',
-      'Responsible DGM',
-      'Defined OLA Details',
-      'Data Sources'
+      'Calculation'
     ];
     const totalColumnsFirstTable = baseColumns.length + this.headers.length;
 
@@ -489,10 +513,6 @@ export class TmActivityPlanComponent implements OnInit {
         record.kpi ?? '-',
         record.target ?? '-',
         record.calculation ?? '-',
-        record.platform ?? '-',
-        record.responsibleDGM ?? '-',
-        record.definedOLADetails ?? '-',
-        record.dataSources ?? '-',
         ...this.calculatedValues.map(v => `${v}%`)
       ]);
       this.addBorder(row);
@@ -613,21 +633,25 @@ export class TmActivityPlanComponent implements OnInit {
       return [];
     }
 
-    const currentMonth = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date());
-    const specialMonths = ['March', 'June', 'September', 'December'];
-    let selectedMonths: string[] | undefined;
+    // Derive quarter months from the selected filter month
+    const quarterEndByMonth: Record<number, string> = {
+      1: 'March', 2: 'March', 3: 'March',
+      4: 'June',  5: 'June',  6: 'June',
+      7: 'September', 8: 'September', 9: 'September',
+      10: 'December', 11: 'December', 12: 'December'
+    };
 
-    if (currentMonth === 'March') {
-      selectedMonths = ['January', 'February', 'March'];
-    } else if (currentMonth === 'June') {
-      selectedMonths = ['April', 'May', 'June'];
-    } else if (currentMonth === 'September') {
-      selectedMonths = ['July', 'August', 'September'];
-    } else if (currentMonth === 'December') {
-      selectedMonths = ['October', 'November', 'December'];
-    }
+    const quarterEnd = quarterEndByMonth[this.selectedMonth];
 
-    if (!specialMonths.includes(currentMonth)) {
+    const quarters: Record<string, string[]> = {
+      March:     ['January', 'February', 'March'],
+      June:      ['April', 'May', 'June'],
+      September: ['July', 'August', 'September'],
+      December:  ['October', 'November', 'December']
+    };
+
+    const selectedMonths = quarters[quarterEnd];
+    if (!selectedMonths) {
       return headers.map(() => '100.00');
     }
 
@@ -636,7 +660,7 @@ export class TmActivityPlanComponent implements OnInit {
       let totalDistribution = 0;
 
       data.forEach(monthEntry => {
-        if (selectedMonths?.includes(monthEntry.month)) {
+        if (selectedMonths.includes(monthEntry.month)) {
           const detail = monthEntry.details.find(item => item.Column1 === header);
           if (detail) {
             totalAchievement += Number(detail.Column3) || 0;

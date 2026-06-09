@@ -8,6 +8,9 @@ import { catchError, map } from 'rxjs/operators';
 import { OtnOp1Service, OtnOpKpi, OtnOp1Metric } from '../../../../services/otn-op1.service';
 import { OtnOp2Service, OtnOp2Metric } from '../../../../services/otn-op2.service';
 import { RegionService, Region } from '../../../../services/region.service';
+import { AgedNetworkFailureService } from '../../../../services/aged-network-failure.service';
+
+const AGED_FAILURE_PLATFORM = 'OTN_OP';
 
 type Dict<T = any> = Record<string, T>;
 
@@ -100,6 +103,9 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 	devRoleOverride: 'padmin' | 'user' | null = null;
 	saving = false;
 
+	agedFailureValues: Record<string, number> = {};
+	agedFailureSaving = false;
+
 	readonly daysInMonth: number = new Date(
 		new Date().getFullYear(),
 		new Date().getMonth() + 1,
@@ -179,6 +185,7 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 		private otnOp2Service: OtnOp2Service,
 		private regionService: RegionService,
 		private authService: AuthService,
+		private agedFailureService: AgedNetworkFailureService,
 		private cdr: ChangeDetectorRef
 	) {}
 
@@ -198,6 +205,7 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 		this.loadRegionTable();
 		this.initializeFilters();
 		this.loadData();
+		this.loadAgedFailureData();
 
 		this.permissionTimer = setInterval(() => this.refreshEditPermission(), 60000);
 	}
@@ -796,6 +804,7 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 	onPeriodChange(): void {
 		this.cancelEdit();
 		this.loadData();
+		this.loadAgedFailureData();
 	}
 
 	onDropdownChange(
@@ -834,6 +843,7 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 
 		this.formValues.dropdown4 = value;
 		this.cancelEdit();
+		this.loadAgedFailureData();
 	}
 
 	calculatePercentageOtnOp1(totalMinutes: any, unavailableMinutes: any, totalNodes: any): number {
@@ -988,6 +998,54 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 			event.preventDefault();
 			this.cancelEdit();
 		}
+	}
+
+	isAgedFailureKpi(name: string): boolean {
+		return name?.includes('Unavailability of Aged Network Failures') ?? false;
+	}
+
+	getAgedFailureValue(areaCode: string): number {
+		return this.agedFailureValues[areaCode] ?? 0;
+	}
+
+	setAgedFailureValue(areaCode: string, value: number): void {
+		this.agedFailureValues[areaCode] = value;
+	}
+
+	async saveAgedFailure(areaCode: string): Promise<void> {
+		if (!areaCode) return;
+		this.agedFailureSaving = true;
+		try {
+			const result: any = await firstValueFrom(this.agedFailureService.upsert({
+				areaCode,
+				platformType: AGED_FAILURE_PLATFORM,
+				hasUnavailability: this.agedFailureValues[areaCode] ?? 0,
+				month: this.selectedMonth,
+				year: this.selectedYear,
+			}));
+			this.showToast('success', result?.message ?? 'Saved successfully.');
+		} catch {
+			this.showToast('danger', 'Failed to save Has Unavailability.');
+		} finally {
+			this.agedFailureSaving = false;
+		}
+	}
+
+	private loadAgedFailureData(): void {
+		const key = this.selectedKey;
+		if (!key) return;
+		this.agedFailureService
+			.get(key, this.selectedMonth, this.selectedYear, AGED_FAILURE_PLATFORM)
+			.subscribe({
+				next: (rows) => {
+					rows.forEach((r) => {
+						const k = r.areaCode?.replace(/[^A-Za-z0-9]/g, '').toLowerCase() ?? '';
+						if (k) this.agedFailureValues[k] = r.hasUnavailability;
+					});
+					this.cdr.detectChanges();
+				},
+				error: () => {},
+			});
 	}
 
 	private async persistMetricChange(entry: OtnOp1Entry | OtnOp2Entry, siteKey: string): Promise<void> {

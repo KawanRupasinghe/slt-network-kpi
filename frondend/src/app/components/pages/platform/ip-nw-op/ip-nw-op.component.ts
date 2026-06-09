@@ -7,6 +7,9 @@ import * as ExcelJS from 'exceljs';
 import { IpNwOpService, IpNwOpKpiDto, IpNwOpMetricPayload, IpNwOpMetric } from '../../../../services/ip-nw-op.service';
 import { RegionService, Region } from '../../../../services/region.service';
 import { AuthService } from '../../../../services/auth.service';
+import { AgedNetworkFailureService } from '../../../../services/aged-network-failure.service';
+
+const AGED_FAILURE_PLATFORM = 'IP_NW_OP';
 
 interface RegionRow {
   region?: string;
@@ -56,6 +59,9 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
   loading = true;
   saving = false;
   error: string | null = null;
+
+  agedFailureValues: Record<string, number> = {};
+  agedFailureSaving = false;
 
   // Month/Year selection (current month default)
   selectedMonth: number = new Date().getMonth() + 1; // 1-12
@@ -120,6 +126,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     private ipNwOpService: IpNwOpService,
     private regionService: RegionService,
     private authService: AuthService,
+    private agedFailureService: AgedNetworkFailureService,
     private cdr: ChangeDetectorRef
   ) { }
 
@@ -128,6 +135,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     this.loadRegionTable();
     this.initializeFilters();
     this.loadData();
+    this.loadAgedFailureData();
   }
 
   ngOnDestroy(): void {
@@ -315,6 +323,54 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     });
   }
 
+  isAgedFailureKpi(name: string): boolean {
+    return name?.includes('Unavailability of Aged Network Failures') ?? false;
+  }
+
+  getAgedFailureValue(areaCode: string): number {
+    return this.agedFailureValues[areaCode] ?? 0;
+  }
+
+  setAgedFailureValue(areaCode: string, value: number): void {
+    this.agedFailureValues[areaCode] = value;
+  }
+
+  async saveAgedFailure(areaCode: string): Promise<void> {
+    if (!areaCode) return;
+    this.agedFailureSaving = true;
+    try {
+      const result: any = await firstValueFrom(this.agedFailureService.upsert({
+        areaCode,
+        platformType: AGED_FAILURE_PLATFORM,
+        hasUnavailability: this.agedFailureValues[areaCode] ?? 0,
+        month: this.selectedMonth,
+        year: this.selectedYear,
+      }));
+      this.showToast('success', result?.message ?? 'Saved successfully.');
+    } catch {
+      this.showToast('danger', 'Failed to save Has Unavailability.');
+    } finally {
+      this.agedFailureSaving = false;
+    }
+  }
+
+  private loadAgedFailureData(): void {
+    const key = this.selectedKey;
+    if (!key) return;
+    this.agedFailureService
+      .get(key, this.selectedMonth, this.selectedYear, AGED_FAILURE_PLATFORM)
+      .subscribe({
+        next: (rows) => {
+          rows.forEach((r) => {
+            const k = r.areaCode?.replace(/[^A-Za-z0-9]/g, '').toLowerCase() ?? '';
+            if (k) this.agedFailureValues[k] = r.hasUnavailability;
+          });
+          this.cdr.detectChanges();
+        },
+        error: () => {},
+      });
+  }
+
   onMonthYearChange(): void {
     // Update daysInMonth when month/year changes
     this.daysInMonth = this.getDaysInMonth(this.selectedYear, this.selectedMonth);
@@ -322,6 +378,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     this.cancelEdit();
     // Reload data with new month/year
     this.loadData();
+    this.loadAgedFailureData();
   }
 
   // -------------------------
@@ -435,6 +492,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     this.formValues.dropdown4 = value;
     this.cancelEdit();
     this.loadData();
+    this.loadAgedFailureData();
   }
 
   // -------------------------

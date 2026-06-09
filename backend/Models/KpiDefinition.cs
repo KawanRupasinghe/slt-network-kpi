@@ -67,12 +67,5 @@ namespace backend.Models
         [Column("updatedAt")]
         public string? UpdatedAt { get; set; }
 
-        // Month for which this KPI definition applies
-        [Column("month")]
-        public byte Month { get; set; }
-
-        // Year for which this KPI definition applies
-        [Column("year")]
-        public short Year { get; set; }
     }
 }

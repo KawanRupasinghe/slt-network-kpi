@@ -1,4 +1,4 @@
-﻿using backend.Models;
+using backend.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Data
@@ -89,6 +89,11 @@ namespace backend.Data
         public DbSet<OtherOperatorKpiMetric> OtherOperatorKpiMetrics { get; set; } = null!;
         public DbSet<OtherKpi> OtherKpis { get; set; } = null!;
         public DbSet<OtherKpiMetric> OtherKpiMetrics { get; set; } = null!;
+
+        // =========================
+        // AGED NETWORK FAILURE METRICS
+        // =========================
+        public DbSet<AgedNetworkFailureMetric> AgedNetworkFailureMetrics { get; set; } = null!;
 
         //OTNOP1 AND OTNOP2
         public DbSet<OtnOp1> OtnOp1 { get; set; } = null!;
@@ -199,13 +204,8 @@ namespace backend.Data
                 entity.Property(x => x.Kpi).HasColumnName("kpi");
                 entity.Property(x => x.Target).HasColumnName("target");
                 entity.Property(x => x.Calculation).HasColumnName("calculation");
-                entity.Property(x => x.Platform).HasColumnName("platform");
-                entity.Property(x => x.ResponsibleDGM).HasColumnName("responsibleDGM");
-                entity.Property(x => x.DefinedOLADetails).HasColumnName("definedOLADetails");
-                entity.Property(x => x.DataSources).HasColumnName("dataSources");
                 entity.Property(x => x.CreatedAt).HasColumnName("createdAt");
                 entity.Property(x => x.UpdatedAt).HasColumnName("updatedAt");
-                entity.Property(x => x.V).HasColumnName("v");
             });
 
             // KPI TOWER
@@ -364,80 +364,22 @@ namespace backend.Data
             });
 
             // KPI DEFINITIONS
-            // KPI DEFINITIONS (finaldatatables) - UPDATED (rowNumber + v removed)
             modelBuilder.Entity<KpiDefinition>(entity =>
             {
-                entity.ToTable("finaldatatables", "dbo");
+                entity.ToTable("KpiDefinition", "dbo");
                 entity.HasKey(x => x.Id);
-
-                entity.Property(x => x.Id)
-                    .HasColumnName("id")
-                    .ValueGeneratedOnAdd();
-
-                // ❌ removed: rowNumber
-
-                entity.Property(x => x.Perspectives)
-                    .HasColumnName("perspectives")
-                    .HasMaxLength(50)
-                    .IsRequired();
-
-                entity.Property(x => x.Category)
-                    .HasColumnName("category")
-                    .HasMaxLength(50)
-                    .IsRequired(false);
-
-                entity.Property(x => x.StrategicObjectives)
-                    .HasColumnName("strategicObjectives")
-                    .HasMaxLength(50)
-                    .IsRequired();
-
-                entity.Property(x => x.KeyPerformanceIndicators)
-                    .HasColumnName("keyPerformanceIndicators")
-                    .HasMaxLength(100)
-                    .IsRequired();
-
-                entity.Property(x => x.Unit)
-                    .HasColumnName("unit")
-                    .HasMaxLength(50)
-                    .IsRequired();
-
-                entity.Property(x => x.DescriptionOfKPI)
-                    .HasColumnName("descriptionOfKPI")
-                    .HasMaxLength(50)
-                    .IsRequired();
-
-                entity.Property(x => x.Weightage)
-                    .HasColumnName("weightage")
-                    .HasColumnType("decimal(10,4)")
-                    .IsRequired();
-
-                entity.Property(x => x.CreatedAt)
-                    .HasColumnName("createdAt")
-                    .HasMaxLength(50)
-                    .IsRequired();
-
-                entity.Property(x => x.UpdatedAt)
-                    .HasColumnName("updatedAt")
-                    .HasMaxLength(50)
-                    .IsRequired();
-
-                entity.Property(x => x.Month)
-                    .HasColumnName("month")
-                    .IsRequired();
-
-                entity.Property(x => x.Year)
-                    .HasColumnName("year")
-                    .IsRequired();
-
-                entity.Property(x => x.PointsApplicable)
-                    .HasColumnName("pointsApplicable")
-                    .IsRequired();
-
-                entity.Property(x => x.TotalPoints)
-                    .HasColumnName("totalPoints")
-                    .IsRequired();
-
-                // ❌ removed: v
+                entity.Property(x => x.Id).HasColumnName("id").ValueGeneratedOnAdd();
+                entity.Property(x => x.Perspectives).HasColumnName("perspectives").HasMaxLength(50).IsRequired();
+                entity.Property(x => x.Category).HasColumnName("category").HasMaxLength(50).IsRequired(false);
+                entity.Property(x => x.StrategicObjectives).HasColumnName("strategicObjectives").HasMaxLength(50).IsRequired();
+                entity.Property(x => x.KeyPerformanceIndicators).HasColumnName("keyPerformanceIndicators").HasMaxLength(100).IsRequired();
+                entity.Property(x => x.Unit).HasColumnName("unit").HasMaxLength(50).IsRequired();
+                entity.Property(x => x.DescriptionOfKPI).HasColumnName("descriptionOfKPI").HasMaxLength(50).IsRequired();
+                entity.Property(x => x.Weightage).HasColumnName("weightage").HasColumnType("decimal(10,4)").IsRequired();
+                entity.Property(x => x.PointsApplicable).HasColumnName("pointsApplicable").IsRequired();
+                entity.Property(x => x.TotalPoints).HasColumnName("totalPoints").IsRequired();
+                entity.Property(x => x.CreatedAt).HasColumnName("createdAt").HasMaxLength(50).IsRequired(false);
+                entity.Property(x => x.UpdatedAt).HasColumnName("updatedAt").HasMaxLength(50).IsRequired(false);
             });
 
             modelBuilder.Entity<OverallKpiResult>(entity =>
@@ -684,10 +626,12 @@ namespace backend.Data
 
                 entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(x => x.EnterpriseKpiId).HasColumnName("EnterpriseKpiId").IsRequired();
-                entity.Property(x => x.Site).HasColumnName("area_code").HasMaxLength(50).IsRequired();
-                entity.Property(x => x.KpiValue).HasColumnName("kpi_value").HasColumnType("decimal(18,4)");
+                entity.Property(x => x.Site).HasColumnName("Site").HasMaxLength(50).IsRequired();
+                entity.Property(x => x.KpiValue).HasColumnName("KpiValue").HasColumnType("decimal(18,4)");
                 entity.Property(x => x.Month).HasColumnName("month");
                 entity.Property(x => x.Year).HasColumnName("year");
+                entity.Property(x => x.CreatedAt).HasColumnName("CreatedAt");
+                entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
 
                 entity.HasOne(x => x.EnterpriseKpi)
                       .WithMany()
@@ -721,8 +665,8 @@ namespace backend.Data
 
                 entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(x => x.OtherKpiId).HasColumnName("OtherKpiId").IsRequired();
-                entity.Property(x => x.AreaCode).HasColumnName("area_code").HasMaxLength(50).IsRequired();
-                entity.Property(x => x.KpiValue).HasColumnName("kpi_value").HasColumnType("decimal(18,4)");
+                entity.Property(x => x.AreaCode).HasColumnName("AreaCode").HasMaxLength(50).IsRequired();
+                entity.Property(x => x.KpiValue).HasColumnName("KpiValue").HasColumnType("decimal(18,4)");
                 entity.Property(x => x.Year).HasColumnName("year");
                 entity.Property(x => x.Month).HasColumnName("month");
                 entity.Property(x => x.CreatedAt).HasColumnName("createdAt");
@@ -756,20 +700,36 @@ namespace backend.Data
                 entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(x => x.OtherOperatorKpiId).HasColumnName("OtherOperatorKpiId").IsRequired();
                 entity.Property(x => x.Site).HasColumnName("Site").HasMaxLength(100);
-                entity.Property(x => x.TotalFaults).HasColumnName("TotalFaults");
-                entity.Property(x => x.FaultsWithinSla).HasColumnName("FaultsWithinSla");
-                entity.Property(x => x.RepeatedFaults).HasColumnName("RepeatedFaults");
-                entity.Property(x => x.TotalCustomers).HasColumnName("TotalCustomers");
-                entity.Property(x => x.TotalClearanceFaults).HasColumnName("TotalClearanceFaults");
-                entity.Property(x => x.ClearedWithin4Hrs).HasColumnName("ClearedWithin4Hrs");
                 entity.Property(x => x.Year).HasColumnName("Year");
                 entity.Property(x => x.Month).HasColumnName("Month");
+                entity.Property(x => x.KpiValue).HasColumnName("kpi_value").HasColumnType("decimal(18,4)");
 
                 entity.HasOne(x => x.OtherOperatorKpi)
                       .WithMany()
                       .HasForeignKey(x => x.OtherOperatorKpiId)
                       .HasConstraintName("FK_OtherOperatorKpiMetrics_OtherOperatorKpi")
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // =========================
+            // AGED NETWORK FAILURE METRICS
+            // =========================
+            modelBuilder.Entity<AgedNetworkFailureMetric>(entity =>
+            {
+                entity.ToTable("AgedNetworkFailureMetrics", "dbo");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).HasColumnName("id").ValueGeneratedOnAdd();
+                entity.Property(x => x.AreaCode).HasColumnName("area_code").HasMaxLength(50).IsRequired();
+                entity.Property(x => x.PlatformType).HasColumnName("platform_type").HasMaxLength(20).IsRequired();
+                entity.Property(x => x.HasUnavailability).HasColumnName("has_unavailability");
+                entity.Property(x => x.Month).HasColumnName("month");
+                entity.Property(x => x.Year).HasColumnName("year");
+                entity.Property(x => x.CreatedAt).HasColumnName("created_at");
+                entity.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+
+                entity.HasIndex(x => new { x.AreaCode, x.PlatformType, x.Month, x.Year })
+                      .IsUnique()
+                      .HasDatabaseName("UQ_AgedNetworkFailureMetrics_Row");
             });
 
             base.OnModelCreating(modelBuilder);

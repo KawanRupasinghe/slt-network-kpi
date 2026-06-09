@@ -2,7 +2,7 @@
   <div class="kpi-overlay"></div>
   <section class="kpi-hero">
     <h1>{{ pageTitle }}</h1>
-    <p>Define Other Operator KPIs, responsible teams, and supporting data sources.</p>
+    <p>Define Tower Maintenance KPIs, responsible teams, and supporting data sources.</p>
   </section>
 
   <section class="form-section">
@@ -53,9 +53,9 @@
   </section>
 
   <section class="table-section">
-    <div class="state" *ngIf="loading">Loading Other Operator activities...</div>
+    <div class="state" *ngIf="loading">Loading Tower Maintenance activities...</div>
     <div class="state error" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
-    <div class="state" *ngIf="!loading && !errorMessage && !records.length">No Other Operator activities yet.</div>
+    <div class="state" *ngIf="!loading && !errorMessage && !records.length">No Tower Maintenance activities yet.</div>
 
     <table *ngIf="!loading && records.length" class="kpi-table">
       <thead>

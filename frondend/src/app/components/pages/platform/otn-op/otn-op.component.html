@@ -175,7 +175,7 @@
 									<td>{{ row.kpiPercent }}</td>
 									<td *ngIf="selectedKey">{{ selectedPercentage(row) || '—' }}</td>
 								</tr>
-								<ng-container *ngIf="row.formType === 'OtnOp1' && selectedKey">
+								<ng-container *ngIf="row.formType === 'OtnOp1' && selectedKey && !isAgedFailureKpi(row.networkEngineerKpi)">
 									<tr class="sub-row">
 										<td></td>
 										<td class="sub-label" colspan="4">Total Minutes</td>
@@ -274,7 +274,7 @@
 										</td>
 									</tr>
 								</ng-container>
-								<ng-container *ngIf="row.formType === 'OtnOp2' && selectedKey">
+								<ng-container *ngIf="row.formType === 'OtnOp2' && selectedKey && !isAgedFailureKpi(row.networkEngineerKpi)">
 									<tr class="sub-row">
 										<td></td>
 										<td class="sub-label" colspan="4">Total Failed Links</td>
@@ -338,6 +338,35 @@
 														Edit
 													</button>
 												</div>
+											</ng-template>
+										</td>
+									</tr>
+								</ng-container>
+
+								<!-- Has Unavailability row — only for Aged Network Failure KPIs -->
+								<ng-container *ngIf="selectedKey && isAgedFailureKpi(row.networkEngineerKpi)">
+									<tr class="sub-row">
+										<td></td>
+										<td class="sub-label" colspan="4">Has Unavailability</td>
+										<td class="metric-cell" [class.can-edit]="canEditMetrics">
+											<ng-container *ngIf="canEditMetrics; else viewAgedFailureOtn">
+												<div class="d-flex align-items-center gap-2">
+													<select class="form-select form-select-sm"
+														[ngModel]="getAgedFailureValue(selectedKey)"
+														(ngModelChange)="setAgedFailureValue(selectedKey, +$event)"
+														[ngModelOptions]="{standalone: true}">
+														<option [value]="0">No Unavailability</option>
+														<option [value]="1">Has Unavailability</option>
+													</select>
+													<button type="button" class="table-button"
+														(click)="saveAgedFailure(selectedKey)"
+														[disabled]="agedFailureSaving">
+														{{ agedFailureSaving ? 'Saving...' : 'Save' }}
+													</button>
+												</div>
+											</ng-container>
+											<ng-template #viewAgedFailureOtn>
+												{{ getAgedFailureValue(selectedKey) === 1 ? 'Has Unavailability' : 'No Unavailability' }}
 											</ng-template>
 										</td>
 									</tr>

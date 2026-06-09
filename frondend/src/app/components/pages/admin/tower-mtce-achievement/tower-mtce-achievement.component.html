@@ -3,7 +3,7 @@
 
   <section class="kpi-hero">
     <h1>{{ pageTitle }}</h1>
-    <p>Admin panel for Tower Maintenance KPIs</p>
+    <p>Admin panel for Other Operator KPIs</p>
   </section>
 
   <!-- FORM -->
@@ -12,19 +12,19 @@
       <h2>{{ editingId ? 'Update KPI' : 'Add KPI' }}</h2>
 
       <div class="field-group">
-        <input type="text" formControlName="responsibility" placeholder="Responsibility" />
+        <input type="text" formControlName="networkEngineerKpi" placeholder="Responsibility" />
       </div>
 
       <div class="field-group">
-        <input type="text" formControlName="frequency" placeholder="Frequency" />
+        <input type="text" formControlName="division" placeholder="Frequency" />
       </div>
 
       <div class="field-group">
-        <input type="text" formControlName="weightage" placeholder="Weightage" />
+        <input type="text" formControlName="section" placeholder="Weightage" />
       </div>
 
       <div class="field-group">
-        <input type="text" formControlName="kpi" placeholder="KPI" />
+        <input type="number" step="any" formControlName="kpiPercent" placeholder="KPI" />
       </div>
 
       <div class="actions">
@@ -61,10 +61,10 @@
 
       <tbody>
         <tr *ngFor="let record of records">
-          <td>{{ record.responsibility }}</td>
-          <td>{{ record.frequency }}</td>
-          <td>{{ record.weightage }}</td>
-          <td>{{ record.kpi }}</td>
+          <td>{{ record.networkEngineerKpi }}</td>
+          <td>{{ record.division }}</td>
+          <td>{{ record.section }}</td>
+          <td>{{ record.kpiPercent }}</td>
           <td>
             <button class="edit" (click)="onEdit(record)">Edit</button>
             <button class="delete" (click)="onDelete(record.id)">Delete</button>

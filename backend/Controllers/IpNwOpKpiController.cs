@@ -243,10 +243,17 @@ namespace backend.Controllers
                 _db.IpNwOpKpiMetrics.Add(row);
             }
 
-            // Update metric values
-            row.UnavailableMinutes = dto.UnavailableMinutes;
-            row.TotalMinutes = dto.TotalMinutes;
-            row.TotalNodes = dto.TotalNodes;
+            // Update metric values only if provided in the DTO.
+            // This avoids unintentionally clearing existing values when
+            // the client only wants to update a single field (e.g. unavailableMinutes = 0).
+            if (dto.UnavailableMinutes.HasValue)
+                row.UnavailableMinutes = dto.UnavailableMinutes;
+
+            if (dto.TotalMinutes.HasValue)
+                row.TotalMinutes = dto.TotalMinutes;
+
+            if (dto.TotalNodes.HasValue)
+                row.TotalNodes = dto.TotalNodes;
 
             await _db.SaveChangesAsync();
             return Ok(new { message = "Metric saved" });

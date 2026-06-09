@@ -78,8 +78,7 @@ namespace backend.Controllers
             [FromQuery] int? year)
         {
             var now = DateTime.UtcNow;
-            //byte m = (byte)(month ?? now.Month);
-            byte m = (byte)(month ?? 2);
+            byte m = (byte)(month ?? now.Month);
             short y = (short)(year ?? now.Year);
 
             var calculated = await CalculateAndPersistAsync(m, y);
@@ -98,30 +97,11 @@ namespace backend.Controllers
             // Fetch master KPI definitions for selected month/year
             // Fallback to latest definitions if none exist for selected period
             // =========================================================
+            // KpiDefinition no longer has month/year columns — load all definitions
             var kpis = await _db.KpiDefinitions
                 .AsNoTracking()
-                .Where(x => x.Month == month && x.Year == year)
                 .OrderBy(x => x.Id)
                 .ToListAsync();
-
-            if (!kpis.Any())
-            {
-                var latest = await _db.KpiDefinitions
-                    .AsNoTracking()
-                    .OrderByDescending(x => x.Year)
-                    .ThenByDescending(x => x.Month)
-                    .Select(x => new { x.Month, x.Year })
-                    .FirstOrDefaultAsync();
-
-                if (latest != null)
-                {
-                    kpis = await _db.KpiDefinitions
-                        .AsNoTracking()
-                        .Where(x => x.Month == latest.Month && x.Year == latest.Year)
-                        .OrderBy(x => x.Id)
-                        .ToListAsync();
-                }
-            }
 
             // =========================================================
             // STEP 2: LOAD ALL PLATFORM METRICS
@@ -147,6 +127,10 @@ namespace backend.Controllers
                 .ToListAsync();
 
             var sfMetrics = await _db.ServiceFulfilmentKpiMetrics.AsNoTracking()
+                .Where(x => x.Month == month && x.Year == year)
+                .ToListAsync();
+
+            var agedFailureMetrics = await _db.AgedNetworkFailureMetrics.AsNoTracking()
                 .Where(x => x.Month == month && x.Year == year)
                 .ToListAsync();
 
@@ -191,8 +175,8 @@ namespace backend.Controllers
                 .Select(x => x.Trim()));
 
             allAreaCodes.UnionWith(sfMetrics
-                .Select(x => x.AreaCode)
-                .Where(x => x != null && x.Trim() != string.Empty)
+                .Select(x => x.AreaCode ?? string.Empty)
+                .Where(x => x.Trim() != string.Empty)
                 .Select(x => x.Trim()));
 
             allAreaCodes.UnionWith(entMetrics
@@ -201,8 +185,8 @@ namespace backend.Controllers
                 .Select(x => x.Trim()));
 
             allAreaCodes.UnionWith(otherMetrics
-                .Select(x => x.Site)
-                .Where(x => x != null && x.Trim() != string.Empty)
+                .Select(x => x.Site ?? string.Empty)
+                .Where(x => x.Trim() != string.Empty)
                 .Select(x => x.Trim()));
 
             // Normalize area codes
@@ -286,6 +270,37 @@ namespace backend.Controllers
             foreach (var kpi in kpis)
             {
                 var matchedKpi = FindBestMatch(kpi.KeyPerformanceIndicators, allNamedKpis);
+                // Special handling for Aged Network Failure KPIs
+                if (IsAgedNetworkFailureKpi(kpi.KeyPerformanceIndicators))
+                {
+                    foreach (var area in normalizedAreas)
+                    {
+                        var achieved = CalculateAgedNetworkFailureKpi(agedFailureMetrics, area);
+                        var maxPoints = normalizedAreas.Count > 0
+                            ? Math.Round((decimal)kpi.PointsApplicable / normalizedAreas.Count, 4)
+                            : 0m;
+                        var targetValue = TryParseTargetValue(kpi.DescriptionOfKPI);
+                        var pointsAchieved = CalculatePointsAchieved(maxPoints, achieved, targetValue);
+
+                        results.Add(new OverallKpiResult
+                        {
+                            KpiCode = $"KPI-{kpi.Id}",
+                            KpiDefinitionId = kpi.Id,
+                            KpiName = kpi.KeyPerformanceIndicators,
+                            Platform = kpi.Perspectives,
+                            AreaCode = area,
+                            TargetValue = targetValue ?? 0m,
+                            AchievedKpi = achieved,
+                            MaximumPointsPerKpi = maxPoints,
+                            PointsAchieved = pointsAchieved,
+                            Month = month,
+                            Year = year,
+                            CalculatedAt = nowUtc
+                        });
+                    }
+                    continue;
+                }
+
                 var snapshots = BuildAreaSnapshots(matchedKpi, ipMetrics, bbMetrics, otn1Metrics, otn2Metrics, sfMetrics, entMetrics, otherMetrics, enterpriseTargets, otherTargets, daysInMonth);
 
                 var areaSnapshots = normalizedAreas
@@ -321,7 +336,7 @@ namespace backend.Controllers
                         KpiName = kpi.KeyPerformanceIndicators,
                         Platform = kpi.Perspectives,
                         AreaCode = area,
-                        TargetValue = targetValue,
+                        TargetValue = targetValue ?? 0m,
                         AchievedKpi = achieved,
                         MaximumPointsPerKpi = maxPoints,
                         PointsAchieved = pointsAchieved,
@@ -448,16 +463,13 @@ namespace backend.Controllers
 
             if (matchedKpi.Source == "ent")
             {
-                var target = enterpriseTargets.TryGetValue(matchedKpi.Id, out var targetValue) ? targetValue : 0m;
-
                 foreach (var row in entMetrics.Where(x => x.EnterpriseKpiId == matchedKpi.Id))
                 {
                     var area = NormalizeArea(row.AreaCode);
                     if (area == string.Empty) continue;
 
-                    var actual = row.KpiValue ?? 0m;
-                    var normalized = CalculateEnterpriseOrOtherNormalized(matchedKpi.Name, actual, target);
-                    result[area] = new AreaSnapshot(normalized * 100m, 0m, normalized);
+                    var achieved = Math.Round(Math.Clamp(row.KpiValue ?? 0m, 0m, 100m), 4);
+                    result[area] = new AreaSnapshot(achieved, 0m);
                 }
 
                 return result;
@@ -775,6 +787,25 @@ namespace backend.Controllers
 
             var minutesPerNode = 24m * 60m * daysInMonth;
             return totalMinutes / minutesPerNode;
+        }
+
+        // =========================================================
+        // AGED NETWORK FAILURE KPI HELPERS
+        // =========================================================
+        private static bool IsAgedNetworkFailureKpi(string kpiName)
+            => (kpiName ?? string.Empty).Contains("Unavailability of Aged Network Failures",
+                StringComparison.OrdinalIgnoreCase);
+
+        // Returns 0 if ANY platform record has has_unavailability = 1, else 100.
+        private static decimal CalculateAgedNetworkFailureKpi(
+            List<AgedNetworkFailureMetric> metrics, string normalizedArea)
+        {
+            var areaMetrics = metrics
+                .Where(x => NormalizeArea(x.AreaCode) == normalizedArea)
+                .ToList();
+
+            if (!areaMetrics.Any()) return 100m;
+            return areaMetrics.Any(x => x.HasUnavailability == 1) ? 0m : 100m;
         }
     }
 }

@@ -23,12 +23,12 @@ namespace backend.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<OtherKpiDto>>> GetAll()
+        public async Task<ActionResult<IEnumerable<OtherOperatorKpiDto>>> GetAll()
         {
             var items = await _db.OtherOperatorKpis
                 .AsNoTracking()
                 .OrderBy(x => x.Id)
-                .Select(x => new OtherKpiDto
+                .Select(x => new OtherOperatorKpiDto
                 {
                     Id = x.Id,
                     NetworkEngineerKpi = x.NetworkEngineerKpi,
@@ -41,8 +41,85 @@ namespace backend.Controllers
             return Ok(items);
         }
 
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<OtherOperatorKpiDto>> GetById(int id)
+        {
+            var item = await _db.OtherOperatorKpis
+                .AsNoTracking()
+                .Where(x => x.Id == id)
+                .Select(x => new OtherOperatorKpiDto
+                {
+                    Id = x.Id,
+                    NetworkEngineerKpi = x.NetworkEngineerKpi,
+                    Division = x.Division,
+                    Section = x.Section,
+                    KpiPercent = x.KpiPercent
+                })
+                .FirstOrDefaultAsync();
+
+            return item == null ? NotFound() : Ok(item);
+        }
+
+        [HttpPost]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<ActionResult<OtherOperatorKpiDto>> Create([FromBody] CreateOtherOperatorKpiDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.NetworkEngineerKpi))
+                return BadRequest("NetworkEngineerKpi is required.");
+
+            var entity = new OtherOperatorKpi
+            {
+                NetworkEngineerKpi = dto.NetworkEngineerKpi.Trim(),
+                Division = dto.Division,
+                Section = dto.Section,
+                KpiPercent = dto.KpiPercent
+            };
+
+            _db.OtherOperatorKpis.Add(entity);
+            await _db.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, new OtherOperatorKpiDto
+            {
+                Id = entity.Id,
+                NetworkEngineerKpi = entity.NetworkEngineerKpi,
+                Division = entity.Division,
+                Section = entity.Section,
+                KpiPercent = entity.KpiPercent
+            });
+        }
+
+        [HttpPut("{id:int}")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> Update(int id, [FromBody] CreateOtherOperatorKpiDto dto)
+        {
+            var entity = await _db.OtherOperatorKpis.FirstOrDefaultAsync(x => x.Id == id);
+            if (entity == null) return NotFound();
+            if (string.IsNullOrWhiteSpace(dto.NetworkEngineerKpi))
+                return BadRequest("NetworkEngineerKpi is required.");
+
+            entity.NetworkEngineerKpi = dto.NetworkEngineerKpi.Trim();
+            entity.Division = dto.Division;
+            entity.Section = dto.Section;
+            entity.KpiPercent = dto.KpiPercent;
+
+            await _db.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpDelete("{id:int}")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var entity = await _db.OtherOperatorKpis.FirstOrDefaultAsync(x => x.Id == id);
+            if (entity == null) return NotFound();
+
+            _db.OtherOperatorKpis.Remove(entity);
+            await _db.SaveChangesAsync();
+            return NoContent();
+        }
+
         [HttpGet("metrics")]
-        public async Task<ActionResult<IEnumerable<OtherKpiMetricDto>>> GetMetrics(
+        public async Task<ActionResult<IEnumerable<OtherOperatorKpiMetricDto>>> GetMetrics(
             [FromQuery] byte month,
             [FromQuery] short year,
             [FromQuery] string? site)
@@ -66,21 +143,16 @@ namespace backend.Controllers
 
             var result = await query
                 .OrderBy(x => x.kpi.Id)
-                .Select(x => new OtherKpiMetricDto
+                .Select(x => new OtherOperatorKpiMetricDto
                 {
                     Id = x.metric.Id,
-                    OtherKpiId = x.kpi.Id,
+                    OtherOperatorKpiId = x.kpi.Id,
                     NetworkEngineerKpi = x.kpi.NetworkEngineerKpi,
                     Division = x.kpi.Division,
                     Section = x.kpi.Section,
                     KpiPercent = x.kpi.KpiPercent,
                     Site = x.metric.Site ?? string.Empty,
-                    TotalFaults = x.metric.TotalFaults,
-                    FaultsWithinSla = x.metric.FaultsWithinSla,
-                    RepeatedFaults = x.metric.RepeatedFaults,
-                    TotalCustomers = x.metric.TotalCustomers,
-                    TotalClearanceFaults = x.metric.TotalClearanceFaults,
-                    ClearedWithin4Hrs = x.metric.ClearedWithin4Hrs,
+                    KpiValue = x.metric.KpiValue,
                     Month = x.metric.Month,
                     Year = x.metric.Year
                 })
@@ -90,23 +162,23 @@ namespace backend.Controllers
         }
 
         [HttpPost("metrics")]
-        public async Task<ActionResult<OtherKpiMetricDto>> UpsertMetrics([FromBody] UpsertOtherKpiMetricDto dto)
+        public async Task<ActionResult<OtherOperatorKpiMetricDto>> UpsertMetrics([FromBody] OtherOperatorKpiMetricDto dto)
         {
             var authResult = await _authorizationService.AuthorizeAsync(User, PageId, "EditPlatformKpiPolicy");
             if (!authResult.Succeeded) return Forbid();
 
             if (dto == null) return BadRequest("Request body is required.");
-            if (dto.OtherKpiId <= 0) return BadRequest("OtherKpiId must be greater than zero.");
+            if (dto.OtherOperatorKpiId <= 0) return BadRequest("OtherOperatorKpiId must be greater than zero.");
             if (dto.Month == 0 || dto.Year == 0) return BadRequest("Month and Year must be greater than zero.");
 
-            var kpi = await _db.OtherOperatorKpis.FirstOrDefaultAsync(x => x.Id == dto.OtherKpiId);
-            if (kpi == null) return NotFound($"Other Operator KPI with id '{dto.OtherKpiId}' was not found.");
+            var kpi = await _db.OtherOperatorKpis.FirstOrDefaultAsync(x => x.Id == dto.OtherOperatorKpiId);
+            if (kpi == null) return NotFound($"Other Operator KPI with id '{dto.OtherOperatorKpiId}' was not found.");
 
             var normalizedSite = NormalizeSite(dto.Site);
             if (string.IsNullOrWhiteSpace(normalizedSite)) return BadRequest("Site is required.");
 
             var metric = await _db.OtherOperatorKpiMetrics.FirstOrDefaultAsync(x =>
-                x.OtherOperatorKpiId == dto.OtherKpiId &&
+                x.OtherOperatorKpiId == dto.OtherOperatorKpiId &&
                 x.Site != null &&
                 x.Site.ToUpper() == normalizedSite &&
                 x.Month == dto.Month &&
@@ -116,7 +188,7 @@ namespace backend.Controllers
             {
                 metric = new OtherOperatorKpiMetric
                 {
-                    OtherOperatorKpiId = dto.OtherKpiId,
+                    OtherOperatorKpiId = dto.OtherOperatorKpiId,
                     Site = normalizedSite,
                     Month = dto.Month,
                     Year = dto.Year
@@ -124,12 +196,7 @@ namespace backend.Controllers
                 _db.OtherOperatorKpiMetrics.Add(metric);
             }
 
-            metric.TotalFaults = dto.TotalFaults;
-            metric.FaultsWithinSla = dto.FaultsWithinSla;
-            metric.RepeatedFaults = dto.RepeatedFaults;
-            metric.TotalCustomers = dto.TotalCustomers;
-            metric.TotalClearanceFaults = dto.TotalClearanceFaults;
-            metric.ClearedWithin4Hrs = dto.ClearedWithin4Hrs;
+            metric.KpiValue = dto.KpiValue;
 
             await _db.SaveChangesAsync();
 
@@ -150,21 +217,16 @@ namespace backend.Controllers
             return NoContent();
         }
 
-        private static OtherKpiMetricDto ToMetricDto(OtherOperatorKpiMetric metric, OtherOperatorKpi kpi) => new()
+        private static OtherOperatorKpiMetricDto ToMetricDto(OtherOperatorKpiMetric metric, OtherOperatorKpi kpi) => new()
         {
             Id = metric.Id,
-            OtherKpiId = kpi.Id,
+            OtherOperatorKpiId = kpi.Id,
             NetworkEngineerKpi = kpi.NetworkEngineerKpi,
             Division = kpi.Division,
             Section = kpi.Section,
             KpiPercent = kpi.KpiPercent,
             Site = metric.Site ?? string.Empty,
-            TotalFaults = metric.TotalFaults,
-            FaultsWithinSla = metric.FaultsWithinSla,
-            RepeatedFaults = metric.RepeatedFaults,
-            TotalCustomers = metric.TotalCustomers,
-            TotalClearanceFaults = metric.TotalClearanceFaults,
-            ClearedWithin4Hrs = metric.ClearedWithin4Hrs,
+            KpiValue = metric.KpiValue,
             Month = metric.Month,
             Year = metric.Year
         };

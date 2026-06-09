@@ -618,7 +618,7 @@ export class EnterpriseKpiComponent implements OnInit {
     const request: UpsertEnterpriseMetricRequest = { enterpriseKpiId: kpiId, site: areaCode, kpiValue: numericValue, month: Number(this.selectedMonth), year: Number(this.selectedYear) };
     this.metricsLoading = true;
     this.enterpriseKpiService.upsertMetric(request).subscribe({
-      next: () => { this.metricsLoading = false; this.editingCell = { rowId: null, key: null }; this.activeEditValue = ''; this.cdr.detectChanges(); this.toastr.success(`Saved ${this.optionMapping[areaCode] || areaCode} metric successfully.`, 'Success'); this.loadMetrics(); },
+      next: (result) => { this.metricsLoading = false; this.editingCell = { rowId: null, key: null }; this.activeEditValue = ''; this.cdr.detectChanges(); const msg = result.isNew ? 'Saved successfully.' : 'Updated successfully.'; this.toastr.success(msg, 'Success'); this.loadMetrics(); },
       error: (err) => { this.metricsLoading = false; console.error('Failed to save Enterprise KPI metric value', err); this.cdr.detectChanges(); this.toastr.error('Saving metric failed. Please try again.', 'Save Failed'); }
     });
   }

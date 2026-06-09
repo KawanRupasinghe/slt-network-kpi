@@ -25,6 +25,33 @@
             <p>Routine KPI definitions aligned with current placeholder compliance snapshots.</p>
           </div>
         </header>
+
+        <!-- ✅ FILTER BAR -->
+        <div class="filter-bar">
+          <div class="header-filters">
+            <div class="filter-group">
+              <label for="routine-month-select">Month:</label>
+              <select id="routine-month-select" class="filter-select"
+                      [(ngModel)]="selectedMonth"
+                      (ngModelChange)="onMonthChange($event)">
+                <option *ngFor="let month of monthOptions" [ngValue]="month.value">
+                  {{ month.label }}
+                </option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="routine-year-select">Year:</label>
+              <select id="routine-year-select" class="filter-select"
+                      [(ngModel)]="selectedYear"
+                      (ngModelChange)="onYearChange($event)">
+                <option *ngFor="let year of yearOptions" [ngValue]="year">
+                  {{ year }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <div class="table-wrapper">
           <table class="data-table">
             <thead>
