@@ -81,8 +81,9 @@ namespace backend.Services
                 var monthNumber = GetMonthNumber(record.Month);
                 if (monthNumber == 0) continue;
 
-                var cycle = monthNumber <= 6 ? 1 : 2;
-                if (currentCycle != cycle || monthNumber == 1 || monthNumber == 7)
+                // 2-month cycle: Jan-Feb=1, Mar-Apr=2, May-Jun=3, Jul-Aug=4, Sep-Oct=5, Nov-Dec=6
+                var cycle = (monthNumber + 1) / 2;
+                if (currentCycle != cycle)
                 {
                     runningScheduled = 0;
                     runningAttended = 0;
