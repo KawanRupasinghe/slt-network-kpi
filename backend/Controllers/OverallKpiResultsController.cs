@@ -78,8 +78,7 @@ namespace backend.Controllers
             [FromQuery] int? year)
         {
             var now = DateTime.UtcNow;
-            //byte m = (byte)(month ?? now.Month);
-            byte m = (byte)(month ?? 2);
+            byte m = (byte)(month ?? now.Month);
             short y = (short)(year ?? now.Year);
 
             var calculated = await CalculateAndPersistAsync(m, y);
@@ -290,7 +289,7 @@ namespace backend.Controllers
                             KpiName = kpi.KeyPerformanceIndicators,
                             Platform = kpi.Perspectives,
                             AreaCode = area,
-                            TargetValue = targetValue,
+                            TargetValue = targetValue ?? 0m,
                             AchievedKpi = achieved,
                             MaximumPointsPerKpi = maxPoints,
                             PointsAchieved = pointsAchieved,
@@ -337,7 +336,7 @@ namespace backend.Controllers
                         KpiName = kpi.KeyPerformanceIndicators,
                         Platform = kpi.Perspectives,
                         AreaCode = area,
-                        TargetValue = targetValue,
+                        TargetValue = targetValue ?? 0m,
                         AchievedKpi = achieved,
                         MaximumPointsPerKpi = maxPoints,
                         PointsAchieved = pointsAchieved,
@@ -464,16 +463,13 @@ namespace backend.Controllers
 
             if (matchedKpi.Source == "ent")
             {
-                var target = enterpriseTargets.TryGetValue(matchedKpi.Id, out var targetValue) ? targetValue : 0m;
-
                 foreach (var row in entMetrics.Where(x => x.EnterpriseKpiId == matchedKpi.Id))
                 {
                     var area = NormalizeArea(row.AreaCode);
                     if (area == string.Empty) continue;
 
-                    var actual = row.KpiValue ?? 0m;
-                    var normalized = CalculateEnterpriseOrOtherNormalized(matchedKpi.Name, actual, target);
-                    result[area] = new AreaSnapshot(normalized * 100m, 0m, normalized);
+                    var achieved = Math.Round(Math.Clamp(row.KpiValue ?? 0m, 0m, 100m), 4);
+                    result[area] = new AreaSnapshot(achieved, 0m);
                 }
 
                 return result;

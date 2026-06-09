@@ -42,6 +42,7 @@ namespace backend.Data
         public DbSet<TowerMtcData> TowerMtcData { get; set; } = null!;
         public DbSet<SlbnMtcData> SlbnMtcData { get; set; } = null!;
         public DbSet<IpnwMtcData> IpnwMtcData { get; set; } = null!;
+        
 
         // =========================
         // KPI DEFINITIONS
@@ -628,8 +629,8 @@ namespace backend.Data
                 entity.Property(x => x.EnterpriseKpiId).HasColumnName("EnterpriseKpiId").IsRequired();
                 entity.Property(x => x.Site).HasColumnName("Site").HasMaxLength(50).IsRequired();
                 entity.Property(x => x.KpiValue).HasColumnName("KpiValue").HasColumnType("decimal(18,4)");
-                entity.Property(x => x.Month).HasColumnName("Month");
-                entity.Property(x => x.Year).HasColumnName("Year");
+                entity.Property(x => x.Month).HasColumnName("month");
+                entity.Property(x => x.Year).HasColumnName("year");
                 entity.Property(x => x.CreatedAt).HasColumnName("CreatedAt");
                 entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
 
@@ -667,9 +668,9 @@ namespace backend.Data
                 entity.Property(x => x.OtherKpiId).HasColumnName("OtherKpiId").IsRequired();
                 entity.Property(x => x.AreaCode).HasColumnName("AreaCode").HasMaxLength(50).IsRequired();
                 entity.Property(x => x.KpiValue).HasColumnName("KpiValue").HasColumnType("decimal(18,4)");
-                entity.Property(x => x.Year).HasColumnName("Year");
-                entity.Property(x => x.Month).HasColumnName("Month");
-                entity.Property(x => x.CreatedAt).HasColumnName("CreatedAt");
+                entity.Property(x => x.Year).HasColumnName("year");
+                entity.Property(x => x.Month).HasColumnName("month");
+                entity.Property(x => x.CreatedAt).HasColumnName("createdAt");
 
                 entity.HasOne(x => x.OtherKpi)
                       .WithMany()

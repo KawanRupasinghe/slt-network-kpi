@@ -82,8 +82,8 @@ namespace backend.Controllers
                     AreaCode = x.metric.AreaCode,
                     Site = x.metric.AreaCode,
                     KpiValue = x.metric.KpiValue,
-                    Month = x.metric.Month,
-                    Year = x.metric.Year,
+                    Month = (byte)x.metric.Month,
+                    Year = (short)x.metric.Year,
                     CreatedAt = x.metric.CreatedAt
                 })
                 .ToListAsync();
@@ -237,8 +237,8 @@ namespace backend.Controllers
             AreaCode = metric.AreaCode,
             Site = metric.AreaCode,
             KpiValue = metric.KpiValue,
-            Month = metric.Month,
-            Year = metric.Year,
+            Month = (byte)metric.Month,
+            Year = (short)metric.Year,
             CreatedAt = metric.CreatedAt
         };
 

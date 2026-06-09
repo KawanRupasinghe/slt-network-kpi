@@ -27,7 +27,10 @@ namespace backend.Models
         [Column("attended")]
         public int? Attended { get; set; }
 
-        [Column("cumulative_count")]
-        public int? CumulativeCount { get; set; }
+        [Column("Cumulative_Sched")]
+        public int CumulativeSched { get; set; }
+
+        [Column("Cumulative_Achieved")]
+        public int CumulativeAchieved { get; set; }
     }
 }

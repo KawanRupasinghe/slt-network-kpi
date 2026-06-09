@@ -88,3 +88,7 @@ packages/
 sonarqube-analysis.xml
 
 info.md
+
+.cora\*
+.cora*
+.cora\
