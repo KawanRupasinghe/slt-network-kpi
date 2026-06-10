@@ -138,7 +138,7 @@ namespace backend.Controllers
                 .Where(x => x.Month == month && x.Year == year)
                 .ToListAsync();
 
-            var otherMetrics = await _db.OtherKpiMetrics.AsNoTracking()
+            var otherMetrics = await _db.OtherOperatorKpiMetrics.AsNoTracking()
                 .Where(x => x.Month == month && x.Year == year)
                 .ToListAsync();
 
@@ -236,7 +236,7 @@ namespace backend.Controllers
                 .Select(x => new NamedKpi("ent", x.Id, x.NetworkEngineerKpi ?? string.Empty))
                 .ToListAsync();
 
-            var otherKpis = await _db.OtherKpis.AsNoTracking()
+            var otherKpis = await _db.OtherOperatorKpis.AsNoTracking()
                 .Select(x => new NamedKpi("other", x.Id, x.NetworkEngineerKpi ?? string.Empty))
                 .ToListAsync();
 
@@ -252,7 +252,7 @@ namespace backend.Controllers
             var enterpriseTargets = await _db.EnterpriseKpis.AsNoTracking()
                 .ToDictionaryAsync(x => x.Id, x => x.KpiPercent ?? 0m);
 
-            var otherTargets = await _db.OtherKpis.AsNoTracking()
+            var otherTargets = await _db.OtherOperatorKpis.AsNoTracking()
                 .ToDictionaryAsync(x => x.Id, x => x.KpiPercent ?? 0m);
 
             var daysInMonth = DateTime.DaysInMonth(year, month);
@@ -269,7 +269,31 @@ namespace backend.Controllers
             // =========================================================
             foreach (var kpi in kpis)
             {
-                var matchedKpi = FindBestMatch(kpi.KeyPerformanceIndicators, allNamedKpis);
+                var sourceFilter = new List<string>();
+                var p = kpi.Perspectives?.Trim().ToUpperInvariant() ?? string.Empty;
+                var cat = kpi.Category?.Trim().ToUpperInvariant() ?? string.Empty;
+                if (p == "IP NW OP" || p.Contains("IP")) sourceFilter.Add("ip");
+                if (p == "BB ANW" || p.Contains("BB")) sourceFilter.Add("bb");
+                if (p == "OTN OP" || p.Contains("OTN")) { sourceFilter.Add("otn1"); sourceFilter.Add("otn2"); }
+                if (p == "SERVICE FULFILMENT" || p.Contains("FULFILMENT")) sourceFilter.Add("sf");
+                if (p == "ENTERPRISE KPI" || p.Contains("ENTERPRISE"))
+                {
+                    if (cat == "OTHER OPERATOR" || cat.Contains("OPERATOR"))
+                    {
+                        sourceFilter.Add("other");
+                    }
+                    else
+                    {
+                        sourceFilter.Add("ent");
+                    }
+                }
+                if (p == "OTHER OPERATOR KPI" || p == "OTHER OPERATOR" || p.Contains("OPERATOR")) sourceFilter.Add("other");
+
+                var candidates = sourceFilter.Any()
+                    ? allNamedKpis.Where(x => sourceFilter.Contains(x.Source)).ToList()
+                    : allNamedKpis;
+
+                var matchedKpi = FindBestMatch(kpi.KeyPerformanceIndicators, candidates);
                 // Special handling for Aged Network Failure KPIs
                 if (IsAgedNetworkFailureKpi(kpi.KeyPerformanceIndicators))
                 {
@@ -404,7 +428,7 @@ namespace backend.Controllers
             List<OtnOp2Metrics> otn2Metrics,
             List<ServiceFulfilmentKpiMetric> sfMetrics,
             List<EnterpriseKpiMetric> entMetrics,
-            List<OtherKpiMetric> otherMetrics,
+            List<OtherOperatorKpiMetric> otherMetrics,
             IReadOnlyDictionary<int, decimal> enterpriseTargets,
             IReadOnlyDictionary<int, decimal> otherTargets,
             int daysInMonth)
@@ -477,16 +501,13 @@ namespace backend.Controllers
 
             if (matchedKpi.Source == "other")
             {
-                var target = otherTargets.TryGetValue(matchedKpi.Id, out var targetValue) ? targetValue : 0m;
-
-                foreach (var row in otherMetrics.Where(x => x.OtherKpiId == matchedKpi.Id))
+                foreach (var row in otherMetrics.Where(x => x.OtherOperatorKpiId == matchedKpi.Id))
                 {
                     var area = NormalizeArea(row.Site);
                     if (area == string.Empty) continue;
 
-                    var actual = CalculateOtherMetricPercentage(row);
-                    var normalized = CalculateEnterpriseOrOtherNormalized(matchedKpi.Name, actual, target);
-                    result[area] = new AreaSnapshot(normalized * 100m, 0m, normalized);
+                    var achieved = Math.Round(Math.Clamp(row.KpiValue ?? 0m, 0m, 100m), 4);
+                    result[area] = new AreaSnapshot(achieved, 0m);
                 }
 
                 return result;
