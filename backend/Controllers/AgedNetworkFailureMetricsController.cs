@@ -72,7 +72,7 @@ namespace backend.Controllers
                     Id = existingId.Value,
                     AreaCode = areaCode,
                     PlatformType = platform,
-                    HasUnavailability = dto.HasUnavailability,
+                    HasUnavailability = dto.HasUnavailability == 1,
                     Month = dto.Month,
                     Year = dto.Year,
                     UpdatedAt = now
@@ -97,7 +97,7 @@ namespace backend.Controllers
                 {
                     AreaCode = areaCode,
                     PlatformType = platform,
-                    HasUnavailability = dto.HasUnavailability,
+                    HasUnavailability = dto.HasUnavailability == 1,
                     Month = dto.Month,
                     Year = dto.Year,
                     CreatedAt = now,
@@ -124,7 +124,7 @@ namespace backend.Controllers
             var rows = await _db.AgedNetworkFailureMetrics
                 .Where(x => x.Id == id)
                 .ExecuteUpdateAsync(s => s
-                    .SetProperty(x => x.HasUnavailability, dto.HasUnavailability)
+                    .SetProperty(x => x.HasUnavailability, dto.HasUnavailability == 1)
                     .SetProperty(x => x.UpdatedAt, DateTime.UtcNow));
 
             if (rows == 0) return NotFound();
@@ -150,9 +150,9 @@ namespace backend.Controllers
             Id = x.Id,
             AreaCode = x.AreaCode,
             PlatformType = x.PlatformType,
-            HasUnavailability = x.HasUnavailability,
-            Month = x.Month,
-            Year = x.Year
+            HasUnavailability = x.HasUnavailability ? 1 : 0,
+            Month = (byte)x.Month,
+            Year = (short)x.Year
         };
     }
 }
