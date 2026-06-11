@@ -47,3 +47,6 @@ Thumbs.db
 sonarqube-analysis.xml
 
 info.md
+.cora/*
+.cora*
+.cora/

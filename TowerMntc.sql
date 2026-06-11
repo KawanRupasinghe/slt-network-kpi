@@ -64,3 +64,13 @@ SET
 FROM [NWKPI].[dbo].[towermtcdata] t
 JOIN CumulativeCTE c
     ON t.id = c.id;
+
+----------------------------------------------
+EXEC sp_rename
+  'dbo.towermtcdata.Cumulative_Attended',
+  'Cumulative_Achieved',
+  'COLUMN';
+
+-- Convert towermtcdata.year from varchar to int
+ALTER TABLE [NWKPI].[dbo].[towermtcdata]
+ALTER COLUMN [year] INT NULL;

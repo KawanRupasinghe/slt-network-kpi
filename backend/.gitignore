@@ -89,6 +89,6 @@ sonarqube-analysis.xml
 
 info.md
 
-.cora\*
+.cora/*
 .cora*
-.cora\
+.cora/

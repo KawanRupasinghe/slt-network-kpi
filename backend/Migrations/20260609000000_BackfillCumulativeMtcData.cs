@@ -70,12 +70,15 @@ END;
 
             // SLBN — 2-month cycle
             migrationBuilder.Sql(BuildBackfillSql("slbnmtcdata", 2));
+
+            // TOWER — 3-month cycle (quarterly)
+            migrationBuilder.Sql(BuildBackfillSql("towermtcdata", 3));
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             // Zero out all cumulative columns — reversing a recalculation is not meaningful
-            foreach (var table in new[] { "msanmtcdata", "ipnwmtcdata", "slbnmtcdata" })
+            foreach (var table in new[] { "msanmtcdata", "ipnwmtcdata", "slbnmtcdata", "towermtcdata" })
             {
                 migrationBuilder.Sql($@"
 IF OBJECT_ID(N'dbo.{table}', N'U') IS NOT NULL

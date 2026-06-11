@@ -1,6 +1,7 @@
--- Backfill CumulativeSched / CumulativeAchieved for all three MTC tables
+-- Backfill CumulativeSched / CumulativeAchieved for all four MTC tables
 -- MSAN: 6-month cycle (Jan-Jun = cycle 1, Jul-Dec = cycle 2)
 -- IPNW / SLBN: 2-month cycle (Jan-Feb=1, Mar-Apr=2, ...)
+-- TOWER: 3-month cycle (Jan-Mar=1, Apr-Jun=2, Jul-Sep=3, Oct-Dec=4)
 
 -- ============================================================
 -- MSAN (cycleSize = 6)

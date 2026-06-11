@@ -73,30 +73,15 @@ namespace backend.Services
         {
             var rows = await _context.TowerMtcData
                 .Where(x => year == null || x.Year == (short)year)
-                .Select(x => new RawRow
+                .Select(x => new CumulativeRow
                 {
                     Designation = x.Designation,
                     Month = x.Month,
-                    Scheduled = x.Scheduled ?? 0,
-                    Attended = x.Attended ?? 0
+                    CumulativeSched = x.CumulativeScheduled,
+                    CumulativeAchieved = x.CumulativeAttended
                 }).ToListAsync();
 
-            return rows
-                .GroupBy(x => NormalizeMonth(x.Month))
-                .Select(g => new PlatformRecordDto
-                {
-                    Month = g.Key,
-                    Details = new List<PlatformDetailDto>(),
-                    Data = g
-                        .Where(x => !string.IsNullOrWhiteSpace(x.Designation))
-                        .ToDictionary(
-                            x => x.Designation!.Trim(),
-                            x => new PlatformDetailDto
-                            {
-                                Column2 = x.Scheduled.ToString(),
-                                Column3 = x.Attended.ToString()
-                            })
-                }).ToList();
+            return GroupToPlatformRecords(rows);
         }
 
         // -------------------------------------------------------
