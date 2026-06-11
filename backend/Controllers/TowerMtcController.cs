@@ -9,7 +9,7 @@ namespace backend.Controllers
     {
         private readonly IMultiTableService _multiTableService;
 
-        // ✅ FIX: Inject service here
+        // FIX: Inject service here
         public TowerMtcController(IMultiTableService multiTableService)
         {
             _multiTableService = multiTableService;
