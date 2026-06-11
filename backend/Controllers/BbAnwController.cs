@@ -176,10 +176,24 @@ namespace backend.Controllers
 
             if (dto.Nodes != null)
             {
-                entity.Nodes.Clear();
-                foreach (var node in MapNodes(dto.Nodes))
+                var dtoNodes = MapNodes(dto.Nodes);
+                foreach (var dtoNode in dtoNodes)
                 {
-                    entity.Nodes.Add(node);
+                    var existing = entity.Nodes.FirstOrDefault(n =>
+                        n.NodeCode == dtoNode.NodeCode &&
+                        n.Month == dtoNode.Month &&
+                        n.Year == dtoNode.Year);
+
+                    if (existing != null)
+                    {
+                        existing.UnavailableMinutes = dtoNode.UnavailableMinutes;
+                        existing.TotalMinutes = dtoNode.TotalMinutes;
+                        existing.TotalNodes = dtoNode.TotalNodes;
+                    }
+                    else
+                    {
+                        entity.Nodes.Add(dtoNode);
+                    }
                 }
             }
 

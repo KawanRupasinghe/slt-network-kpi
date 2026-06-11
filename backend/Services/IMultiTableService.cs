@@ -16,16 +16,10 @@ namespace backend.Services
     // =========================================================
     public interface IMultiTableService
     {
-        // Fetches MSAN (Metro Software Area Network) platform data
-        Task<List<PlatformRecordDto>> FetchMsanDataAsync();
-
-        // Fetches VPN (Virtual Private Network) platform data
-        Task<List<PlatformRecordDto>> FetchVpnDataAsync();
-
-        // Fetches SLBN (Service Level Backbone Network) platform data
-        Task<List<PlatformRecordDto>> FetchSlbnDataAsync();
-
-        Task<List<PlatformRecordDto>> FetchTowerDataAsync();
+        Task<List<PlatformRecordDto>> FetchMsanDataAsync(int? year = null);
+        Task<List<PlatformRecordDto>> FetchVpnDataAsync(int? year = null);
+        Task<List<PlatformRecordDto>> FetchSlbnDataAsync(int? year = null);
+        Task<List<PlatformRecordDto>> FetchTowerDataAsync(int? year = null);
     }
 
     // =========================================================
@@ -39,7 +33,7 @@ namespace backend.Services
 
         // Collection of platform details for the month
         public List<PlatformDetailDto> Details { get; set; } = new();
-        public Dictionary<dynamic, PlatformDetailDto>? Data { get; internal set; }
+        public Dictionary<string, PlatformDetailDto>? Data { get; internal set; }
     }
 
     // =========================================================

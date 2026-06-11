@@ -42,6 +42,7 @@ namespace backend.Data
         public DbSet<TowerMtcData> TowerMtcData { get; set; } = null!;
         public DbSet<SlbnMtcData> SlbnMtcData { get; set; } = null!;
         public DbSet<IpnwMtcData> IpnwMtcData { get; set; } = null!;
+        
 
         // =========================
         // KPI DEFINITIONS

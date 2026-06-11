@@ -264,31 +264,10 @@
                     <tr class="sub-row" *ngIf="!isAgedFailureKpi(row.network_engineer_kpi)">
                       <td></td>
                       <td colspan="4" class="sub-label">Total Minutes</td>
-                      <td class="metric-cell" [class.can-edit]="canEditMetrics">
-                        <ng-container *ngIf="isCellEditing(row.id, 'total_minutes'); else totalMinutesView">
-                          <div class="edit-box">
-                            <input type="number" class="form-control form-control-sm" [ngModel]="editCell.value"
-                              (ngModelChange)="onEditInput($event)" (keydown)="handleEditKey($event)"
-                              placeholder="Enter minutes" />
-                            <div class="edit-actions">
-                              <button type="button" class="table-button" (click)="doneEdit()">
-                                Save
-                              </button>
-                              <button type="button" class="table-button btn-outline-warning" (click)="cancelEdit()">
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        </ng-container>
-                        <ng-template #totalMinutesView>
-                          <div class="cell-view">
-                            <span>{{ getAreaMetric(row, 'total_minutes') }}</span>
-                            <button *ngIf="canEditMetrics" type="button" class="table-button btn-outline-warning"
-                              (click)="startEdit(row, 'total_minutes')">
-                              Edit
-                            </button>
-                          </div>
-                        </ng-template>
+                      <td class="metric-cell">
+                        <div class="cell-view">
+                          <span>{{ getAreaMetric(row, 'total_minutes') }}</span>
+                        </div>
                       </td>
                     </tr>
                     <tr class="sub-row" *ngIf="!isAgedFailureKpi(row.network_engineer_kpi)">

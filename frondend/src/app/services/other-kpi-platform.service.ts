@@ -48,7 +48,7 @@ export interface UpsertOtherMetricRequest {
 export class OtherKpiPlatformService {
   private readonly apiUrl = `${environment.apiUrl}/OtherKpi`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getAll(): Observable<OtherKpiDto[]> {
     return this.http.get<OtherKpiDto[]>(this.apiUrl).pipe(

@@ -391,6 +391,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		};
 
 		(dto.nodes ?? []).forEach((node) => {
+			console.log('DTO node:', node?.month, node?.year);
 			const code = this.norm(node.nodeCode);
 			if (!code) return;
 			entry.unavailableMinutes[code] = node.unavailableMinutes ?? null;
@@ -404,17 +405,24 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 
 	private buildDtoFromEntry(entry: BbAnwEntry): BbAnwDto {
 		const codes = this.collectNodeCodes(entry);
-		const nodes = codes.map((code) => {
-			const meta = this.ensureNodeMeta(entry, code);
-			return {
-				nodeCode: code,
-				unavailableMinutes: this.toNullableNumber(entry.unavailableMinutes[code]),
-				totalMinutes: this.toNullableNumber(entry.totalMinutes[code]),
-				totalNodes: this.toNullableNumber(entry.totalNodes[code]),
-				month: meta.month,
-				year: meta.year,
-			};
-		});
+		const nodes = codes
+			.map((code) => {
+				const meta = this.ensureNodeMeta(entry, code);
+				return {
+					nodeCode: code,
+					unavailableMinutes: this.toNullableNumber(entry.unavailableMinutes[code]),
+					totalMinutes: this.toNullableNumber(entry.totalMinutes[code]),
+					totalNodes: this.toNullableNumber(entry.totalNodes[code]),
+					month: meta.month,
+					year: meta.year,
+				};
+			})
+			.filter(
+					(node) =>
+						node.unavailableMinutes != null ||
+						node.totalNodes != null ||
+						node.totalMinutes != null
+				);
 
 		return {
 			id: entry.id,
@@ -447,9 +455,11 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 	}
 
 	private normalizeNodeMeta(month?: number | null, year?: number | null): NodeMeta {
+		// Prefer the currently selected reporting period as the fallback so
+		// missing node metadata aligns with the UI period the user is viewing.
 		const now = new Date();
-		const fallbackMonth = now.getMonth() + 1;
-		const fallbackYear = now.getFullYear();
+		const fallbackMonth = typeof this.selectedMonth === 'number' ? this.selectedMonth : now.getMonth() + 1;
+		const fallbackYear = typeof this.selectedYear === 'number' ? this.selectedYear : now.getFullYear();
 		const safeMonth =
 			typeof month === 'number' && month >= 1 && month <= 12 ? month : fallbackMonth;
 		const safeYear = typeof year === 'number' && year >= 1900 ? year : fallbackYear;
@@ -574,13 +584,18 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 				? this.normalizeNodeMeta(rawMeta.month, rawMeta.year)
 				: { month, year };
 			const matchesPeriod = normalized.month === month && normalized.year === year;
-			if (!matchesPeriod) {
-				return;
+			if (matchesPeriod) {
+				filteredUnavailable[code] = entry.unavailableMinutes?.[code] ?? null;
+				filteredTotal[code] = entry.totalMinutes?.[code] ?? null;
+				filteredNodes[code] = entry.totalNodes?.[code] ?? null;
+				filteredMeta[code] = normalized;
+			} else {
+				// initialize empty values for the requested period instead of inheriting from other months
+				filteredUnavailable[code] = null;
+				filteredTotal[code] = null;
+				filteredNodes[code] = null;
+				filteredMeta[code] = { month, year };
 			}
-			filteredUnavailable[code] = entry.unavailableMinutes?.[code] ?? null;
-			filteredTotal[code] = entry.totalMinutes?.[code] ?? null;
-			filteredNodes[code] = entry.totalNodes?.[code] ?? null;
-			filteredMeta[code] = normalized;
 		});
 
 		return {
@@ -711,6 +726,8 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 	}
 
 	startEdit(entry: BbAnwEntry, key: MetricKey): void {
+		// disallow editing of computed-only metric `totalMinutes`
+		if (key === 'totalMinutes') return;
 		if (!this.isEditingAllowed || !this.selectedKey || this.cellSaving) return;
 
 		const nestedKey = `${key}.${this.selectedKey}`;
@@ -771,6 +788,8 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		childKey: string,
 		newValue: string
 	): BbAnwEntry | null {
+		// prevent updates to computed-only metric
+		if (parentKey === 'totalMinutes') return null;
 		let filteredEntry: BbAnwEntry | null = null;
 
 		this.data = this.data.map((entry) => {
@@ -778,25 +797,32 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 				return entry;
 			}
 
-			const next: BbAnwEntry = {
-				...entry,
-				totalMinutes: { ...entry.totalMinutes },
-				unavailableMinutes: { ...entry.unavailableMinutes },
-				totalNodes: { ...entry.totalNodes },
-				nodeMeta: { ...entry.nodeMeta },
-			};
+			const next: BbAnwEntry = this.createPeriodScopedEntry(
+				entry,
+				this.selectedMonth,
+				this.selectedYear
+			);
 
-			(next as any)[parentKey][childKey] = newValue;
+			(next as any)[parentKey][childKey] = this.toNullableNumber(newValue);
+
+			// ensure node meta reflects the current edited period so the DTO sends correct month/year
+			(next as any).nodeMeta = { ...(next as any).nodeMeta };
+			(next as any).nodeMeta[childKey] = { month: this.selectedMonth, year: this.selectedYear };
 
 			if (parentKey === 'totalNodes') {
-				const nodes = Number(newValue) || 0;
-				const meta = this.ensureNodeMeta(next, childKey);
-				const days = this.getDaysInMonth(meta.month, meta.year);
-				const computed = 24 * 60 * days * nodes;
-				next.totalMinutes = {
-					...(next.totalMinutes || {}),
-					[childKey]: computed,
-				};
+				const nodeVal = (next as any).totalNodes?.[childKey] ?? null;
+				if (nodeVal == null) {
+					next.totalMinutes = {
+						...(next.totalMinutes || {}),
+						[childKey]: null,
+					};
+				} else {
+					const days = this.getDaysInMonth(this.selectedMonth, this.selectedYear);
+					next.totalMinutes = {
+						...(next.totalMinutes || {}),
+						[childKey]: 24 * 60 * days * nodeVal,
+					};
+				}
 			}
 
 			filteredEntry = next;
@@ -814,24 +840,32 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 				return entry;
 			}
 
-			const next: BbAnwEntry = {
-				...entry,
-				totalMinutes: { ...entry.totalMinutes },
-				unavailableMinutes: { ...entry.unavailableMinutes },
-				totalNodes: { ...entry.totalNodes },
-				nodeMeta: { ...entry.nodeMeta },
-			};
+			const next: BbAnwEntry = this.createPeriodScopedEntry(
+				entry,
+				this.selectedMonth,
+				this.selectedYear
+			);
 
-			const meta = this.ensureNodeMeta(next, childKey);
 			(next as any)[parentKey][childKey] = this.toNullableNumber(newValue);
 
+			// also force nodeMeta on the canonical allEntries copy
+			(next as any).nodeMeta = { ...(next as any).nodeMeta };
+			(next as any).nodeMeta[childKey] = { month: this.selectedMonth, year: this.selectedYear };
+
 			if (parentKey === 'totalNodes') {
-				const nodes = Number(newValue) || 0;
-				const days = this.getDaysInMonth(meta.month, meta.year);
-				next.totalMinutes = {
-					...next.totalMinutes,
-					[childKey]: 24 * 60 * days * nodes,
-				};
+				const nodeVal = next.totalNodes?.[childKey] ?? null;
+				if (nodeVal == null) {
+					next.totalMinutes = {
+						...next.totalMinutes,
+						[childKey]: null,
+					};
+				} else {
+					const days = this.getDaysInMonth(this.selectedMonth, this.selectedYear);
+					next.totalMinutes = {
+						...next.totalMinutes,
+						[childKey]: 24 * 60 * days * nodeVal,
+					};
+				}
 			}
 
 			return next;

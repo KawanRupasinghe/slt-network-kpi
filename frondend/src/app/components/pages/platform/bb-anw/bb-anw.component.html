@@ -229,41 +229,9 @@
 									<td></td>
 									<td class="sub-label" colspan="4">Total Minutes</td>
 									<td class="metric-value">
-										<ng-container *ngIf="isEditingAllowed; else viewTotalMinutes">
-											<ng-container
-												*ngIf="isEditingCell(row, 'totalMinutes'); else totalMinutesDisplay">
-												<div class="edit-box">
-													<input type="number" class="form-control form-control-sm"
-														[ngModelOptions]="{ standalone: true }"
-														[(ngModel)]="editCell.value" step="0.01" />
-													<div class="edit-actions">
-														<button type="button" class="table-button" (click)="doneEdit()"
-															[disabled]="cellSaving">
-															<span *ngIf="cellSaving"
-																class="spinner-border spinner-border-sm me-1"
-																role="status"></span>
-															{{ cellSaving ? 'Saving...' : 'Save' }}
-														</button>
-														<button type="button" class="table-button btn-secondary"
-															(click)="cancelEdit()" [disabled]="cellSaving">
-															Cancel
-														</button>
-													</div>
-												</div>
-											</ng-container>
-											<ng-template #totalMinutesDisplay>
-												<div class="cell-view">
-													<span>{{ getMetricDisplay(row, 'totalMinutes') }}</span>
-													<button type="button" class="table-button"
-														(click)="startEdit(row, 'totalMinutes')">
-														Edit
-													</button>
-												</div>
-											</ng-template>
-										</ng-container>
-										<ng-template #viewTotalMinutes>
-											{{ getMetricDisplay(row, 'totalMinutes') }}
-										</ng-template>
+										<div class="cell-view">
+											<span>{{ getMetricDisplay(row, 'totalMinutes') }}</span>
+										</div>
 									</td>
 								</tr>
 								<tr class="sub-row" *ngIf="showAreaMetrics && !isAgedFailureKpi(row.networkEngineerKpi)">

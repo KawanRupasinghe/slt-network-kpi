@@ -164,7 +164,7 @@ export class RoutineMtncComponent implements OnInit {
 
   onYearChange(year: number): void {
     this.selectedYear = Number(year);
-    this.applyFiltersAndRecalculate();
+    this.fetchData();
   }
 
   private applyFiltersAndRecalculate(): void {
@@ -198,9 +198,9 @@ export class RoutineMtncComponent implements OnInit {
     this.errorMessage = '';
 
     forkJoin({
-      msan: this.http.get<PlatformRecord[]>(`${environment.apiUrl}/multi-table/fetchMsan`).pipe(catchError(() => of([]))),
-      vpn: this.http.get<PlatformRecord[]>(`${environment.apiUrl}/multi-table/fetchVpn`).pipe(catchError(() => of([]))),
-      slbn: this.http.get<PlatformRecord[]>(`${environment.apiUrl}/multi-table/fetchSlbn`).pipe(catchError(() => of([]))),
+      msan: this.http.get<PlatformRecord[]>(`${environment.apiUrl}/multi-table/fetchMsan?year=${this.selectedYear}`).pipe(catchError(() => of([]))),
+      vpn: this.http.get<PlatformRecord[]>(`${environment.apiUrl}/multi-table/fetchVpn?year=${this.selectedYear}`).pipe(catchError(() => of([]))),
+      slbn: this.http.get<PlatformRecord[]>(`${environment.apiUrl}/multi-table/fetchSlbn?year=${this.selectedYear}`).pipe(catchError(() => of([]))),
       routine: this.http.get<RoutineRecord[]>(`${environment.apiUrl}/mtnc-routine`).pipe(
         catchError((err: HttpErrorResponse) => {
           console.error(err.message);
@@ -215,16 +215,6 @@ export class RoutineMtncComponent implements OnInit {
       }))
       .subscribe((response: ApiResponse) => {
         const { msan, vpn, slbn, routine } = response;
-
-        console.log('DATA KEYS:', Object.keys(msan[0]?.data || {}));
-        console.log('COLUMNS:', this.columns);
-
-
-        console.log('✅ MSAN RESPONSE:', msan);   // 👈 ADD HERE
-        console.log('✅ VPN RESPONSE:', vpn);     // (optional)
-        console.log('✅ SLBN RESPONSE:', slbn);   // (optional)
-
-      //.subscribe(({ msan, vpn, slbn, routine }) => {
         this.platformDataMap = { msan, vpn, slbn };
         this.routineData = routine ?? [];
 
@@ -344,22 +334,21 @@ export class RoutineMtncComponent implements OnInit {
     const months = this.getTargetMonths(platform);
     if (!months.length) return result;
 
+    // Cumulative values are running totals — use the LAST available month in the
+    // window, not a sum across months (summing would double-count).
+    const lastMonthEntry = months
+      .slice()
+      .reverse()
+      .map(m => data.find(d => d.month === m))
+      .find(entry => entry !== undefined);
+
+    if (!lastMonthEntry) return result;
+
     PLATFORM_COLUMNS.forEach(column => {
-      let achieved = 0;
-      let total = 0;
-
-      months.forEach(m => {
-
-        const entry = data.find(d => d.month === m);
-        const detail = entry?.data?.[column];
-
-        if (detail) {
-          achieved += Number(detail.column3) || 0;
-          total += Number(detail.column2) || 0;
-        }
-      });
-
-      result[column] = total ? ((achieved / total) * 100).toFixed(2) : '0.00';
+      const detail = lastMonthEntry.data?.[column];
+      const cumSched   = Number(detail?.column2) || 0;   // CumulativeSched
+      const cumAchieved = Number(detail?.column3) || 0;  // CumulativeAchieved
+      result[column] = cumSched ? ((cumAchieved / cumSched) * 100).toFixed(2) : '0.00';
     });
 
     return result;
