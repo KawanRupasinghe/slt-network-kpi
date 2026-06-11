@@ -16,6 +16,8 @@
     </div>
   </section>
 
+  <div class="dashboard-container">
+
   <!-- LOADING -->
   <section class="table-section" *ngIf="loading">
     <div class="state">Loading KPI data...</div>
@@ -33,98 +35,119 @@
 
   <!-- FORM -->
   <section class="form-section" *ngIf="!loading && !error">
-    <form class="kpi-form" (ngSubmit)="save()">
-      <h2>{{ editingId ? 'Update KPI Row' : 'Create KPI Row' }}</h2>
-
-      <div class="field-group">
-        <input
-          type="text"
-          required
-          [ngModel]="form.network_engineer_kpi"
-          (ngModelChange)="handleInputChange('kpi', $event)"
-          name="kpi"
-          placeholder="Network Engineer KPI"
-        />
+    <div class="form-container">
+      <div class="form-header">
+        <h2>{{ editingId ? 'Update KPI Row' : 'Create KPI Row' }}</h2>
+        <p class="form-sub">Manage IP Network Operations KPI settings</p>
       </div>
 
-      <div class="field-group">
-        <input
-          type="text"
-          required
-          [ngModel]="form.division"
-          (ngModelChange)="handleInputChange('division', $event)"
-          name="division"
-          placeholder="Division"
-        />
-      </div>
+      <form class="kpi-form" (ngSubmit)="save()">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="kpi">Network Engineer KPI</label>
+            <input
+              id="kpi"
+              type="text"
+              required
+              [ngModel]="form.network_engineer_kpi"
+              (ngModelChange)="handleInputChange('kpi', $event)"
+              name="kpi"
+              placeholder="Network Engineer KPI"
+            />
+          </div>
 
-      <div class="field-group">
-        <input
-          type="text"
-          required
-          [ngModel]="form.section"
-          (ngModelChange)="handleInputChange('section', $event)"
-          name="section"
-          placeholder="Section"
-        />
-      </div>
+          <div class="form-group">
+            <label for="division">Division</label>
+            <input
+              id="division"
+              type="text"
+              required
+              [ngModel]="form.division"
+              (ngModelChange)="handleInputChange('division', $event)"
+              name="division"
+              placeholder="Division"
+            />
+          </div>
 
-      <div class="field-group">
-        <input
-          type="number"
-          required
-          step="0.01"
-          [ngModel]="form.kpi_percent"
-          (ngModelChange)="handleInputChange('kpi_percent', $event)"
-          name="kpi_percent"
-          placeholder="KPI (%)"
-        />
-      </div>
+          <div class="form-group">
+            <label for="section">Section</label>
+            <input
+              id="section"
+              type="text"
+              required
+              [ngModel]="form.section"
+              (ngModelChange)="handleInputChange('section', $event)"
+              name="section"
+              placeholder="Section"
+            />
+          </div>
 
-      <div class="actions">
-        <button type="submit">
-          {{ editingId ? 'Update' : 'Add' }}
-        </button>
+          <div class="form-group">
+            <label for="kpi_percent">KPI (%)</label>
+            <input
+              id="kpi_percent"
+              type="number"
+              required
+              step="0.01"
+              [ngModel]="form.kpi_percent"
+              (ngModelChange)="handleInputChange('kpi_percent', $event)"
+              name="kpi_percent"
+              placeholder="KPI (%)"
+            />
+          </div>
+        </div>
 
-        <button
-          type="button"
-          class="secondary"
-          *ngIf="editingId"
-          (click)="cancelEdit()"
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
+        <div class="form-actions">
+          <button class="btn-submit" type="submit">
+            {{ editingId ? 'Update' : 'Add' }}
+          </button>
+
+          <button
+            type="button"
+            class="btn-cancel secondary"
+            *ngIf="editingId"
+            (click)="cancelEdit()"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
   </section>
 
   <!-- TABLE -->
   <section class="table-section" *ngIf="!loading && !error">
     <div class="state" *ngIf="!data.length">No KPI entries yet.</div>
 
-    <table *ngIf="data.length" class="kpi-table">
-      <thead>
-        <tr>
-          <th>Network Engineer KPI</th>
-          <th>Division</th>
-          <th>Section</th>
-          <th>KPI (%)</th>
-          <th class="actions-col">Actions</th>
-        </tr>
-      </thead>
+    <div class="table-responsive" *ngIf="data.length">
+      <table class="kpi-table">
+        <thead>
+          <tr>
+            <th>Network Engineer KPI</th>
+            <th>Division</th>
+            <th>Section</th>
+            <th>KPI (%)</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
 
-      <tbody>
-        <tr *ngFor="let item of data">
-          <td>{{ item.network_engineer_kpi }}</td>
-          <td>{{ item.division }}</td>
-          <td>{{ item.section }}</td>
-          <td>{{ item.kpi_percent }}</td>
-          <td>
-            <button type="button" class="edit" (click)="editRow(item)">Edit</button>
-            <button type="button" class="delete" (click)="deleteRow(item.id)">Delete</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+        <tbody>
+          <tr *ngFor="let item of data">
+            <td>{{ item.network_engineer_kpi }}</td>
+            <td>{{ item.division }}</td>
+            <td>{{ item.section }}</td>
+            <td>{{ item.kpi_percent }}</td>
+            <td class="actions-col">
+              <div class="action-buttons">
+                <button type="button" class="btn-edit" (click)="editRow(item)">Edit</button>
+                <button type="button" class="btn-delete" (click)="deleteRow(item.id)">Delete</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
+
+  </div>
 </div>

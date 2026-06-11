@@ -109,7 +109,7 @@ export class RegionManagementComponent {
     this.resetForm(form);
   }
 
-  private resetForm(form?: NgForm): void {
+  resetForm(form?: NgForm): void {
     this.formData = {
       region: '',
       province: '',

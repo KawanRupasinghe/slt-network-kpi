@@ -1,85 +1,52 @@
-<div class="region-page">
-  <!-- HEADER -->
-  <header class="region-header">
-    <div class="header-center">
-      <p class="eyebrow">Admin / Region Data</p>
-      <h1>{{ pageTitle }}</h1>
-      <p class="subtitle">
-        Keep SLT region, province, NE and LEA info accurate for reporting.
-      </p>
-    </div>
-
-    <!-- Removed region count pill -->
-  </header>
-
-  <!-- ADD REGION FORM (ALWAYS SHOWN) -->
-  <section class="card form-card">
-  <div class="form-card-header">
-    <h2>Add new region</h2>
+<div class="page-container">
+  <div class="page-header">
+    <h1>{{ pageTitle }}</h1>
+    <p class="page-subtitle">Keep SLT region, province, NE and LEA info accurate for reporting.</p>
   </div>
 
-  <form #regionForm="ngForm" (ngSubmit)="onSubmit(regionForm)" class="region-form">
-    
-    <div class="form-group">
-      <input
-        type="text"
-        name="region"
-        [(ngModel)]="formData.region"
-        required
-        placeholder="Region"
-      />
+  <div class="dashboard-container">
+    <div class="form-container">
+      <div class="form-header">
+        <h2>Add new region</h2>
+        <p class="form-sub">Manage region details used in reports</p>
+      </div>
+
+      <form #regionForm="ngForm" (ngSubmit)="onSubmit(regionForm)" class="kpi-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="region">Region</label>
+            <input id="region" name="region" type="text" [(ngModel)]="formData.region" required placeholder="Region" />
+          </div>
+
+          <div class="form-group">
+            <label for="province">Province</label>
+            <input id="province" name="province" type="text" [(ngModel)]="formData.province" required placeholder="Province" />
+          </div>
+
+          <div class="form-group">
+            <label for="networkEngineer">Network Engineer</label>
+            <input id="networkEngineer" name="networkEngineer" type="text" [(ngModel)]="formData.networkengineer" required placeholder="Network Engineer" />
+          </div>
+
+          <div class="form-group">
+            <label for="lea">LEA</label>
+            <input id="lea" name="lea" type="text" [(ngModel)]="formData.leacode" required placeholder="LEA" />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-cancel" type="button" (click)="resetForm()">Reset</button>
+          <button class="btn-close-form" type="button" (click)="closeForm()">Close</button>
+          <button class="btn-submit" type="submit" [disabled]="isSubmitting">{{ isSubmitting ? 'Processing...' : 'Add' }}</button>
+        </div>
+      </form>
+
+      <div *ngIf="error" class="error-message">{{ error }}</div>
+      <div *ngIf="success" class="success-message">{{ success }}</div>
     </div>
 
-    <div class="form-group">
-      <input
-        type="text"
-        name="province"
-        [(ngModel)]="formData.province"
-        required
-        placeholder="Province"
-      />
-    </div>
-
-    <div class="form-group">
-      <input
-        type="text"
-        name="networkEngineer"
-        [(ngModel)]="formData.networkengineer"
-        required
-        placeholder="Network Engineer"
-      />
-    </div>
-
-    <div class="form-group">
-      <input
-        type="text"
-        name="lea"
-        [(ngModel)]="formData.leacode"
-        required
-        placeholder="LEA"
-      />
-    </div>
-
-    <button class="primary-btn" type="submit" [disabled]="isSubmitting">
-      {{ isSubmitting ? "Processing..." : "Add" }}
-    </button>
-  </form>
-
-  <div *ngIf="error" class="message error-message">{{ error }}</div>
-  <div *ngIf="success" class="message success-message">{{ success }}</div>
-</section>
-
-  <!-- TABLE SECTION -->
-  <section class="card table-card">
-    <div class="table-header-row">
-      <h2>Region Data</h2>
-      <p class="hint">
-        Click a cell or pencil to edit inline. Use trash to delete.
-      </p>
-    </div>
-
-    <div class="table-wrapper">
-      <table class="region-data-table">
+    <div class="table-responsive">
+      <table class="kpi-table region-data-table">
         <thead>
           <tr>
             <th (click)="requestSort('region')">
@@ -259,18 +226,12 @@
             <!-- Actions (ONLY DELETE button now) -->
             <td class="actions-col">
               <div class="action-buttons">
-                <button
-                  type="button"
-                  class="mini-btn delete"
-                  (click)="handleDelete(r.id)"
-                >
-                  Delete
-                </button>
+                <button type="button" class="btn-delete" (click)="handleDelete(r.id)">Delete</button>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-  </section>
+  </div>
 </div>
