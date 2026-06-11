@@ -90,6 +90,9 @@ namespace backend.Data
         public DbSet<OtherOperatorKpiMetric> OtherOperatorKpiMetrics { get; set; } = null!;
         public DbSet<OtherKpi> OtherKpis { get; set; } = null!;
         public DbSet<OtherKpiMetric> OtherKpiMetrics { get; set; } = null!;
+      // TELEMETRY / POWER & AC
+      public DbSet<Telemetry> Telemetry { get; set; } = null!;
+      public DbSet<PowerAndAC> PowerAndAC { get; set; } = null!;
 
         // =========================
         // AGED NETWORK FAILURE METRICS
@@ -732,6 +735,41 @@ namespace backend.Data
                       .IsUnique()
                       .HasDatabaseName("UQ_AgedNetworkFailureMetrics_Row");
             });
+
+                  // TELEMETRY
+                  modelBuilder.Entity<Telemetry>(entity =>
+                  {
+                        entity.ToTable("Telemetry", "dbo");
+                        entity.HasKey(x => x.Id);
+                        entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                        entity.Property(x => x.Designation).HasColumnName("Designation").HasMaxLength(100).IsRequired();
+                        entity.Property(x => x.Year).HasColumnName("Year");
+                        entity.Property(x => x.Month).HasColumnName("Month");
+                        entity.Property(x => x.Percentage).HasColumnName("Percentage").HasColumnType("decimal(5,2)");
+
+                        entity.HasIndex(x => new { x.Designation, x.Year, x.Month })
+                                .IsUnique()
+                                .HasDatabaseName("UQ_Telemetry_Designation_Year_Month");
+                  });
+
+                  // POWER AND AC
+                  modelBuilder.Entity<PowerAndAC>(entity =>
+                  {
+                        entity.ToTable("PowerAndAC", "dbo");
+                        entity.HasKey(x => x.Id);
+                        entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                        entity.Property(x => x.Designation).HasColumnName("Designation").HasMaxLength(100).IsRequired();
+                        entity.Property(x => x.Year).HasColumnName("Year");
+                        entity.Property(x => x.Month).HasColumnName("Month");
+                        entity.Property(x => x.Scheduled).HasColumnName("Scheduled");
+                        entity.Property(x => x.Attended).HasColumnName("Attended");
+                        entity.Property(x => x.Cumulative_Sched).HasColumnName("Cumulative_Sched");
+                        entity.Property(x => x.Cumulative_Achieved).HasColumnName("Cumulative_Achieved");
+
+                        entity.HasIndex(x => new { x.Designation, x.Year, x.Month })
+                                .IsUnique()
+                                .HasDatabaseName("UQ_PowerAndAC_Designation_Year_Month");
+                  });
 
             base.OnModelCreating(modelBuilder);
         }

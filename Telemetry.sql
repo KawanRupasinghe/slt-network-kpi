@@ -41,13 +41,3 @@ CREATE TABLE [dbo].[PowerAndAC]
 GO
 
 
-/*
-in other kpi page
-[NW KPI Monitoring](http://localhost:4200/platform/other-kpi)
-
-when a platform admin fills out the filter component. the metrices fields are shown to imput values [this is the general behaviour of all pages in platform admin]
-
-under the "Telemetry Network Availability" - the metric table related should be - Telemetry [check telemetry.sql file]
-and under - O&M of Power & Aircondition. table should be - PowerAndAC [check telemetry.sql]
-
-*/
