@@ -73,6 +73,11 @@ export const platformNavOptions: NavOption[] = [
     label: 'Other Operator',
     path: 'platform/tower-mtce-achievement',
     title: 'Platform KPI — Other Operator'
+  },
+  {
+    label: 'Node Failures',
+    path: 'platform/node-failures',
+    title: 'Platform KPI — Node Failures'
   }
 ];
 
