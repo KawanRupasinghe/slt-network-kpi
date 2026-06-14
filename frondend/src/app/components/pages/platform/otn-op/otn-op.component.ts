@@ -1,4 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../services/auth.service';
 import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -869,13 +869,12 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 		const tn = Number(totalNodes) || 0;
 
 		const totalAvailableMinutes = tm - um;
-		const days = this.getDaysInMonth(meta?.year ?? this.selectedYear, meta?.month ?? this.selectedMonth);
-		const totalMin = 24 * 60 * days * tn;
-		if (totalMin <= 0) {
+		const denominator = tm > 0 ? tm : (24 * 60 * this.getDaysInMonth(meta?.year ?? this.selectedYear, meta?.month ?? this.selectedMonth) * tn);
+		if (denominator <= 0) {
 			return 100;
 		}
 
-		const pct = (100 * totalAvailableMinutes) / totalMin;
+		const pct = (100 * totalAvailableMinutes) / denominator;
 		return Math.max(0, Math.min(100, pct));
 	}
 
