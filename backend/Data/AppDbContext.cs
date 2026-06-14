@@ -724,16 +724,17 @@ namespace backend.Data
                 entity.HasKey(x => x.Id);
                 entity.Property(x => x.Id).HasColumnName("id").ValueGeneratedOnAdd();
                 entity.Property(x => x.AreaCode).HasColumnName("area_code").HasMaxLength(50).IsRequired();
-                entity.Property(x => x.PlatformType).HasColumnName("platform_type").HasMaxLength(20).IsRequired();
+
                 entity.Property(x => x.HasUnavailability).HasColumnName("has_unavailability");
                 entity.Property(x => x.Month).HasColumnName("month");
                 entity.Property(x => x.Year).HasColumnName("year");
                 entity.Property(x => x.CreatedAt).HasColumnName("created_at");
                 entity.Property(x => x.UpdatedAt).HasColumnName("updated_at");
 
-                entity.HasIndex(x => new { x.AreaCode, x.PlatformType, x.Month, x.Year })
+                entity.HasIndex(x => new { x.AreaCode, x.Month, x.Year })
                       .IsUnique()
                       .HasDatabaseName("UQ_AgedNetworkFailureMetrics_Row");
+
             });
 
                   // TELEMETRY

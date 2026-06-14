@@ -6,22 +6,19 @@
 */
 
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../../../services/auth.service';
 import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RegionService, Region } from '../../../../services/region.service';
-import { BbAnwService, BbAnwDto } from '../../../../services/bb-anw.service';
-import { AgedNetworkFailureService } from '../../../../services/aged-network-failure.service';
+import { AuthService } from '../../../../services/auth.service';
+import { BbAnwDto, BbAnwService } from '../../../../services/bb-anw.service';
+import { Region, RegionService } from '../../../../services/region.service';
 import * as ExcelJS from 'exceljs';
 import { firstValueFrom } from 'rxjs';
 
-const AGED_FAILURE_KPI = 'Unavailability of Aged Network Failures - BB ANW';
-const AGED_FAILURE_PLATFORM = 'BB_ANW';
-
 /* ========== DATA TYPES ========== */
 
-/* Generic dictionary type */
 type Dict<T = any> = Record<string, T>;
+
+type MetricKey = 'unavailableMinutes' | 'totalMinutes' | 'totalNodes';
 
 interface RegionRow {
 	region?: string;
@@ -54,8 +51,6 @@ interface EditCellState {
 	value: string;
 }
 
-type MetricKey = 'unavailableMinutes' | 'totalMinutes' | 'totalNodes';
-
 const LOCAL_REGION_TABLE: RegionRow[] = [
 	{ region: 'Region 3', province: 'NP', networkEngineer: 'NW/NP-2', lea: 'KOMLTMBVA' },
 	{ region: 'Region 3', province: 'NP', networkEngineer: 'NW/NP-1', lea: 'JA' },
@@ -87,6 +82,7 @@ const LOCAL_REGION_TABLE: RegionRow[] = [
 	styleUrls: ['./bb-anw.component.scss'],
 })
 export class BbAnwComponent implements OnInit, OnDestroy {
+
 	pageTitle = 'BB & ANW';
 
 	data: BbAnwEntry[] = [];
@@ -164,10 +160,6 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		komltmbva: 'KO / MLT / MB / VA',
 	};
 
-	// Tracks has_unavailability value per area for aged-failure KPI rows
-	agedFailureValues: Record<string, number> = {}; // key = areaCode, value = 0|1
-	agedFailureSaving = false;
-
 	private metricLabelMap: Record<MetricKey, string> = {
 		unavailableMinutes: 'Unavailable minutes',
 		totalMinutes: 'Total minutes',
@@ -181,9 +173,9 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		private regionService: RegionService,
 		private bbAnwService: BbAnwService,
 		private authService: AuthService,
-		private agedFailureService: AgedNetworkFailureService,
 		private cdr: ChangeDetectorRef
 	) {}
+
 
 	ngOnInit(): void {
 		this.buildFriendlyMap();
@@ -192,10 +184,11 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		this.loadRegionTable();
 		this.initializeFilters();
 		this.loadData();
-		this.loadAgedFailureData();
 
 		this.permissionTimer = setInterval(() => this.refreshEditPermission(), 60000);
 	}
+
+
 
 	ngOnDestroy(): void {
 		if (this.permissionTimer) {
@@ -205,9 +198,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 	}
 
 	get regions(): string[] {
-		return Array.from(
-			new Set(this.regionTable.map((row) => row.region).filter(Boolean) as string[])
-		);
+		return Array.from(new Set(this.regionTable.map((row) => row.region).filter(Boolean) as string[]));
 	}
 
 	get selectedKey(): string {
@@ -216,17 +207,12 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 
 	get selectedAreaLabel(): string | null {
 		const key = this.selectedKey;
-		if (!key) {
-			return null;
-		}
+		if (!key) return null;
 		return this.optionMapping[key] ?? key.toUpperCase();
 	}
 
 	get selectedMonthLabel(): string {
-		return (
-			this.monthOptions.find((month) => month.value === this.selectedMonth)?.label ??
-			'Month'
-		);
+		return this.monthOptions.find((month) => month.value === this.selectedMonth)?.label ?? 'Month';
 	}
 
 	get showAreaMetrics(): boolean {
@@ -235,36 +221,25 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 
 	getSelectedAvailability(entry: BbAnwEntry): string {
 		const key = this.selectedKey;
-		if (!key) {
-			return '--';
-		}
+		if (!key) return '--';
+
 		const unavailable = entry.unavailableMinutes?.[key];
 		const total = entry.totalMinutes?.[key];
 		const nodes = entry.totalNodes?.[key];
-		const hasData = [unavailable, total, nodes].some(
-			(value) => value !== undefined && value !== null
-		);
-		if (!hasData) {
-			return '--';
-		}
+		const hasData = [unavailable, total, nodes].some((value) => value !== undefined && value !== null);
+		if (!hasData) return '--';
+
 		const meta = entry.nodeMeta?.[key];
 		const pct = this.calculatePercentage(total, unavailable, nodes, meta);
 		return `${pct.toFixed(2)}%`;
 	}
 
-	getMetricDisplay(
-		entry: BbAnwEntry,
-		metric: 'unavailableMinutes' | 'totalMinutes' | 'totalNodes'
-	): string {
+	getMetricDisplay(entry: BbAnwEntry, metric: MetricKey): string {
 		const key = this.selectedKey;
-		if (!key) {
-			return '--';
-		}
+		if (!key) return '--';
 		const source = (entry as any)[metric] ?? {};
 		const rawValue = source[key];
-		if (rawValue === undefined || rawValue === null || rawValue === '') {
-			return '--';
-		}
+		if (rawValue === undefined || rawValue === null || rawValue === '') return '--';
 		return typeof rawValue === 'number' ? String(rawValue) : `${rawValue}`;
 	}
 
@@ -273,8 +248,9 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 	}
 
 	private hasAreaData(entry: BbAnwEntry, key: string): boolean {
-		const pools = [entry.unavailableMinutes, entry.totalMinutes, entry.totalNodes];
-		return pools.some((pool) => pool && pool[key] !== undefined && pool[key] !== null);
+		return [entry.unavailableMinutes, entry.totalMinutes, entry.totalNodes].some(
+			(pool) => pool && pool[key] !== undefined && pool[key] !== null
+		);
 	}
 
 	private buildFriendlyMap(): void {
@@ -301,46 +277,30 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 			this.isEditingAllowed = this.devRoleOverride === 'padmin';
 			return;
 		}
-
 		this.isEditingAllowed = this.authService.canEditPage('BB ANW');
 	}
 
 	toggleRoleOverride(): void {
-		if (!this.devRoleOverride) {
-			this.devRoleOverride = 'padmin';
-		} else if (this.devRoleOverride === 'padmin') {
-			this.devRoleOverride = 'user';
-		} else {
-			this.devRoleOverride = null;
-		}
+		if (!this.devRoleOverride) this.devRoleOverride = 'padmin';
+		else if (this.devRoleOverride === 'padmin') this.devRoleOverride = 'user';
+		else this.devRoleOverride = null;
 
 		this.refreshEditPermission();
 		const label = this.devRoleOverride ? this.devRoleOverride.toUpperCase() : 'LIVE ROLE';
 		this.showToast('success', `Role override: ${label}`);
 	}
 
-
 	loadRegionTable(): void {
 		this.regionService.getAll().subscribe({
 			next: (res: Region[] | any[]) => {
 				const source = Array.isArray(res) ? res : [];
-
 				const mapped: RegionRow[] = source.map((item: any) => ({
 					region: item.region ?? item.Region ?? '',
 					province: item.province ?? item.Province ?? '',
 					networkEngineer:
-						item.networkEngineer ??
-						item.networkengineer ??
-						item.NetworkEngineer ??
-						'',
-					lea:
-						item.lea ??
-						item.leacode ??
-						item.leaCode ??
-						item.LEA ??
-						'',
+						item.networkEngineer ?? item.networkengineer ?? item.NetworkEngineer ?? '',
+					lea: item.lea ?? item.leacode ?? item.leaCode ?? item.LEA ?? '',
 				}));
-
 				this.regionTable = mapped.length ? mapped : [...LOCAL_REGION_TABLE];
 				this.initializeFilters();
 			},
@@ -391,7 +351,6 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		};
 
 		(dto.nodes ?? []).forEach((node) => {
-			console.log('DTO node:', node?.month, node?.year);
 			const code = this.norm(node.nodeCode);
 			if (!code) return;
 			entry.unavailableMinutes[code] = node.unavailableMinutes ?? null;
@@ -417,12 +376,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 					year: meta.year,
 				};
 			})
-			.filter(
-					(node) =>
-						node.unavailableMinutes != null ||
-						node.totalNodes != null ||
-						node.totalMinutes != null
-				);
+			.filter((node) => node.unavailableMinutes != null || node.totalNodes != null || node.totalMinutes != null);
 
 		return {
 			id: entry.id,
@@ -444,9 +398,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 	}
 
 	private ensureNodeMeta(entry: BbAnwEntry, key: string): NodeMeta {
-		if (!entry.nodeMeta[key]) {
-			entry.nodeMeta[key] = this.getDefaultNodeMeta();
-		}
+		if (!entry.nodeMeta[key]) entry.nodeMeta[key] = this.getDefaultNodeMeta();
 		return entry.nodeMeta[key];
 	}
 
@@ -455,13 +407,10 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 	}
 
 	private normalizeNodeMeta(month?: number | null, year?: number | null): NodeMeta {
-		// Prefer the currently selected reporting period as the fallback so
-		// missing node metadata aligns with the UI period the user is viewing.
 		const now = new Date();
 		const fallbackMonth = typeof this.selectedMonth === 'number' ? this.selectedMonth : now.getMonth() + 1;
 		const fallbackYear = typeof this.selectedYear === 'number' ? this.selectedYear : now.getFullYear();
-		const safeMonth =
-			typeof month === 'number' && month >= 1 && month <= 12 ? month : fallbackMonth;
+		const safeMonth = typeof month === 'number' && month >= 1 && month <= 12 ? month : fallbackMonth;
 		const safeYear = typeof year === 'number' && year >= 1900 ? year : fallbackYear;
 		return { month: safeMonth, year: safeYear };
 	}
@@ -482,7 +431,6 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 			this.dropdown2Options = [];
 			return;
 		}
-
 		this.dropdown2Options = Array.from(
 			new Set(
 				this.regionTable
@@ -493,18 +441,16 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		);
 	}
 
-	private updateDropdown3Options(province: string): void {
+private updateDropdown3Options(province: string): void {
+
 		if (!province || !this.formValues.dropdown1) {
 			this.dropdown3Options = [];
 			return;
 		}
-
 		this.dropdown3Options = Array.from(
 			new Set(
 				this.regionTable
-					.filter(
-						(row) => row.region === this.formValues.dropdown1 && row.province === province
-					)
+					.filter((row) => row.region === this.formValues.dropdown1 && row.province === province)
 					.map((row) => row.networkEngineer)
 					.filter(Boolean) as string[]
 			)
@@ -516,7 +462,6 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 			this.dropdown4Options = [];
 			return;
 		}
-
 		const leas = this.regionTable
 			.filter(
 				(row) =>
@@ -534,14 +479,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 	}
 
 	private initializeFilters(): void {
-		// Do not auto-select any filters; keep "Select an option" as default
-		// and let the user drive all selections consistently with other pages.
-		this.formValues = {
-			dropdown1: '',
-			dropdown2: '',
-			dropdown3: '',
-			dropdown4: '',
-		};
+		this.formValues = { dropdown1: '', dropdown2: '', dropdown3: '', dropdown4: '' };
 		this.dropdown2Options = [];
 		this.dropdown3Options = [];
 		this.dropdown4Options = [];
@@ -566,9 +504,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 
 		const month = this.selectedMonth;
 		const year = this.selectedYear;
-		this.data = this.allEntries.map((entry) =>
-			this.createPeriodScopedEntry(entry, month, year)
-		);
+		this.data = this.allEntries.map((entry) => this.createPeriodScopedEntry(entry, month, year));
 	}
 
 	private createPeriodScopedEntry(entry: BbAnwEntry, month: number, year: number): BbAnwEntry {
@@ -580,9 +516,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 
 		codes.forEach((code) => {
 			const rawMeta = entry.nodeMeta?.[code];
-			const normalized = rawMeta
-				? this.normalizeNodeMeta(rawMeta.month, rawMeta.year)
-				: { month, year };
+			const normalized = rawMeta ? this.normalizeNodeMeta(rawMeta.month, rawMeta.year) : { month, year };
 			const matchesPeriod = normalized.month === month && normalized.year === year;
 			if (matchesPeriod) {
 				filteredUnavailable[code] = entry.unavailableMinutes?.[code] ?? null;
@@ -590,7 +524,6 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 				filteredNodes[code] = entry.totalNodes?.[code] ?? null;
 				filteredMeta[code] = normalized;
 			} else {
-				// initialize empty values for the requested period instead of inheriting from other months
 				filteredUnavailable[code] = null;
 				filteredTotal[code] = null;
 				filteredNodes[code] = null;
@@ -607,109 +540,45 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		};
 	}
 
-	onDropdownChange(
-		name: 'dropdown1' | 'dropdown2' | 'dropdown3' | 'dropdown4',
-		value: string
-	): void {
+	onDropdownChange(name: 'dropdown1' | 'dropdown2' | 'dropdown3' | 'dropdown4', value: string): void {
+
 		if (name === 'dropdown1') {
 			this.formValues.dropdown1 = value;
 			this.formValues.dropdown2 = '';
 			this.formValues.dropdown3 = '';
 			this.formValues.dropdown4 = '';
-
 			this.updateDropdown2Options(value);
 			this.dropdown3Options = [];
 			this.dropdown4Options = [];
 			this.cancelEdit();
 			return;
 		}
-
 		if (name === 'dropdown2') {
 			this.formValues.dropdown2 = value;
 			this.formValues.dropdown3 = '';
 			this.formValues.dropdown4 = '';
-
 			this.updateDropdown3Options(value);
 			this.dropdown4Options = [];
 			this.cancelEdit();
 			return;
 		}
-
 		if (name === 'dropdown3') {
 			this.formValues.dropdown3 = value;
 			this.formValues.dropdown4 = '';
-
 			this.updateDropdown4Options(value);
 			this.cancelEdit();
 			return;
 		}
-
 		this.formValues.dropdown4 = value;
 		this.cancelEdit();
-		this.loadAgedFailureData();
-	}
-
-	isAgedFailureKpi(name: string): boolean {
-		return name?.includes('Unavailability of Aged Network Failures') ?? false;
-	}
-
-	getAgedFailureValue(areaCode: string): number {
-		return this.agedFailureValues[areaCode] ?? 0;
-	}
-
-	setAgedFailureValue(areaCode: string, value: number): void {
-		this.agedFailureValues[areaCode] = value;
-	}
-
-	async saveAgedFailure(areaCode: string): Promise<void> {
-		if (!areaCode) return;
-		this.agedFailureSaving = true;
-		try {
-			const result: any = await firstValueFrom(this.agedFailureService.upsert({
-				areaCode,
-				platformType: AGED_FAILURE_PLATFORM,
-				hasUnavailability: this.agedFailureValues[areaCode] ?? 0,
-				month: this.selectedMonth,
-				year: this.selectedYear,
-			}));
-			this.showToast('success', result?.message ?? 'Saved successfully.');
-		} catch {
-			this.showToast('danger', 'Failed to save Has Unavailability.');
-		} finally {
-			this.agedFailureSaving = false;
-		}
-	}
-
-	private loadAgedFailureData(): void {
-		const key = this.selectedKey;
-		if (!key) return;
-		this.agedFailureService
-			.get(key, this.selectedMonth, this.selectedYear, AGED_FAILURE_PLATFORM)
-			.subscribe({
-				next: (rows) => {
-					rows.forEach((r) => {
-						// normalise key: strip non-alphanumeric, lowercase
-						const k = r.areaCode?.replace(/[^A-Za-z0-9]/g, '').toLowerCase() ?? '';
-						if (k) this.agedFailureValues[k] = r.hasUnavailability;
-					});
-					this.cdr.detectChanges();
-				},
-				error: () => {},
-			});
 	}
 
 	onPeriodChange(): void {
 		this.cancelEdit();
 		this.applyPeriodFilter();
-		this.loadAgedFailureData();
 	}
 
-	calculatePercentage(
-		totalMinutes: any,
-		unavailableMinutes: any,
-		totalNodes: any,
-		meta?: NodeMeta
-	): number {
+	private calculatePercentage(totalMinutes: any, unavailableMinutes: any, totalNodes: any, meta?: NodeMeta): number {
 		const tm = Number(totalMinutes) || 0;
 		const um = Number(unavailableMinutes) || 0;
 		const tn = Number(totalNodes) || 0;
@@ -717,22 +586,18 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		const totalAvailableMinutes = tm - um;
 		const days = this.getDaysInMonth(meta?.month, meta?.year);
 		const totalMin = 24 * 60 * days * tn;
-		if (totalMin <= 0) {
-			return 100;
-		}
+		if (totalMin <= 0) return 100;
 
 		const pct = (100 * totalAvailableMinutes) / totalMin;
 		return Math.max(0, Math.min(100, pct));
 	}
 
 	startEdit(entry: BbAnwEntry, key: MetricKey): void {
-		// disallow editing of computed-only metric `totalMinutes`
-		if (key === 'totalMinutes') return;
+		if (key === 'totalMinutes') return; // computed
 		if (!this.isEditingAllowed || !this.selectedKey || this.cellSaving) return;
 
 		const nestedKey = `${key}.${this.selectedKey}`;
 		const value = (entry as any)[key]?.[this.selectedKey];
-
 		this.editCell = {
 			rowId: entry.id,
 			key: nestedKey,
@@ -756,22 +621,14 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 
 		const newValue = this.editCell.value;
 		const updatedEntry = this.findAndUpdateEntry(parentKey, childKey, newValue);
-
-		if (!updatedEntry) {
-			this.cancelEdit();
-			return;
-		}
-		if (!updatedEntry.id) {
-			this.showToast('danger', 'Missing KPI identifier. Please reload and try again.');
+		if (!updatedEntry || !updatedEntry.id) {
 			this.cancelEdit();
 			return;
 		}
 
 		this.cellSaving = true;
 		try {
-			await firstValueFrom(
-				this.bbAnwService.update(updatedEntry.id, this.buildDtoFromEntry(updatedEntry))
-			);
+			await firstValueFrom(this.bbAnwService.update(updatedEntry.id, this.buildDtoFromEntry(updatedEntry)));
 			const metricLabel = this.metricLabelMap[parentKey] || 'KPI metric';
 			this.showToast('success', `${metricLabel} saved.`);
 		} catch (error) {
@@ -783,45 +640,26 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private findAndUpdateEntry(
-		parentKey: MetricKey,
-		childKey: string,
-		newValue: string
-	): BbAnwEntry | null {
-		// prevent updates to computed-only metric
+	private findAndUpdateEntry(parentKey: MetricKey, childKey: string, newValue: string): BbAnwEntry | null {
 		if (parentKey === 'totalMinutes') return null;
 		let filteredEntry: BbAnwEntry | null = null;
 
 		this.data = this.data.map((entry) => {
-			if (entry.id !== this.editCell.rowId) {
-				return entry;
-			}
+			if (entry.id !== this.editCell.rowId) return entry;
 
-			const next: BbAnwEntry = this.createPeriodScopedEntry(
-				entry,
-				this.selectedMonth,
-				this.selectedYear
-			);
-
+			const next: BbAnwEntry = this.createPeriodScopedEntry(entry, this.selectedMonth, this.selectedYear);
 			(next as any)[parentKey][childKey] = this.toNullableNumber(newValue);
 
-			// ensure node meta reflects the current edited period so the DTO sends correct month/year
 			(next as any).nodeMeta = { ...(next as any).nodeMeta };
 			(next as any).nodeMeta[childKey] = { month: this.selectedMonth, year: this.selectedYear };
 
 			if (parentKey === 'totalNodes') {
 				const nodeVal = (next as any).totalNodes?.[childKey] ?? null;
 				if (nodeVal == null) {
-					next.totalMinutes = {
-						...(next.totalMinutes || {}),
-						[childKey]: null,
-					};
+					next.totalMinutes = { ...(next.totalMinutes || {}), [childKey]: null };
 				} else {
 					const days = this.getDaysInMonth(this.selectedMonth, this.selectedYear);
-					next.totalMinutes = {
-						...(next.totalMinutes || {}),
-						[childKey]: 24 * 60 * days * nodeVal,
-					};
+					next.totalMinutes = { ...(next.totalMinutes || {}), [childKey]: 24 * 60 * days * nodeVal };
 				}
 			}
 
@@ -829,42 +667,26 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 			return next;
 		});
 
-		if (!filteredEntry) {
-			return null;
-		}
-
-		const targetEntry = filteredEntry as BbAnwEntry;
+		const targetEntry = filteredEntry as BbAnwEntry | null;
+		if (!targetEntry) return null;
 		const targetId = targetEntry.id;
+
 		this.allEntries = this.allEntries.map((entry) => {
-			if (entry.id !== targetId) {
-				return entry;
-			}
+			if (entry.id !== targetId) return entry;
 
-			const next: BbAnwEntry = this.createPeriodScopedEntry(
-				entry,
-				this.selectedMonth,
-				this.selectedYear
-			);
-
+			const next: BbAnwEntry = this.createPeriodScopedEntry(entry, this.selectedMonth, this.selectedYear);
 			(next as any)[parentKey][childKey] = this.toNullableNumber(newValue);
 
-			// also force nodeMeta on the canonical allEntries copy
 			(next as any).nodeMeta = { ...(next as any).nodeMeta };
 			(next as any).nodeMeta[childKey] = { month: this.selectedMonth, year: this.selectedYear };
 
 			if (parentKey === 'totalNodes') {
 				const nodeVal = next.totalNodes?.[childKey] ?? null;
 				if (nodeVal == null) {
-					next.totalMinutes = {
-						...next.totalMinutes,
-						[childKey]: null,
-					};
+					next.totalMinutes = { ...next.totalMinutes, [childKey]: null };
 				} else {
 					const days = this.getDaysInMonth(this.selectedMonth, this.selectedYear);
-					next.totalMinutes = {
-						...next.totalMinutes,
-						[childKey]: 24 * 60 * days * nodeVal,
-					};
+					next.totalMinutes = { ...next.totalMinutes, [childKey]: 24 * 60 * days * nodeVal };
 				}
 			}
 
@@ -874,12 +696,9 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		return this.allEntries.find((entry) => entry.id === targetId) ?? null;
 	}
 
-	isEditingCell(entry: BbAnwEntry, key: 'unavailableMinutes' | 'totalMinutes' | 'totalNodes'): boolean {
-		const selected = this.selectedKey;
-		if (!selected) {
-			return false;
-		}
-		return this.editCell.rowId === entry.id && this.editCell.key === `${key}.${selected}`;
+	isEditingCell(entry: BbAnwEntry, key: MetricKey): boolean {
+		if (!this.selectedKey) return false;
+		return this.editCell.rowId === entry.id && this.editCell.key === `${key}.${this.selectedKey}`;
 	}
 
 	cancelEdit(): void {
@@ -889,10 +708,11 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 	async exportToExcel(): Promise<void> {
 		const workbook = new ExcelJS.Workbook();
 		const worksheet = workbook.addWorksheet('BB & ANW KPI');
-		const exportEntries = this.selectedKey
+	const exportEntries: BbAnwEntry[] = this.selectedKey
 			? this.data.filter((entry) => this.hasAreaData(entry, this.selectedKey!))
 			: this.data;
-		const areaKeys = this.selectedKey ? [this.selectedKey] : Object.keys(this.optionMapping);
+		const areaKeys: string[] = this.selectedKey ? [this.selectedKey] : Object.keys(this.optionMapping);
+
 
 		worksheet.addRow(['KPI (MSAN / OLT / IP Core - Network Availability)']);
 		worksheet.addRow([`Generated Date: ${new Date().toISOString().split('T')[0]}`]);
@@ -906,12 +726,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 			'KPI Percent',
 			...areaKeys.flatMap((key) => {
 				const label = this.optionMapping[key] || key;
-				return [
-					`${label} Availability (%)`,
-					`${label} Unavailable Minutes`,
-					`${label} Total Minutes`,
-					`${label} Total Nodes`,
-				];
+				return [`${label} Availability (%)`, `${label} Unavailable Minutes`, `${label} Total Minutes`, `${label} Total Nodes`];
 			}),
 		];
 
@@ -929,21 +744,10 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		});
 
 		exportEntries.forEach((entry) => {
-			const row: any[] = [
-				entry.order,
-				entry.networkEngineerKpi,
-				entry.division,
-				entry.section,
-				entry.kpiPercent,
-			];
+			const row: any[] = [entry.order, entry.networkEngineerKpi, entry.division, entry.section, entry.kpiPercent];
 
 			areaKeys.forEach((key) => {
-				const pct = this.calculatePercentage(
-					entry.totalMinutes?.[key],
-					entry.unavailableMinutes?.[key],
-					entry.totalNodes?.[key],
-					entry.nodeMeta?.[key]
-				);
+				const pct = this.calculatePercentage(entry.totalMinutes?.[key], entry.unavailableMinutes?.[key], entry.totalNodes?.[key], entry.nodeMeta?.[key]);
 				row.push(isNaN(pct) ? '' : `${pct.toFixed(2)}%`);
 				row.push(entry.unavailableMinutes?.[key] ?? '');
 				row.push(entry.totalMinutes?.[key] ?? '');
@@ -960,13 +764,10 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 					right: { style: 'thin' },
 				};
 			});
-
 		});
 
 		worksheet.columns.forEach((column) => {
-			if (column) {
-				column.width = 18;
-			}
+			if (column) column.width = 18;
 		});
 
 		const buffer = await workbook.xlsx.writeBuffer();
@@ -981,3 +782,4 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		URL.revokeObjectURL(link.href);
 	}
 }
+
