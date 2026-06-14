@@ -340,12 +340,22 @@ namespace backend.Controllers
                     ? (decimal)kpi.PointsApplicable / normalizedAreas.Count
                     : 0m;
 
+                var isFibreRestoration = IsFibreFailuresRestorationKpi(kpi.KeyPerformanceIndicators);
+                var numEngineers = dbRegions.Any()
+                    ? dbRegions.Select(x => x.NetworkEngineer?.Trim()).Where(x => !string.IsNullOrEmpty(x)).Distinct(StringComparer.OrdinalIgnoreCase).Count()
+                    : (normalizedAreas.Count > 0 ? normalizedAreas.Count : 1);
+
+                if (numEngineers <= 0) numEngineers = 1;
+                var pointsPerEngineer = (decimal)kpi.PointsApplicable / numEngineers;
+
                 foreach (var (area, snapshot) in areaSnapshots)
                 {
                     var achieved = Math.Round(Math.Clamp(snapshot?.Achieved ?? 0m, 0m, 100m), 4);
-                    var maxPoints = hasNodeBasedWeight && totalNodes > 0m
-                        ? Math.Round(((decimal)kpi.PointsApplicable * (snapshot?.TotalNodes ?? 0m)) / totalNodes, 4)
-                        : Math.Round(equalShare, 4);
+                    var maxPoints = isFibreRestoration
+                        ? Math.Round(pointsPerEngineer, 4)
+                        : (hasNodeBasedWeight && totalNodes > 0m
+                            ? Math.Round(((decimal)kpi.PointsApplicable * (snapshot?.TotalNodes ?? 0m)) / totalNodes, 4)
+                            : Math.Round(equalShare, 4));
 
                     // Calculate pointsAchieved based on target value
                     var targetValue = TryParseTargetValue(kpi.DescriptionOfKPI);
@@ -637,7 +647,7 @@ namespace backend.Controllers
             decimal um = unavailableMinutes ?? 0;
             decimal tn = totalNodes ?? 0;
 
-            var denominator = 24m * 60m * daysInMonth * tn;
+            var denominator = tm > 0m ? tm : (24m * 60m * daysInMonth * tn);
             if (denominator <= 0m) return 100m;
 
             var numerator = tm - um;
@@ -651,7 +661,7 @@ namespace backend.Controllers
             decimal um = unavailableMinutes ?? 0;
             decimal tn = totalNodes;
 
-            var denominator = 24m * 60m * daysInMonth * tn;
+            var denominator = tm > 0m ? tm : (24m * 60m * daysInMonth * tn);
             if (denominator <= 0m) return 100m;
 
             var numerator = tm - um;
@@ -842,6 +852,16 @@ namespace backend.Controllers
         private static bool IsAgedNetworkFailureKpi(string kpiName)
             => (kpiName ?? string.Empty).Contains("Unavailability of Aged Network Failures",
                 StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsFibreFailuresRestorationKpi(string kpiName)
+        {
+            if (string.IsNullOrEmpty(kpiName)) return false;
+            var normalized = kpiName.Replace(" ", "").ToLowerInvariant();
+            return normalized.Contains("fiberfailuresrestoration(general)")
+                || normalized.Contains("fibrefailuresrestoration(general)")
+                || normalized.Contains("fiberfailurerestoration(largescale")
+                || normalized.Contains("fibrefailurerestoration(largescale");
+        }
 
         // Returns 0 if ANY platform record has has_unavailability = 1, else 100.
         private static decimal CalculateAgedNetworkFailureKpi(
