@@ -52,7 +52,8 @@ export class UserRegistrationComponent implements OnInit {
     'TOWER MTCE ACHIEVEMENT',
     'Enterprise KPI',
     'Other Operator KPI',
-    'Other KPI'
+    'Other KPI',
+    'Node Failures'
   ];
 
   constructor(private userService: UserService) { }

@@ -506,6 +506,7 @@ namespace backend.Controllers
                 "enterprisekpi" => 8,
                 "otheroperatorkpi" => 9,
                 "otherkpi" => 10,
+                "nodefailures" => 11,
                 _ => null
             };
         }
