@@ -33,11 +33,11 @@ namespace backend.Controllers
         // FETCH MSAN PLATFORM DATA
         // =========================================================
         [HttpGet("fetchMsan")]
-        public async Task<IActionResult> FetchMsan([FromQuery] int? year)
+        public async Task<IActionResult> FetchMsan([FromQuery] int? year, [FromQuery] int? month)
         {
             try
             {
-                var data = await _multiTableService.FetchMsanDataAsync(year);
+                var data = await _multiTableService.FetchMsanDataAsync(year, month);
                 return Ok(data);
             }
             catch (Exception ex)
@@ -47,11 +47,11 @@ namespace backend.Controllers
         }
 
         [HttpGet("fetchVpn")]
-        public async Task<IActionResult> FetchVpn([FromQuery] int? year)
+        public async Task<IActionResult> FetchVpn([FromQuery] int? year, [FromQuery] int? month)
         {
             try
             {
-                var data = await _multiTableService.FetchVpnDataAsync(year);
+                var data = await _multiTableService.FetchVpnDataAsync(year, month);
                 return Ok(data);
             }
             catch (Exception ex)
@@ -61,11 +61,11 @@ namespace backend.Controllers
         }
 
         [HttpGet("fetchSlbn")]
-        public async Task<IActionResult> FetchSlbn([FromQuery] int? year)
+        public async Task<IActionResult> FetchSlbn([FromQuery] int? year, [FromQuery] int? month)
         {
             try
             {
-                var data = await _multiTableService.FetchSlbnDataAsync(year);
+                var data = await _multiTableService.FetchSlbnDataAsync(year, month);
                 return Ok(data);
             }
             catch (Exception ex)

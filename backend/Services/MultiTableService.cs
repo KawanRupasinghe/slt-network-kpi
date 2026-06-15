@@ -5,6 +5,8 @@
  * Tower uses raw Scheduled/Attended.
  */
 
+using System;
+using System.Linq;
 using backend.Data;
 using backend.DTOs;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +26,7 @@ namespace backend.Services
             _context = context;
         }
 
-        public async Task<List<PlatformRecordDto>> FetchMsanDataAsync(int? year = null)
+        public async Task<List<PlatformRecordDto>> FetchMsanDataAsync(int? year = null, int? month = null)
         {
             var rows = await _context.MsanMtcData
                 .Where(x => year == null || x.Year == year)
@@ -39,7 +41,7 @@ namespace backend.Services
             return GroupToPlatformRecords(rows);
         }
 
-        public async Task<List<PlatformRecordDto>> FetchVpnDataAsync(int? year = null)
+        public async Task<List<PlatformRecordDto>> FetchVpnDataAsync(int? year = null, int? month = null)
         {
             var rows = await _context.IpnwMtcData
                 .Where(x => year == null || x.Year == year)
@@ -54,7 +56,7 @@ namespace backend.Services
             return GroupToPlatformRecords(rows);
         }
 
-        public async Task<List<PlatformRecordDto>> FetchSlbnDataAsync(int? year = null)
+        public async Task<List<PlatformRecordDto>> FetchSlbnDataAsync(int? year = null, int? month = null)
         {
             var rows = await _context.SlbnMtcData
                 .Where(x => year == null || x.Year == year)
@@ -69,7 +71,7 @@ namespace backend.Services
             return GroupToPlatformRecords(rows);
         }
 
-        public async Task<List<PlatformRecordDto>> FetchTowerDataAsync(int? year = null)
+        public async Task<List<PlatformRecordDto>> FetchTowerDataAsync(int? year = null, int? month = null)
         {
             var rows = await _context.TowerMtcData
                 .Where(x => year == null || x.Year == (short)year)

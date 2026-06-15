@@ -159,7 +159,8 @@ export class RoutineMtncComponent implements OnInit {
 
   onMonthChange(month: number): void {
     this.selectedMonth = Number(month);
-    this.applyFiltersAndRecalculate();
+    // Request filtered data from backend for selected month and year
+    this.fetchData();
   }
 
   onYearChange(year: number): void {
