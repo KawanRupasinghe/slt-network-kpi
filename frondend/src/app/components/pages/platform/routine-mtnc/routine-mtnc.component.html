@@ -64,7 +64,6 @@
                 <th>Responsible DGM</th>
                 <th>Defined OLA Details</th>
                 <th>Data Sources</th>
-                
                 <th *ngFor="let column of columns; trackBy: trackByColumn">{{ column }}</th>
               </tr>
             </thead>
@@ -81,7 +80,6 @@
                 <td>{{ formatRoutineValue(row.routine.responsibleDGM) }}</td>
                 <td>{{ formatRoutineValue(row.routine.definedOLADetails) }}</td>
                 <td>{{ formatRoutineValue(row.routine.dataSources) }}</td>
-                <td>{{ formatPlaceholderValue(row.platformKey, efiberSourceColumn) }}</td>
                 <td *ngFor="let column of columns; trackBy: trackByColumn">
                   {{ formatPlaceholderValue(row.platformKey, column) }}
                 </td>

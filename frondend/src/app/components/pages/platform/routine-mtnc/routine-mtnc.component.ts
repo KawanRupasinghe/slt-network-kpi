@@ -89,7 +89,6 @@ export class RoutineMtncComponent implements OnInit {
   heroSubtitle = 'Routine maintenance cadence across IPNW, INT & NT, and BB&ANW footprints.';
 
   readonly columns = PLATFORM_COLUMNS;
-  readonly efiberSourceColumn = 'NW/WPC-1';
   readonly combinedTableStaticColumns = 8;
 
   readonly platformConfigs: PlatformTableConfig[] = [
@@ -183,15 +182,16 @@ export class RoutineMtncComponent implements OnInit {
 
   get maintenanceRows(): MaintenanceRow[] {
     return this.routineData.map(routine => {
-      const platform = (routine.platform ?? '').toLowerCase();
-      const normalizedPlatform = platform.replace(/[\s&]/g, '');
+      const kpiLower = (routine.kpi ?? '').toLowerCase();
+      const platformLower = (routine.platform ?? '').toLowerCase();
+      const combined = `${kpiLower}|${platformLower}`.replace(/[\s&]/g, '');
       let platformKey: PlatformKey | null = null;
 
-      if (normalizedPlatform.includes('slbn') || normalizedPlatform.includes('bbanw') || normalizedPlatform.includes('slb')) {
+      if (combined.includes('slbn') || combined.includes('slb')) {
         platformKey = 'slbn';
-      } else if (normalizedPlatform.includes('ipnw') || normalizedPlatform.includes('vpn')) {
+      } else if (combined.includes('ipnw') || combined.includes('vpn')) {
         platformKey = 'vpn';
-      } else if (normalizedPlatform.includes('msan') || normalizedPlatform.includes('olte') || normalizedPlatform.includes('int') || normalizedPlatform.includes('nt')) {
+      } else if (combined.includes('msan') || combined.includes('olte')) {
         platformKey = 'msan';
       }
 
@@ -200,7 +200,7 @@ export class RoutineMtncComponent implements OnInit {
   }
 
   get combinedTableColspan(): number {
-    return this.combinedTableStaticColumns + 1 + this.columns.length;
+    return this.combinedTableStaticColumns + this.columns.length;
   }
 
   /* ================= API ================= */
@@ -253,7 +253,7 @@ export class RoutineMtncComponent implements OnInit {
     const headers = [
       'No', 'KPI', 'Target', 'Calculation', 'Platform',
       'Responsible DGM', 'Defined OLA Details', 'Data Sources',
-      'E/Fiber', ...this.columns
+      ...this.columns
     ];
 
     worksheet.addRow(headers);
@@ -268,7 +268,6 @@ export class RoutineMtncComponent implements OnInit {
         row.routine.responsibleDGM ?? '',
         row.routine.definedOLADetails ?? '',
         row.routine.dataSources ?? '',
-        this.placeholderMap[row.platformKey!]?.[this.efiberSourceColumn] ?? '',
         ...this.columns.map(c => this.placeholderMap[row.platformKey!]?.[c] ?? '')
       ]);
     });
