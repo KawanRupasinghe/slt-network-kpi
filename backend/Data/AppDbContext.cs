@@ -746,6 +746,7 @@ namespace backend.Data
                         entity.Property(x => x.Year).HasColumnName("Year");
                         entity.Property(x => x.Month).HasColumnName("Month");
                         entity.Property(x => x.Percentage).HasColumnName("Percentage").HasColumnType("decimal(5,2)");
+                        entity.Property(x => x.Node_Count).HasColumnName("Node_Count");
 
                         entity.HasIndex(x => new { x.Designation, x.Year, x.Month })
                                 .IsUnique()

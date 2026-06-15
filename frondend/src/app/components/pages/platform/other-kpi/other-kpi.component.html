@@ -2,204 +2,173 @@
   <div class="page-header d-flex flex-wrap align-items-start justify-content-between gap-3">
     <div>
       <h1>{{ pageTitle }}</h1>
-      <p class="page-subtitle">Monitor {{ pageTitle }} metrics and performance</p>
-      <div class="mt-3">
-        <small class="text-muted">
-          <i class="bi bi-info-circle me-1"></i>
-          {{ data.length }} KPIs loaded • {{ metricsRows.length }} metric rows •
-          <span [class.text-success]="canEditMetrics()" [class.text-warning]="!canEditMetrics()">
-            <i class="bi" [ngClass]="canEditMetrics() ? 'bi-check-circle' : 'bi-exclamation-circle'"></i>
-            {{ canEditMetrics() ? 'Edit mode enabled' : 'View only mode' }}
-          </span>
-        </small>
-      </div>
-    </div>
-
-    <div class="header-actions d-flex flex-wrap gap-2 ms-auto">
-      <button type="button" class="export-btn" (click)="generateExcelReport()" [disabled]="loading || !data.length">
-        Export to Excel
-      </button>
+      <p class="page-subtitle">Telemetry and O&amp;M Power &amp; Air Conditioning KPI metrics</p>
     </div>
   </div>
 
-  <div *ngIf="loading" class="loader text-center py-5">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
-    <p class="text-muted mt-3">Loading {{ pageTitle }} data...</p>
-  </div>
+  <!-- ═══════════════════════════════════════════════════
+       TABLE 1 — TELEMETRY
+  ═══════════════════════════════════════════════════ -->
+  <div class="mt-4">
 
-  <div *ngIf="error" class="error-message alert alert-danger text-center">
-    {{ error }}
-    <button type="button" class="btn btn-outline-danger btn-sm ms-3" (click)="loadData()">Retry</button>
-  </div>
-
-  <div *ngIf="!loading && !error">
+    <!-- Filter bar — same style as Aged Network Failures -->
     <form (submit)="$event.preventDefault()" class="filters-form mb-4">
       <div class="row g-3">
-        <div class="col-md-2">
-          <label for="monthSelect" class="form-label">Month:</label>
-          <select id="monthSelect" class="form-select" [(ngModel)]="selectedMonth" name="monthSelect"
-            (change)="onPeriodChange()">
-            <option *ngFor="let month of monthOptions" [value]="month.value">{{ month.label }}</option>
+        <div class="col-md-3">
+          <label class="form-label">Month:</label>
+          <select class="form-select" [(ngModel)]="telMonth" name="telMonth" (change)="onMonthYearChange()">
+            <option *ngFor="let m of monthOptions" [value]="m.value">{{ m.label }}</option>
           </select>
         </div>
-
-        <div class="col-md-2">
-          <label for="yearSelect" class="form-label">Year:</label>
-          <select id="yearSelect" class="form-select" [(ngModel)]="selectedYear" name="yearSelect"
-            (change)="onPeriodChange()">
-            <option *ngFor="let year of yearOptions" [value]="year">{{ year }}</option>
+        <div class="col-md-3">
+          <label class="form-label">Year:</label>
+          <select class="form-select" [(ngModel)]="telYear" name="telYear" (change)="onMonthYearChange()">
+            <option *ngFor="let y of yearOptions" [value]="y">{{ y }}</option>
           </select>
         </div>
-
-        <div class="col-md-2">
-          <label for="dropdown1" class="form-label">R-GM:</label>
-          <select id="dropdown1" class="form-select" [(ngModel)]="formValues.dropdown1" name="dropdown1"
-            (change)="onDropdownChange('dropdown1', $any($event.target)?.value || '')">
-            <option value="">Select an option</option>
-            <option *ngFor="let region of getUniqueRegions()" [value]="region">{{ region }}</option>
-          </select>
-        </div>
-
-        <div class="col-md-2">
-          <label for="dropdown2" class="form-label">P-DGM:</label>
-          <select id="dropdown2" class="form-select" [(ngModel)]="formValues.dropdown2" name="dropdown2"
-            [disabled]="!formValues.dropdown1"
-            (change)="onDropdownChange('dropdown2', $any($event.target)?.value || '')">
-            <option value="">Select an option</option>
-            <option *ngFor="let province of dropdown2Options" [value]="province">{{ province }}</option>
-          </select>
-        </div>
-
-        <div class="col-md-2">
-          <label for="dropdown3" class="form-label">NW EE:</label>
-          <select id="dropdown3" class="form-select" [(ngModel)]="formValues.dropdown3" name="dropdown3"
-            [disabled]="!formValues.dropdown2"
-            (change)="onDropdownChange('dropdown3', $any($event.target)?.value || '')">
-            <option value="">Select an option</option>
-            <option *ngFor="let engineer of dropdown3Options" [value]="engineer">{{ engineer }}</option>
-          </select>
-        </div>
-
-        <div class="col-md-2">
-          <label for="dropdown4" class="form-label">RTOM AREA:</label>
-          <select id="dropdown4" class="form-select" [(ngModel)]="formValues.dropdown4" name="dropdown4"
-            [disabled]="!formValues.dropdown3"
-            (change)="onDropdownChange('dropdown4', $any($event.target)?.value || '')">
-            <option value="">Select an option</option>
-            <option *ngFor="let area of dropdown4Options" [value]="area">{{ optionMapping[area] || area }}</option>
+        <div class="col-md-3">
+          <label class="form-label">R-GM:</label>
+          <select class="form-select" [(ngModel)]="telRegion" name="telRegion" (change)="onRegionChange()">
+            <option value="">All</option>
+            <option *ngFor="let r of regionOptions" [value]="r">{{ r }}</option>
           </select>
         </div>
       </div>
     </form>
 
+    <div class="selected-filters mb-4">
+      <div class="filter-chip">
+        <span class="filter-label">Month:</span>
+        <span class="filter-value">{{ telMonthLabel }}</span>
+      </div>
+      <div class="filter-chip">
+        <span class="filter-label">Year:</span>
+        <span class="filter-value">{{ telYear }}</span>
+      </div>
+      <div class="filter-chip">
+        <span class="filter-label">R-GM:</span>
+        <span class="filter-value">{{ telRegion || 'All' }}</span>
+      </div>
+    </div>
+
     <div class="card shadow-sm border-0">
       <div class="card-header bg-primary text-white">
-        <h5 class="mb-0"><i class="bi bi-table me-2"></i>{{ pageTitle }}</h5>
+        <h5 class="mb-0"><i class="bi bi-broadcast-pin me-2"></i>Telemetry</h5>
       </div>
-
       <div class="card-body p-0">
-        <div *ngIf="canEditMetrics()" class="edit-mode-banner">
-          <i class="bi bi-pencil-square me-2"></i>
-          Inline editing enabled for {{ optionMapping[formValues.dropdown4] || formValues.dropdown4 }}.
+
+        <div *ngIf="telLoading" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="text-muted mt-2">Loading Telemetry data...</p>
         </div>
 
-        <!-- If an RTOM area is selected, show metrics as rows (sub-rows per KPI) -->
-        <div *ngIf="hasAreaFilter; else noAreaView">
-          <div class="table-responsive" *ngIf="data.length > 0; else noKpiData">
-            <table class="table table-hover table-bordered mb-0 data-table">
-              <thead class="table-dark">
-                <tr>
-                  <th>No</th>
-                  <th>Network Engineer KPI</th>
-                  <th>Division</th>
-                  <th>Section</th>
-                  <th>KPI %</th>
-                  <th>{{ selectedAreaLabel || 'Selected Area' }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <ng-container *ngFor="let row of data">
-                  <tr>
-                    <td>{{ row.no }}</td>
-                    <td>{{ row.networkEngineerKpi }}</td>
-                    <td>{{ row.division || '-' }}</td>
-                    <td>{{ row.section || '-' }}</td>
-                    <td>{{ row.kpiPercent }}</td>
-                    <td>{{ row.site || '-' }}</td>
-                  </tr>
-
-                  <tr *ngFor="let col of metricColumns" class="sub-row">
-                    <td></td>
-                    <td colspan="4" class="sub-label">{{ col.label }}</td>
-                    <td class="metric-cell" [class.can-edit]="canEditMetrics()">
-                      <ng-container *ngIf="isEditingCell(row, col.key); else metricView">
-                        <form class="inline-edit-form" (submit)="$event.preventDefault(); saveEdit(row, col.key)">
-                          <input type="number" class="form-control form-control-sm" [(ngModel)]="activeEditValue"
-                            [ngModelOptions]="{ standalone: true }" min="0" step="1" inputmode="numeric" autofocus
-                            (keyup.escape)="cancelEdit()" />
-                          <div class="inline-edit-actions">
-                            <button type="submit" class="icon-btn success" [disabled]="metricsLoading">
-                              <i class="bi bi-check-lg"></i><span>Save</span>
-                            </button>
-                            <button type="button" class="icon-btn ghost" (click)="cancelEdit()">
-                              <i class="bi bi-x-lg"></i><span>Cancel</span>
-                            </button>
-                          </div>
-                        </form>
-                      </ng-container>
-
-                      <ng-template #metricView>
-                        <div class="metric-display">
-                          <span class="metric-value">{{ formatMetric(row[col.key]) }}</span>
-                          <button type="button" class="icon-btn" [disabled]="!canEditMetrics()"
-                            (click)="startEdit(row, col.key)">
-                            <i class="bi bi-pencil-square"></i><span>Edit</span>
-                          </button>
-                        </div>
-                      </ng-template>
-                    </td>
-                  </tr>
-                </ng-container>
-              </tbody>
-            </table>
-          </div>
+        <div *ngIf="telError && !telLoading" class="alert alert-danger m-3">
+          {{ telError }}
+          <button class="btn btn-outline-danger btn-sm ms-3" (click)="refresh()">Retry</button>
         </div>
 
-        <!-- Default view when no area selected: show KPI rows without metric columns -->
-        <ng-template #noAreaView>
-          <div class="table-responsive" *ngIf="data.length > 0; else noKpiData">
-            <table class="table table-hover table-bordered mb-0 data-table">
-              <thead class="table-dark">
-                <tr>
-                  <th>No</th>
-                  <th>Network Engineer KPI</th>
-                  <th>Division</th>
-                  <th>Section</th>
-                  <th>KPI %</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let row of data">
-                  <td>{{ row.no }}</td>
-                  <td>{{ row.networkEngineerKpi }}</td>
-                  <td>{{ row.division || '-' }}</td>
-                  <td>{{ row.section || '-' }}</td>
-                  <td>{{ row.kpiPercent }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </ng-template>
+        <div *ngIf="!telLoading && !telError" class="table-responsive">
+          <table class="table table-hover table-bordered mb-0 data-table">
+            <thead class="table-dark">
+              <tr>
+                <th>No.</th>
+                <th>RTOM Area</th>
+                <th>R-GM</th>
+                <th>P-DGM</th>
+                <th>NW EE</th>
+                <th>Percentage (%)</th>
+                <th>Node Count</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of tableRows; let i = index">
+                <td class="text-center">{{ i + 1 }}</td>
+                <td><strong>{{ row.friendlyName }}</strong></td>
+                <td>{{ row.region || '—' }}</td>
+                <td>{{ row.province || '—' }}</td>
+                <td>{{ row.networkEngineer }}</td>
+                <td class="text-center">{{ row.percentage | number:'1.2-2' }}%</td>
+                <td class="text-center">{{ row.node_Count ?? '—' }}</td>
+                <td class="text-center"><span class="text-muted">—</span></td>
+              </tr>
+              <tr *ngIf="!tableRows.length">
+                <td colspan="8" class="text-center py-5 text-muted">
+                  <i class="bi bi-folder2-open d-block mb-2 fs-2"></i>
+                  No data for the selected filters.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-        <ng-template #noKpiData>
-          <div class="text-center py-5">
-            <div class="text-muted mb-3"><i class="bi bi-table fs-1 opacity-50"></i></div>
-            <p class="text-muted mb-0">No KPI data found for the selected filters.</p>
-          </div>
-        </ng-template>
       </div>
     </div>
   </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       TABLE 2 — O&M POWER & AIR CONDITIONING
+  ═══════════════════════════════════════════════════ -->
+  <div class="mt-5">
+
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-lightning-charge me-2"></i>O&amp;M of Power &amp; Air Conditioning</h5>
+        <div class="d-flex align-items-center gap-2">
+          <label class="text-white mb-0 fw-semibold small">Year:</label>
+          <select class="form-select form-select-sm pac-year-select"
+                  [(ngModel)]="pacYear" name="pacYear" (change)="onPacYearChange()">
+            <option *ngFor="let y of yearOptions" [value]="y">{{ y }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="card-body p-0">
+
+        <div *ngIf="pacLoading" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="text-muted mt-2">Loading Power &amp; AC data...</p>
+        </div>
+
+        <div *ngIf="pacError && !pacLoading" class="alert alert-danger m-3">
+          {{ pacError }}
+          <button class="btn btn-outline-danger btn-sm ms-3" (click)="loadPowerAndAC()">Retry</button>
+        </div>
+
+        <div *ngIf="!pacLoading && !pacError" class="table-responsive">
+          <table class="table table-hover table-bordered mb-0 data-table">
+            <thead class="table-dark">
+              <tr>
+                <th>No.</th>
+                <th>Designation</th>
+                <th>Month</th>
+                <th>Scheduled</th>
+                <th>Attended</th>
+                <th>Cumulative Scheduled</th>
+                <th>Cumulative Achieved</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of pacRows; let i = index">
+                <td class="text-center">{{ i + 1 }}</td>
+                <td>{{ row.designation }}</td>
+                <td class="text-center">{{ getMonthLabel(row.month) }}</td>
+                <td class="text-center">{{ row.scheduled }}</td>
+                <td class="text-center">{{ row.attended }}</td>
+                <td class="text-center">{{ row.cumulative_Sched }}</td>
+                <td class="text-center">{{ row.cumulative_Achieved }}</td>
+              </tr>
+              <tr *ngIf="!pacRows.length">
+                <td colspan="7" class="text-center py-5 text-muted">
+                  <i class="bi bi-folder2-open d-block mb-2 fs-2"></i>
+                  No Power &amp; AC data for {{ pacYear }}.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
 </div>

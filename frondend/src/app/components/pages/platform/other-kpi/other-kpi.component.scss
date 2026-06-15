@@ -1,1 +1,14 @@
 @use '../service-fulfilment/service-fulfilment.component.scss' as *;
+
+.pac-year-select {
+  width: auto;
+  min-width: 90px;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.4);
+
+  option {
+    color: #1a1f2b;
+    background-color: #fff;
+  }
+}

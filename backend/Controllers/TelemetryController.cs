@@ -1,5 +1,4 @@
 using backend.Data;
-using backend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,21 +10,15 @@ namespace backend.Controllers
     {
         private readonly AppDbContext _db;
 
-        public TelemetryController(AppDbContext db)
-        {
-            _db = db;
-        }
+        public TelemetryController(AppDbContext db) => _db = db;
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] string? designation, [FromQuery] int? year, [FromQuery] int? month)
+        public async Task<IActionResult> GetAll([FromQuery] int? year, [FromQuery] int? month)
         {
-            var q = _db.Telemetry.AsQueryable();
-            if (!string.IsNullOrWhiteSpace(designation)) q = q.Where(x => x.Designation == designation);
+            var q = _db.Telemetry.AsNoTracking();
             if (year.HasValue) q = q.Where(x => x.Year == year.Value);
             if (month.HasValue) q = q.Where(x => x.Month == month.Value);
-
-            var list = await q.ToListAsync();
-            return Ok(list);
+            return Ok(await q.ToListAsync());
         }
 
         [HttpGet("{id}")]
