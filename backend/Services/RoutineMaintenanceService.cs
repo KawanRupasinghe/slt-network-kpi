@@ -77,6 +77,7 @@ namespace backend.Services
                 results.Add(new RoutineMaintenanceResult(designation, areaCode, percent));
             }
 
+            Console.WriteLine($"IPNW rows = {results.Count}");
             return results;
         }
 
@@ -135,6 +136,7 @@ namespace backend.Services
                 results.Add(new RoutineMaintenanceResult(designation, areaCode, percent));
             }
 
+            Console.WriteLine($"SLBN rows = {results.Count}");
             return results;
         }
 
@@ -196,6 +198,7 @@ namespace backend.Services
                 results.Add(new RoutineMaintenanceResult(designation, areaCode, percent));
             }
 
+            Console.WriteLine($"MSAN rows = {results.Count}");
             return results;
         }
 

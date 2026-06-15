@@ -66,6 +66,7 @@ namespace backend.Services
                 results.Add(new RoutineMaintenanceResult(designation, areaCode, percent));
             }
 
+            Console.WriteLine($"Tower rows = {results.Count}");
             return results;
         }
     }
