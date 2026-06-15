@@ -878,6 +878,15 @@ namespace backend.Controllers
                 .ToList();
         }
 
+        private static string NormalizeDesignation(string value)
+        {
+            return new string(
+                value
+                    .ToUpperInvariant()
+                    .Where(char.IsLetterOrDigit)
+                    .ToArray());
+        }
+
         private Dictionary<string, string> BuildDesignationToAreaMap(List<RegionData> dbRegions)
         {
             var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -893,10 +902,34 @@ namespace backend.Controllers
 
             foreach (var d in designations)
             {
-                var key = d?.Trim() ?? string.Empty;
-                if (string.IsNullOrEmpty(key)) continue;
-                var normalized = NormalizeArea(key);
-                map[key] = normalized;
+                var designation = d?.Trim() ?? string.Empty;
+                if (string.IsNullOrEmpty(designation))
+                    continue;
+
+                var normalizedDesignation = NormalizeDesignation(designation);
+
+                var region = dbRegions.FirstOrDefault(r =>
+                {
+                    var engineer = r.NetworkEngineer ?? "";
+
+                    // remove name part "(Manjula)"
+                    var engineerDesignation =
+                        engineer.Contains('(')
+                        ? engineer[..engineer.IndexOf('(')]
+                        : engineer;
+
+                    return NormalizeDesignation(engineerDesignation)
+                            == normalizedDesignation;
+                });
+
+                if (region != null)
+                {
+                    map[designation] = NormalizeArea(region.LeaCode);
+                }
+                else
+                {
+                    Console.WriteLine($"No RegionData match for designation [{designation}]");
+                }
             }
 
             return map;

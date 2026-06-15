@@ -372,6 +372,8 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
 
           this.computeTotals();
           this.scheduleRowSync();
+          console.log('KPI definitions');
+          this.kpiRows.forEach(x => console.log(x.id, x.kpi));
           this.loadOverallResultsFromApi();
         },
         error: (err) => {
@@ -412,6 +414,8 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
         }));
 
         this.noOverallResults = list.length === 0;
+        console.log('Overall results');
+        list.forEach(x => console.log(x.kpiDefinitionId, x.areaCode, x.achievedKpi));
         const grouped = new Map<number, OverallKpiResultApi[]>();
 
         list.forEach((row) => {
@@ -422,6 +426,8 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.kpiRows = this.kpiRows.map((kpiRow) => {
           const byKpi = grouped.get(kpiRow.id) ?? [];
+          console.log('Engineers');
+          this.engineersFlat.forEach(x => console.log(x.networkEngineer, x.lea));
           const metrics = this.engineersFlat.map((engineer) => {
             const match = this.findOverallResultForArea(byKpi, engineer.lea);
             return {
