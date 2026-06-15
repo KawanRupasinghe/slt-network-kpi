@@ -71,6 +71,7 @@ builder.Services.AddHttpClient<IMultiTableService, MultiTableService>();
 builder.Services.AddScoped<backend.Services.IKpiDefinitionService, backend.Services.KpiDefinitionService>();
 builder.Services.AddScoped<IMsanMtcDataCumulativeService, MsanMtcDataCumulativeService>();
 builder.Services.AddScoped<ISlbnMtcDataCumulativeService, SlbnMtcDataCumulativeService>();
+builder.Services.AddScoped<ITowerMtcDataCumulativeService, TowerMtcDataCumulativeService>();
 
 builder.Services.AddScoped<IIpnwMtcDataCumulativeService, IpnwMtcDataCumulativeService>();
 
@@ -277,6 +278,14 @@ END;
             slbnBackfillResult.TotalRecords,
             slbnBackfillResult.GroupsProcessed,
             slbnBackfillResult.RecordsUpdated);
+
+        var towerBackfill = services.GetRequiredService<ITowerMtcDataCumulativeService>();
+        var towerBackfillResult = await towerBackfill.RecalculateAllAsync();
+        Console.WriteLine(
+            "Tower MTC cumulative backfill completed. Records: {0}, Groups: {1}, Rows updated: {2}.",
+            towerBackfillResult.TotalRecords,
+            towerBackfillResult.GroupsProcessed,
+            towerBackfillResult.RecordsUpdated);
     }
     catch (Exception ex)
     {

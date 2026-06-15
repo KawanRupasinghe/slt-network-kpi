@@ -16,10 +16,10 @@ namespace backend.Services
     // =========================================================
     public interface IMultiTableService
     {
-        Task<List<PlatformRecordDto>> FetchMsanDataAsync(int? year = null);
-        Task<List<PlatformRecordDto>> FetchVpnDataAsync(int? year = null);
-        Task<List<PlatformRecordDto>> FetchSlbnDataAsync(int? year = null);
-        Task<List<PlatformRecordDto>> FetchTowerDataAsync(int? year = null);
+        Task<List<PlatformRecordDto>> FetchMsanDataAsync(int? year = null, int? month = null);
+        Task<List<PlatformRecordDto>> FetchVpnDataAsync(int? year = null, int? month = null);
+        Task<List<PlatformRecordDto>> FetchSlbnDataAsync(int? year = null, int? month = null);
+        Task<List<PlatformRecordDto>> FetchTowerDataAsync(int? year = null, int? month = null);
     }
 
     // =========================================================

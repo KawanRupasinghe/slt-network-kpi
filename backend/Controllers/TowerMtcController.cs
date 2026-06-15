@@ -9,18 +9,18 @@ namespace backend.Controllers
     {
         private readonly IMultiTableService _multiTableService;
 
-        // ✅ FIX: Inject service here
+        // FIX: Inject service here
         public TowerMtcController(IMultiTableService multiTableService)
         {
             _multiTableService = multiTableService;
         }
 
         [HttpGet("fetchTower")]
-        public async Task<IActionResult> FetchTower([FromQuery] int? year)
+        public async Task<IActionResult> FetchTower([FromQuery] int? year, [FromQuery] int? month)
         {
             try
             {
-                var data = await _multiTableService.FetchTowerDataAsync(year);
+                var data = await _multiTableService.FetchTowerDataAsync(year, month);
                 return Ok(data);
             }
             catch (Exception ex)

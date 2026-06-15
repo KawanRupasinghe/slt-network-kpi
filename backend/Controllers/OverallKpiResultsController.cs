@@ -72,7 +72,7 @@ namespace backend.Controllers
         // Returns: List of newly calculated KPI results
         // =========================================================
         [HttpPost("calculate")]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<ActionResult<List<OverallKpiResultDto>>> Calculate(
             [FromQuery] int? month,
             [FromQuery] int? year)
@@ -189,11 +189,11 @@ namespace backend.Controllers
                 .Where(x => x.Trim() != string.Empty)
                 .Select(x => x.Trim()));
 
-            // Normalize area codes
-            var normalizedAreas = allAreaCodes
-                .Select(a => NormalizeArea(a))
-                .Where(x => x != string.Empty)
-                .ToList();
+            // Normalize area codes, prioritizing RegionData if populated
+            var dbRegions = await _db.RegionData.AsNoTracking().ToListAsync();
+            var normalizedAreas = dbRegions.Any()
+                ? dbRegions.Select(x => NormalizeArea(x.LeaCode)).Where(x => x != string.Empty).Distinct().ToList()
+                : allAreaCodes.Select(a => NormalizeArea(a)).Where(x => x != string.Empty).Distinct().ToList();
 
             // =========================================================
             // STEP 4: VALIDATE DATA AVAILABILITY
@@ -340,12 +340,22 @@ namespace backend.Controllers
                     ? (decimal)kpi.PointsApplicable / normalizedAreas.Count
                     : 0m;
 
+                var isFibreRestoration = IsFibreFailuresRestorationKpi(kpi.KeyPerformanceIndicators);
+                var numEngineers = dbRegions.Any()
+                    ? dbRegions.Select(x => x.NetworkEngineer?.Trim()).Where(x => !string.IsNullOrEmpty(x)).Distinct(StringComparer.OrdinalIgnoreCase).Count()
+                    : (normalizedAreas.Count > 0 ? normalizedAreas.Count : 1);
+
+                if (numEngineers <= 0) numEngineers = 1;
+                var pointsPerEngineer = (decimal)kpi.PointsApplicable / numEngineers;
+
                 foreach (var (area, snapshot) in areaSnapshots)
                 {
                     var achieved = Math.Round(Math.Clamp(snapshot?.Achieved ?? 0m, 0m, 100m), 4);
-                    var maxPoints = hasNodeBasedWeight && totalNodes > 0m
-                        ? Math.Round(((decimal)kpi.PointsApplicable * (snapshot?.TotalNodes ?? 0m)) / totalNodes, 4)
-                        : Math.Round(equalShare, 4);
+                    var maxPoints = isFibreRestoration
+                        ? Math.Round(pointsPerEngineer, 4)
+                        : (hasNodeBasedWeight && totalNodes > 0m
+                            ? Math.Round(((decimal)kpi.PointsApplicable * (snapshot?.TotalNodes ?? 0m)) / totalNodes, 4)
+                            : Math.Round(equalShare, 4));
 
                     // Calculate pointsAchieved based on target value
                     var targetValue = TryParseTargetValue(kpi.DescriptionOfKPI);
@@ -593,6 +603,14 @@ namespace backend.Controllers
             if (normalizedArea == string.Empty || snapshots.Count == 0) return null;
             if (snapshots.TryGetValue(normalizedArea, out var exact)) return exact;
 
+            // Handle special mappings for combined metro areas (CEN/HK/MD)
+            if (normalizedArea == "hk" || normalizedArea == "cenmd")
+            {
+                if (snapshots.TryGetValue("cenhkmd", out var s1)) return s1;
+                if (snapshots.TryGetValue("cenhkmd1", out var s2)) return s2;
+                if (snapshots.TryGetValue("cenhk", out var s3)) return s3;
+            }
+
             var partial = snapshots
                 .Where(kv => kv.Key.Contains(normalizedArea) || normalizedArea.Contains(kv.Key))
                 .OrderByDescending(kv => CommonPrefixLength(kv.Key, normalizedArea))
@@ -629,7 +647,7 @@ namespace backend.Controllers
             decimal um = unavailableMinutes ?? 0;
             decimal tn = totalNodes ?? 0;
 
-            var denominator = 24m * 60m * daysInMonth * tn;
+            var denominator = tm > 0m ? tm : (24m * 60m * daysInMonth * tn);
             if (denominator <= 0m) return 100m;
 
             var numerator = tm - um;
@@ -643,7 +661,7 @@ namespace backend.Controllers
             decimal um = unavailableMinutes ?? 0;
             decimal tn = totalNodes;
 
-            var denominator = 24m * 60m * daysInMonth * tn;
+            var denominator = tm > 0m ? tm : (24m * 60m * daysInMonth * tn);
             if (denominator <= 0m) return 100m;
 
             var numerator = tm - um;
@@ -682,7 +700,25 @@ namespace backend.Controllers
             => Regex.Replace(value ?? string.Empty, "[^A-Za-z0-9]+", " ").Trim().ToLowerInvariant();
 
         private static string NormalizeArea(string value)
-            => Regex.Replace(value ?? string.Empty, "[^A-Za-z0-9]+", "").ToLowerInvariant();
+        {
+            var normalized = Regex.Replace(value ?? string.Empty, "[^A-Za-z0-9]+", "").ToLowerInvariant();
+            if (normalized == "kpivalue") return string.Empty;
+
+            // Map metric area code variations/shorthands to standard normalized LEA codes
+            return normalized switch
+            {
+                "ndfrm" => "ndrm",
+                "ngivt" => "ngwt",
+                "debkymt" => "kymt",
+                "bddwmrg" => "bdbwmrg",
+                "keirn" => "kern",
+                "embmbmh" => "embhbmh",
+                "bcjrdkltc" => "bcapkltc",
+                "adipr" => "adpr",
+                "konix" => "konkx",
+                _ => normalized
+            };
+        }
 
         // =========================================================
         // TOKENIZATION FOR MATCHING
@@ -817,6 +853,16 @@ namespace backend.Controllers
             => (kpiName ?? string.Empty).Contains("Unavailability of Aged Network Failures",
                 StringComparison.OrdinalIgnoreCase);
 
+        private static bool IsFibreFailuresRestorationKpi(string kpiName)
+        {
+            if (string.IsNullOrEmpty(kpiName)) return false;
+            var normalized = kpiName.Replace(" ", "").ToLowerInvariant();
+            return normalized.Contains("fiberfailuresrestoration(general)")
+                || normalized.Contains("fibrefailuresrestoration(general)")
+                || normalized.Contains("fiberfailurerestoration(largescale")
+                || normalized.Contains("fibrefailurerestoration(largescale");
+        }
+
         // Returns 0 if ANY platform record has has_unavailability = 1, else 100.
         private static decimal CalculateAgedNetworkFailureKpi(
             List<AgedNetworkFailureMetric> metrics, string normalizedArea)
@@ -826,7 +872,7 @@ namespace backend.Controllers
                 .ToList();
 
             if (!areaMetrics.Any()) return 100m;
-            return areaMetrics.Any(x => x.HasUnavailability == 1) ? 0m : 100m;
+            return areaMetrics.Any(x => x.HasUnavailability) ? 0m : 100m;
         }
     }
 }
