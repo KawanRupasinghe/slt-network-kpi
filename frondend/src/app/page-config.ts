@@ -75,9 +75,9 @@ export const platformNavOptions: NavOption[] = [
     title: 'Platform KPI — Other Operator'
   },
   {
-    label: 'Node Failures',
+    label: 'Aged Network Failures',
     path: 'platform/node-failures',
-    title: 'Platform KPI — Node Failures'
+    title: 'Platform KPI — Aged Network Failures'
   }
 ];
 

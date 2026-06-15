@@ -23,7 +23,7 @@ interface AreaRow {
   styleUrls: ['./node-failures.component.scss'],
 })
 export class NodeFailuresComponent implements OnInit, OnDestroy {
-  pageTitle = 'Node Failures';
+  pageTitle = 'Aged Network Failures';
 
   loading = false;
   error: string | null = null;
@@ -44,8 +44,10 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
 
   // Rows displayed in the table (merged with DB state)
   tableRows: Array<AreaRow & {
-    hasUnavailability: number;
+    percentage: number;
+    remarks: string;
     saving?: boolean;
+    isEditing?: boolean;
   }> = [];
 
   // Toast notifications state
@@ -116,7 +118,7 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
   }
 
   get isEditingAllowed(): boolean {
-    return this.authService.canEditPage('NODE FAILURES');
+    return this.authService.canEditPage('AGED NETWORK FAILURES');
   }
 
   get monthLabel(): string {
@@ -156,17 +158,19 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
       .get('', this.selectedMonth, this.selectedYear)
       .subscribe({
         next: (rows) => {
-          const dbMap = new Map<string, number>();
+          const dbMap = new Map<string, { percentage: number; remarks: string }>();
           (rows || []).forEach((r) => {
-            dbMap.set(this.norm(r.areaCode), r.hasUnavailability);
+            dbMap.set(this.norm(r.areaCode), { percentage: r.percentage, remarks: r.remarks ?? '' });
           });
 
           let mappedRows = this.allAreas.map((area) => {
-            const hasUnavail = dbMap.get(area.areaCode) ?? 0;
+            const dbVal = dbMap.get(area.areaCode);
             return {
               ...area,
-              hasUnavailability: hasUnavail,
+              percentage: dbVal ? dbVal.percentage : 0,
+              remarks: dbVal ? dbVal.remarks : '',
               saving: false,
+              isEditing: false,
             };
           });
 
@@ -197,7 +201,8 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
 
     const dto = {
       areaCode: row.areaCode,
-      hasUnavailability: Number(row.hasUnavailability),
+      percentage: Number(row.percentage) || 0,
+      remarks: row.remarks || '',
       month: this.selectedMonth,
       year: this.selectedYear,
     };
@@ -205,6 +210,7 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
     this.agedFailureService.upsert(dto).subscribe({
       next: () => {
         row.saving = false;
+        row.isEditing = false;
         this.showToast('success', `Saved status for ${row.friendlyName} successfully.`);
         this.refresh();
       },
@@ -268,6 +274,15 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  getEngineerNameOnly(engineer: string): string {
+    if (!engineer) return '';
+    const match = engineer.match(/\(([^)]+)\)/);
+    if (match && match[1]) {
+      return match[1];
+    }
+    return engineer.replace(/^NW\//i, '').replace(/^WPS/i, '');
   }
 
   private norm(s: any): string {

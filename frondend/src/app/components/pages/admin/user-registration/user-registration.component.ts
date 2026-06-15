@@ -53,7 +53,7 @@ export class UserRegistrationComponent implements OnInit {
     'Enterprise KPI',
     'Other Operator KPI',
     'Other KPI',
-    'Node Failures'
+    'Aged Network Failures'
   ];
 
   constructor(private userService: UserService) { }
