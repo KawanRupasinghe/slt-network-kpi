@@ -28,12 +28,18 @@ namespace backend.Controllers
         private readonly AppDbContext _db;
         private readonly backend.Services.RoutineMaintenanceService _routineService;
         private readonly backend.Services.TowerMaintenanceService _towerService;
+        private readonly backend.Services.PowerAndACService _powerService;
 
-        public OverallKpiResultsController(AppDbContext db, backend.Services.RoutineMaintenanceService routineService, backend.Services.TowerMaintenanceService towerService)
+        public OverallKpiResultsController(
+            AppDbContext db,
+            backend.Services.RoutineMaintenanceService routineService,
+            backend.Services.TowerMaintenanceService towerService,
+            backend.Services.PowerAndACService powerService)
         {
             _db = db;
             _routineService = routineService;
             _towerService = towerService;
+            _powerService = powerService;
         }
 
         // =========================================================
@@ -214,10 +220,14 @@ namespace backend.Controllers
             var towerResults = await _towerService.GetTowerPercentagesAsync(
                     year, month, designationToArea);
 
+            var powerResults = await _powerService.GetPowerAndACPercentagesAsync(
+                    (short)year, month, designationToArea);
+
             Console.WriteLine($"IPNW results count = {ipnwResults.Count}");
             Console.WriteLine($"SLBN results count = {slbnResults.Count}");
             Console.WriteLine($"MSAN results count = {msanResults.Count}");
             Console.WriteLine($"Tower results count = {towerResults.Count}");
+            Console.WriteLine($"Power & AC results count = {powerResults.Count}");
 
             // =========================================================
             // STEP 4: VALIDATE DATA AVAILABILITY
@@ -438,6 +448,44 @@ namespace backend.Controllers
                             AchievedKpi = achieved,
                             MaximumPointsPerKpi = maxPoints,
                             PointsAchieved = achieved > 95m
+                                ? maxPoints
+                                : Math.Round((maxPoints * achieved) / 100m, 4),
+                            Month = month,
+                            Year = year,
+                            CalculatedAt = nowUtc
+                        });
+                    }
+                    continue;
+                }
+
+                if (kpi.KeyPerformanceIndicators.Contains("Power", StringComparison.OrdinalIgnoreCase)
+                    && (kpi.KeyPerformanceIndicators.Contains("Air", StringComparison.OrdinalIgnoreCase)
+                        || kpi.KeyPerformanceIndicators.Contains("AC", StringComparison.OrdinalIgnoreCase)))
+                {
+                    Console.WriteLine("ENTERED POWER & AC BLOCK");
+                    var totalPowerNodes = powerResults.Sum(x => x.NodesCount);
+                    foreach (var record in powerResults)
+                    {
+                        var area = record.NormalizedAreaCode;
+                        var achieved = record.Percentage;
+                        var nodes = record.NodesCount;
+
+                        var maxPoints = totalPowerNodes > 0m
+                            ? Math.Round((nodes / totalPowerNodes) * (decimal)kpi.PointsApplicable, 4)
+                            : (powerResults.Count > 0 ? Math.Round((decimal)kpi.PointsApplicable / powerResults.Count, 4) : 0m);
+
+                        Console.WriteLine($"INSERTING {kpi.KeyPerformanceIndicators} Area={area} Achieved={achieved} Nodes={nodes} MaxPoints={maxPoints}");
+                        results.Add(new OverallKpiResult
+                        {
+                            KpiCode = $"KPI-{kpi.Id}",
+                            KpiDefinitionId = kpi.Id,
+                            KpiName = kpi.KeyPerformanceIndicators,
+                            Platform = kpi.Perspectives,
+                            AreaCode = area,
+                            TargetValue = 90m,
+                            AchievedKpi = achieved,
+                            MaximumPointsPerKpi = maxPoints,
+                            PointsAchieved = achieved > 90m
                                 ? maxPoints
                                 : Math.Round((maxPoints * achieved) / 100m, 4),
                             Month = month,
