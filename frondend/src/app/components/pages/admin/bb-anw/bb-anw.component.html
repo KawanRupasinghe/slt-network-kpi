@@ -5,14 +5,17 @@
 
   <div class="dashboard-container">
 
-    <section class="form-section">
-      <div class="form-container">
+    <div class="form-container">
+
         <div class="form-header">
           <h2>{{ editingId ? 'Update KPI Row' : 'Create KPI Row' }}</h2>
         </div>
 
         <form class="kpi-form" (ngSubmit)="submitForm()">
           <div class="form-row">
+
+
+
             <div class="form-group">
               <label for="kpi">Network Engineer KPI</label>
               <input id="kpi" type="text" [(ngModel)]="form.networkEngineerKpi" name="kpi" placeholder="Network Engineer KPI" required />
