@@ -27,13 +27,16 @@ type ActivityRecord = {
 };
 
 @Component({
-  selector: 'app-admin-tm-activity-plan',
+selector: 'app-tower-mtnc',
+
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, HttpClientModule],
-  templateUrl: './tm-activity-plan.component.html',
-  styleUrls: ['./tm-activity-plan.component.scss']
+  templateUrl: './tower-mtnc.component.html',
+  styleUrls: ['./tower-mtnc.component.scss']
+
 })
-export class AdminTmActivityPlanComponent implements OnInit {
+export class TowerMtncComponent implements OnInit {
+
   private readonly http = inject(HttpClient);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
