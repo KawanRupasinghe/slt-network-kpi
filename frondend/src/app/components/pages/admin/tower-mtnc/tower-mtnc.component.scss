@@ -225,8 +225,12 @@
   color: white;
   text-align: left;
   border-right: 1px solid rgba(255, 255, 255, .85);
+}
+
+.kpi-table thead th {
   background-clip: padding-box;
 }
+
 
 .kpi-table th:last-child {
   border-right: none;
@@ -243,11 +247,9 @@
 .kpi-table td {
   padding: 1rem;
   border-bottom: 1px solid #eee;
-}
-
-.kpi-table td {
   text-align: left;
 }
+
 
 .kpi-table tbody tr:hover {
   background: rgba(15, 102, 195, .05);
@@ -260,9 +262,10 @@
 }
 
 .actions-col {
-  width: 160px;
+  width: 130px;
   text-align: center;
 }
+
 
 .action-buttons {
   display: flex;
