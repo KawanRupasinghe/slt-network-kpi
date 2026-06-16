@@ -202,24 +202,21 @@ namespace backend.Controllers
             // Build designation -> area map from region and maintenance tables
             var designationToArea = BuildDesignationToAreaMap(dbRegions);
 
-            var ipnwMap = (await _routineService.GetIpnwPercentagesAsync(
-                    year, month, designationToArea))
-                .ToDictionary(x => x.NormalizedAreaCode, x => x.Percentage);
+            var ipnwResults = await _routineService.GetIpnwPercentagesAsync(
+                    year, month, designationToArea);
 
-            var slbnMap = (await _routineService.GetSlbnPercentagesAsync(
-                    year, month, designationToArea))
-                .ToDictionary(x => x.NormalizedAreaCode, x => x.Percentage);
+            var slbnResults = await _routineService.GetSlbnPercentagesAsync(
+                    year, month, designationToArea);
 
-            var msanMap = (await _routineService.GetMsanPercentagesAsync(
-                    year, month, designationToArea))
-                .ToDictionary(x => x.NormalizedAreaCode, x => x.Percentage);
+            var msanResults = await _routineService.GetMsanPercentagesAsync(
+                    year, month, designationToArea);
 
             var towerResults = await _towerService.GetTowerPercentagesAsync(
                     year, month, designationToArea);
 
-            Console.WriteLine($"IPNW map count = {ipnwMap.Count}");
-            Console.WriteLine($"SLBN map count = {slbnMap.Count}");
-            Console.WriteLine($"MSAN map count = {msanMap.Count}");
+            Console.WriteLine($"IPNW results count = {ipnwResults.Count}");
+            Console.WriteLine($"SLBN results count = {slbnResults.Count}");
+            Console.WriteLine($"MSAN results count = {msanResults.Count}");
             Console.WriteLine($"Tower results count = {towerResults.Count}");
 
             // =========================================================
@@ -319,13 +316,17 @@ namespace backend.Controllers
                 if (kpi.KeyPerformanceIndicators.Equals("Routine Maintenance - IPNW", StringComparison.OrdinalIgnoreCase))
                 {
                     Console.WriteLine("ENTERED IPNW BLOCK");
-                    foreach (var x in ipnwMap) Console.WriteLine($"{x.Key} -> {x.Value}");
-                    foreach (var kv in ipnwMap)
+                    var totalIpnwNodes = ipnwResults.Sum(x => x.NodesCount);
+                    foreach (var record in ipnwResults)
                     {
-                        var area = kv.Key;
-                        var achieved = kv.Value;
-                        var maxPoints = ipnwMap.Count > 0 ? (decimal)kpi.PointsApplicable / ipnwMap.Count : 0m;
-                        Console.WriteLine($"INSERTING {kpi.KeyPerformanceIndicators} Area={area} Achieved={achieved}");
+                        var area = record.NormalizedAreaCode;
+                        var achieved = record.Percentage;
+                        var nodes = record.NodesCount;
+                        var maxPoints = totalIpnwNodes > 0m
+                            ? Math.Round((nodes / totalIpnwNodes) * (decimal)kpi.PointsApplicable, 4)
+                            : (ipnwResults.Count > 0 ? Math.Round((decimal)kpi.PointsApplicable / ipnwResults.Count, 4) : 0m);
+
+                        Console.WriteLine($"INSERTING {kpi.KeyPerformanceIndicators} Area={area} Achieved={achieved} Nodes={nodes} MaxPoints={maxPoints}");
                         results.Add(new OverallKpiResult
                         {
                             KpiCode = $"KPI-{kpi.Id}",
@@ -348,12 +349,17 @@ namespace backend.Controllers
                 if (kpi.KeyPerformanceIndicators.Equals("Routine Maintenance - SLBN/SDH", StringComparison.OrdinalIgnoreCase))
                 {
                     Console.WriteLine("ENTERED SLBN BLOCK");
-                    foreach (var kv in slbnMap)
+                    var totalSlbnNodes = slbnResults.Sum(x => x.NodesCount);
+                    foreach (var record in slbnResults)
                     {
-                        var area = kv.Key;
-                        var achieved = kv.Value;
-                        var maxPoints = slbnMap.Count > 0 ? (decimal)kpi.PointsApplicable / slbnMap.Count : 0m;
-                        Console.WriteLine($"INSERTING {kpi.KeyPerformanceIndicators} Area={area} Achieved={achieved}");
+                        var area = record.NormalizedAreaCode;
+                        var achieved = record.Percentage;
+                        var nodes = record.NodesCount;
+                        var maxPoints = totalSlbnNodes > 0m
+                            ? Math.Round((nodes / totalSlbnNodes) * (decimal)kpi.PointsApplicable, 4)
+                            : (slbnResults.Count > 0 ? Math.Round((decimal)kpi.PointsApplicable / slbnResults.Count, 4) : 0m);
+
+                        Console.WriteLine($"INSERTING {kpi.KeyPerformanceIndicators} Area={area} Achieved={achieved} Nodes={nodes} MaxPoints={maxPoints}");
                         results.Add(new OverallKpiResult
                         {
                             KpiCode = $"KPI-{kpi.Id}",
@@ -376,12 +382,17 @@ namespace backend.Controllers
                 if (kpi.KeyPerformanceIndicators.Equals("Routine Maintenance - MSAN/OLTE", StringComparison.OrdinalIgnoreCase))
                 {
                     Console.WriteLine("ENTERED MSAN BLOCK");
-                    foreach (var kv in msanMap)
+                    var totalMsanNodes = msanResults.Sum(x => x.NodesCount);
+                    foreach (var record in msanResults)
                     {
-                        var area = kv.Key;
-                        var achieved = kv.Value;
-                        var maxPoints = msanMap.Count > 0 ? (decimal)kpi.PointsApplicable / msanMap.Count : 0m;
-                        Console.WriteLine($"INSERTING {kpi.KeyPerformanceIndicators} Area={area} Achieved={achieved}");
+                        var area = record.NormalizedAreaCode;
+                        var achieved = record.Percentage;
+                        var nodes = record.NodesCount;
+                        var maxPoints = totalMsanNodes > 0m
+                            ? Math.Round((nodes / totalMsanNodes) * (decimal)kpi.PointsApplicable, 4)
+                            : (msanResults.Count > 0 ? Math.Round((decimal)kpi.PointsApplicable / msanResults.Count, 4) : 0m);
+
+                        Console.WriteLine($"INSERTING {kpi.KeyPerformanceIndicators} Area={area} Achieved={achieved} Nodes={nodes} MaxPoints={maxPoints}");
                         results.Add(new OverallKpiResult
                         {
                             KpiCode = $"KPI-{kpi.Id}",

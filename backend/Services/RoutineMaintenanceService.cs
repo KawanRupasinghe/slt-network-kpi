@@ -74,7 +74,7 @@ namespace backend.Services
                 designationToArea.TryGetValue(designation, out var areaCode);
                 areaCode ??= string.Empty;
 
-                results.Add(new RoutineMaintenanceResult(designation, areaCode, percent));
+                results.Add(new RoutineMaintenanceResult(designation, areaCode, percent, sched));
             }
 
             Console.WriteLine($"IPNW rows = {results.Count}");
@@ -133,7 +133,7 @@ namespace backend.Services
                 designationToArea.TryGetValue(designation, out var areaCode);
                 areaCode ??= string.Empty;
 
-                results.Add(new RoutineMaintenanceResult(designation, areaCode, percent));
+                results.Add(new RoutineMaintenanceResult(designation, areaCode, percent, sched));
             }
 
             Console.WriteLine($"SLBN rows = {results.Count}");
@@ -195,7 +195,7 @@ namespace backend.Services
                 designationToArea.TryGetValue(designation, out var areaCode);
                 areaCode ??= string.Empty;
 
-                results.Add(new RoutineMaintenanceResult(designation, areaCode, percent));
+                results.Add(new RoutineMaintenanceResult(designation, areaCode, percent, sched));
             }
 
             Console.WriteLine($"MSAN rows = {results.Count}");
