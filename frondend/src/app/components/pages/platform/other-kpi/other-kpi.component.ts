@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RegionService, Region } from '../../../../services/region.service';
 import { TelemetryService } from '../../../../services/telemetry.service';
 import { PowerAndACService, PowerAndACRecord } from '../../../../services/power-and-ac.service';
+import { AuthService } from '../../../../services/auth.service';
 
 const MONTH_OPTIONS = [
   { value: 1, label: 'January' }, { value: 2, label: 'February' }, { value: 3, label: 'March' },
@@ -29,6 +30,9 @@ interface AreaRow {
   networkEngineer: string;
   percentage: number;
   node_Count: number | null;
+  isEditing?: boolean;
+  originalPercentage?: number;
+  originalNodeCount?: number | null;
 }
 
 @Component({
@@ -52,6 +56,7 @@ export class OtherKpiComponent implements OnInit {
   allAreas: AreaRow[] = [];          // built from RegionData — always full list
   tableRows: AreaRow[] = [];         // filtered + merged with DB values
   regionOptions: string[] = [];
+  isEditingAllowed: boolean = false;
 
   // ── Power & AC filter state ──
   pacYear: number = new Date().getFullYear();
@@ -66,10 +71,12 @@ export class OtherKpiComponent implements OnInit {
     private regionService: RegionService,
     private telService: TelemetryService,
     private pacService: PowerAndACService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.isEditingAllowed = this.authService.canEditPage('Other KPI');
     this.loadRegions();
     this.loadPowerAndAC();
   }
@@ -171,6 +178,39 @@ export class OtherKpiComponent implements OnInit {
       error: () => {
         this.telError = 'Failed to load Telemetry data.';
         this.telLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  editRow(row: AreaRow): void {
+    row.originalPercentage = row.percentage;
+    row.originalNodeCount = row.node_Count;
+    row.isEditing = true;
+  }
+
+  cancelEdit(row: AreaRow): void {
+    if (row.originalPercentage !== undefined) row.percentage = row.originalPercentage;
+    if (row.originalNodeCount !== undefined) row.node_Count = row.originalNodeCount;
+    row.isEditing = false;
+  }
+
+  saveRow(row: AreaRow): void {
+    const payload = {
+      designation: row.designation,
+      year: this.telYear,
+      month: this.telMonth,
+      percentage: row.percentage,
+      node_Count: row.node_Count
+    };
+    
+    this.telService.upsert(payload).subscribe({
+      next: () => {
+        row.isEditing = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.telError = 'Failed to save Telemetry data.';
         this.cdr.detectChanges();
       }
     });

@@ -88,9 +88,38 @@
                 <td>{{ row.region || '—' }}</td>
                 <td>{{ row.province || '—' }}</td>
                 <td>{{ row.networkEngineer }}</td>
-                <td class="text-center">{{ row.percentage | number:'1.2-2' }}%</td>
-                <td class="text-center">{{ row.node_Count ?? '—' }}</td>
-                <td class="text-center"><span class="text-muted">—</span></td>
+                <td class="text-center" style="min-width: 120px;">
+                  <ng-container *ngIf="!row.isEditing">
+                    {{ row.percentage | number:'1.2-2' }}%
+                  </ng-container>
+                  <ng-container *ngIf="row.isEditing">
+                    <input type="number" class="form-control form-control-sm mx-auto" style="width: 80px;" [(ngModel)]="row.percentage">
+                  </ng-container>
+                </td>
+                <td class="text-center" style="min-width: 120px;">
+                  <ng-container *ngIf="!row.isEditing">
+                    {{ row.node_Count ?? '—' }}
+                  </ng-container>
+                  <ng-container *ngIf="row.isEditing">
+                    <input type="number" class="form-control form-control-sm mx-auto" style="width: 80px;" [(ngModel)]="row.node_Count">
+                  </ng-container>
+                </td>
+                <td class="text-center" style="min-width: 120px;">
+                  <ng-container *ngIf="isEditingAllowed">
+                    <button *ngIf="!row.isEditing" class="btn btn-sm btn-outline-primary" (click)="editRow(row)">
+                      <i class="bi bi-pencil"></i> Edit
+                    </button>
+                    <div *ngIf="row.isEditing" class="d-flex justify-content-center gap-2">
+                      <button class="btn btn-sm btn-success d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0;" (click)="saveRow(row)" title="Save">
+                        <i class="bi bi-check-lg"></i>
+                      </button>
+                      <button class="btn btn-sm btn-danger d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0;" (click)="cancelEdit(row)" title="Cancel">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </div>
+                  </ng-container>
+                  <span *ngIf="!isEditingAllowed" class="text-muted">—</span>
+                </td>
               </tr>
               <tr *ngIf="!tableRows.length">
                 <td colspan="8" class="text-center py-5 text-muted">

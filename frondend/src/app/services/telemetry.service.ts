@@ -22,4 +22,8 @@ export class TelemetryService {
     const params = new HttpParams().set('year', year).set('month', month);
     return this.http.get<TelemetryRecord[]>(this.base, { params });
   }
+
+  upsert(data: Partial<TelemetryRecord>): Observable<any> {
+    return this.http.post(`${this.base}/upsert`, data);
+  }
 }
