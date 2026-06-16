@@ -214,14 +214,13 @@ namespace backend.Controllers
                     year, month, designationToArea))
                 .ToDictionary(x => x.NormalizedAreaCode, x => x.Percentage);
 
-            var towerMap = (await _towerService.GetTowerPercentagesAsync(
-                    year, month, designationToArea))
-                .ToDictionary(x => x.NormalizedAreaCode, x => x.Percentage);
+            var towerResults = await _towerService.GetTowerPercentagesAsync(
+                    year, month, designationToArea);
 
             Console.WriteLine($"IPNW map count = {ipnwMap.Count}");
             Console.WriteLine($"SLBN map count = {slbnMap.Count}");
             Console.WriteLine($"MSAN map count = {msanMap.Count}");
-            Console.WriteLine($"Tower map count = {towerMap.Count}");
+            Console.WriteLine($"Tower results count = {towerResults.Count}");
 
             // =========================================================
             // STEP 4: VALIDATE DATA AVAILABILITY
@@ -405,12 +404,18 @@ namespace backend.Controllers
                 if (kpi.KeyPerformanceIndicators.Equals("Operation & Maintenance of SLT towers and tower premises", StringComparison.OrdinalIgnoreCase))
                 {
                     Console.WriteLine("ENTERED TOWER BLOCK");
-                    foreach (var kv in towerMap)
+                    var totalTowerNodes = towerResults.Sum(x => x.NodesCount);
+                    foreach (var record in towerResults)
                     {
-                        var area = kv.Key;
-                        var achieved = kv.Value;
-                        var maxPoints = towerMap.Count > 0 ? (decimal)kpi.PointsApplicable / towerMap.Count : 0m;
-                        Console.WriteLine($"INSERTING {kpi.KeyPerformanceIndicators} Area={area} Achieved={achieved}");
+                        var area = record.NormalizedAreaCode;
+                        var achieved = record.Percentage;
+                        var nodes = record.NodesCount;
+
+                        var maxPoints = totalTowerNodes > 0m
+                            ? Math.Round((nodes / totalTowerNodes) * (decimal)kpi.PointsApplicable, 4)
+                            : (towerResults.Count > 0 ? Math.Round((decimal)kpi.PointsApplicable / towerResults.Count, 4) : 0m);
+
+                        Console.WriteLine($"INSERTING {kpi.KeyPerformanceIndicators} Area={area} Achieved={achieved} Nodes={nodes} MaxPoints={maxPoints}");
                         results.Add(new OverallKpiResult
                         {
                             KpiCode = $"KPI-{kpi.Id}",

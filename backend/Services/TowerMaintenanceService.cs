@@ -63,7 +63,7 @@ namespace backend.Services
                 designationToArea.TryGetValue(designation, out var areaCode);
                 areaCode ??= string.Empty;
 
-                results.Add(new RoutineMaintenanceResult(designation, areaCode, percent));
+                results.Add(new RoutineMaintenanceResult(designation, areaCode, percent, sched));
             }
 
             Console.WriteLine($"Tower rows = {results.Count}");
