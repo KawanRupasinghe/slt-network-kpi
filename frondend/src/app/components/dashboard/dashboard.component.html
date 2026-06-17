@@ -3,15 +3,20 @@
      Purpose: Render regions with KPI meters and performance indicators -->
 
 <!-- Dashboard container -->
-<div
-  class="dashboard"
-  *ngIf="!loading; else loadingState"
->
+<div class="dashboard" *ngIf="!loading; else loadingState">
   <div class="dashboard-header">
+    <div class="header-left">
+      <h1>Performance Dashboard</h1>
+      <p class="subtitle">
+        Regional KPI achievement and metrics summary for {{ currentMonthLabel }} {{ selectedYear }}
+      </p>
+    </div>
+
     <div class="header-filters">
       <div class="filter-group">
         <label for="month-select">Month:</label>
-        <select id="month-select" class="filter-select" [(ngModel)]="selectedMonth" (ngModelChange)="onMonthChange($event)">
+        <select id="month-select" class="filter-select" [(ngModel)]="selectedMonth"
+          (ngModelChange)="onMonthChange($event)">
           <option *ngFor="let month of monthOptions" [ngValue]="month.value">
             {{ month.label }}
           </option>
@@ -19,7 +24,8 @@
       </div>
       <div class="filter-group">
         <label for="year-select">Year:</label>
-        <select id="year-select" class="filter-select" [(ngModel)]="selectedYear" (ngModelChange)="onYearChange($event)">
+        <select id="year-select" class="filter-select" [(ngModel)]="selectedYear"
+          (ngModelChange)="onYearChange($event)">
           <option *ngFor="let year of yearOptions" [ngValue]="year">
             {{ year }}
           </option>
@@ -88,12 +94,8 @@
   <!-- REGIONS & METERS SECTION -->
   <div class="percentage-note">All values shown are percentages (%)</div>
   <div class="regions-wrapper">
-    <div
-      class="region-card"
-      *ngFor="let region of regions; trackBy: trackByRegion; let idx = index"
-      (mouseenter)="regionHoverStates[idx] = true"
-      (mouseleave)="regionHoverStates[idx] = false"
-    >
+    <div class="region-card" *ngFor="let region of regions; trackBy: trackByRegion; let idx = index"
+      (mouseenter)="regionHoverStates[idx] = true" (mouseleave)="regionHoverStates[idx] = false">
       <!-- Region title with subtle left accent -->
       <div class="region-title">
         <h3>{{ formatRegionTitle(region.title) }}</h3>
@@ -101,20 +103,14 @@
 
       <!-- Circular meters -->
       <div class="meters-row">
-        <div
-          class="meter"
-          *ngFor="let meter of region.meters; trackBy: trackByMeter"
+        <div class="meter" *ngFor="let meter of region.meters; trackBy: trackByMeter"
           (mouseenter)="meterHoverStates[region.title + meter.code] = true"
-          (mouseleave)="meterHoverStates[region.title + meter.code] = false"
-          (click)="openMeterDetails(region, meter)"
-        >
+          (mouseleave)="meterHoverStates[region.title + meter.code] = false" (click)="openMeterDetails(region, meter)">
           <div class="meter-progress">
             <!-- Dynamic conic gradient background (set via style binding) -->
-            <div
-              class="meter-circle"
-              [style.background]="getCircularProgressBackground(meter, region.meters)"
-            >
-              <span class="meter-percent" [style.color]="getColorForValue(valueForMeter(meter))">{{ valueForMeter(meter).toFixed(1) }}</span>
+            <div class="meter-circle" [style.background]="getCircularProgressBackground(meter, region.meters)">
+              <span class="meter-percent" [style.color]="getColorForValue(valueForMeter(meter))">{{
+                valueForMeter(meter).toFixed(1) }}</span>
             </div>
           </div>
           <div class="meter-label">
@@ -136,8 +132,8 @@
     </div>
     <div class="message-card" *ngIf="!loading && error">
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0057a6">
-        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" />
+        <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
       </svg>
       <p>{{ error }}</p>
     </div>
@@ -152,8 +148,9 @@
         <h2>{{ selectedDetails.displayName }}</h2>
         <div class="meta-badge">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#02b28c">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" stroke-width="1.8"/>
-            <circle cx="12" cy="9" r="2" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor"
+              stroke-width="1.8" />
+            <circle cx="12" cy="9" r="2" stroke="currentColor" stroke-width="1.8" />
           </svg>
           <span>{{ selectedDetails.region }} · {{ selectedDetails.province }}</span>
         </div>
@@ -172,7 +169,8 @@
       </div>
       <div class="summary-item">
         <span class="summary-label">Overall KPI</span>
-        <strong class="summary-value" style="color: #02b28c;">{{ selectedDetails.overallPercent | number:'1.2-2' }}%</strong>
+        <strong class="summary-value" style="color: #02b28c;">{{ selectedDetails.overallPercent | number:'1.2-2'
+          }}%</strong>
       </div>
       <div class="summary-item">
         <span class="summary-label">Max Points</span>

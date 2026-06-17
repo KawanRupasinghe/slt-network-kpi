@@ -165,6 +165,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     @Inject(PLATFORM_ID) private platformId: any
   ) {}
 
+  get currentMonthLabel(): string {
+    const found = this.monthOptions.find((m) => m.value === this.selectedMonth);
+    return found ? found.label : '';
+  }
+
   ngOnInit(): void {
     this.loadDashboardData();
   }

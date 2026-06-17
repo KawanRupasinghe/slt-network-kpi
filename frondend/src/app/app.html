@@ -2,7 +2,7 @@
   <header class="app-header" *ngIf="!isLoginPage">
     <div class="header-content">
       <div class="header-left">
-        <div class="logo-section">
+        <div class="logo-section" (click)="navigateToDashboard()">
           <div class="logo">
             <img src="assets/slt-logo.svg" alt="SLT Mobitel logo" class="logo-img" />
           </div>
@@ -25,9 +25,13 @@
 
         
 
-          <span class="welcome-text">
-            Welcome, {{ userName() }}
-          </span>
+          <div class="user-profile-section" (click)="navigateToUserManagement()">
+            <span class="profile-icon">👤</span>
+            <div class="profile-details">
+              <span class="profile-name">{{ userName() }}</span>
+              <span class="profile-role" *ngIf="userRole()">{{ userRole() }}</span>
+            </div>
+          </div>
 
           <app-logout-button (logout)="logout()">
           </app-logout-button>

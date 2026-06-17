@@ -1,39 +1,34 @@
 /* Header Container Styling */
 .current-month-header {
   width: 100%;
-  background: white;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  background: transparent;
+  padding: 6px 4px;
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  margin-bottom: 20px;
-  border: 1px solid #ffffff;
+  margin-bottom: 10px;
+  border: none;
   gap: 12px;
 }
 
 /* Left Section: Text */
 .header-left .eyebrow {
-  color: #000000;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  font-size: 12px;
-  margin: 0 0 4px 0;
+  display: none;
 }
 
 .header-left h1 {
   color: #0057a6;
-  font-size: 2.1rem;
+  font-size: 1.8rem;
   font-weight: 700;
-  margin: 0.5rem 0;
+  margin: 0;
   letter-spacing: 0.3px;
+  line-height: 1.2;
 }
 
 .header-left .subtitle {
   color: #64748b;
-  font-size: 14px;
-  margin-top: 4px;
+  font-size: 13px;
+  margin: 4px 0 0 0;
 }
 
 /* Center Section: Filters */
@@ -175,7 +170,7 @@
   flex-direction: row;
   width: 100%;
   max-width: 100vw;
-  max-height: calc(100vh - 180px); /* Keeps the table scrollable and scrollbars visible */
+  max-height: calc(100vh - 130px); /* Keeps the table scrollable and scrollbars visible */
   overflow: auto; /* Enables synchronized vertical scrolling and horizontal scrolling */
   gap: 0;
   align-items: flex-start;
@@ -498,3 +493,59 @@
   color: #0b3d26;
   font-weight: 800;
 }
+
+/* Category Legend Styling */
+.legend-container {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 14px;
+  align-self: flex-start;
+  padding-left: 6px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.assurance-dot {
+  background-color: #dbeafe;
+  border: 1.5px solid #0057a6;
+}
+
+.fulfillment-dot {
+  background-color: #dcfce7;
+  border: 1.5px solid #28a745;
+}
+
+/* Row Category Specific Background Colors (Service Assurance & Service Fulfillment) */
+.kpi-table tbody tr.category-assurance td,
+.final-distribution-table tbody tr.category-assurance td {
+  background-color: #dbeafe !important;
+}
+
+.kpi-table tbody tr.category-assurance:hover td,
+.final-distribution-table tbody tr.category-assurance:hover td {
+  background-color: #bfdbfe !important;
+}
+
+.kpi-table tbody tr.category-fulfillment td,
+.final-distribution-table tbody tr.category-fulfillment td {
+  background-color: #dcfce7 !important;
+}
+
+.kpi-table tbody tr.category-fulfillment:hover td,
+.final-distribution-table tbody tr.category-fulfillment:hover td {
+  background-color: #bbf7d0 !important;
+}
+
