@@ -152,6 +152,10 @@ namespace backend.Controllers
                 .Where(x => x.Month == month && x.Year == year)
                 .ToListAsync();
 
+            var telemetryMetrics = await _db.Telemetry.AsNoTracking()
+                .Where(x => x.Month == month && x.Year == year)
+                .ToListAsync();
+
             // =========================================================
             // STEP 3: EXTRACT AREA CODES FROM METRICS
             // Aggregate all unique area codes from actual metric data
@@ -447,9 +451,7 @@ namespace backend.Controllers
                             TargetValue = 95m,
                             AchievedKpi = achieved,
                             MaximumPointsPerKpi = maxPoints,
-                            PointsAchieved = achieved > 95m
-                                ? maxPoints
-                                : Math.Round((maxPoints * achieved) / 100m, 4),
+                            PointsAchieved = CalculatePointsAchieved(maxPoints, achieved, 95m),
                             Month = month,
                             Year = year,
                             CalculatedAt = nowUtc
@@ -485,9 +487,47 @@ namespace backend.Controllers
                             TargetValue = 90m,
                             AchievedKpi = achieved,
                             MaximumPointsPerKpi = maxPoints,
-                            PointsAchieved = achieved > 90m
-                                ? maxPoints
-                                : Math.Round((maxPoints * achieved) / 100m, 4),
+                            PointsAchieved = CalculatePointsAchieved(maxPoints, achieved, 90m),
+                            Month = month,
+                            Year = year,
+                            CalculatedAt = nowUtc
+                        });
+                    }
+                    continue;
+                }
+
+                if (kpi.KeyPerformanceIndicators.Contains("Telemetry", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("ENTERED TELEMETRY BLOCK");
+                    var totalTelemetryNodes = (decimal)telemetryMetrics.Sum(x => x.Node_Count ?? 0);
+                    foreach (var record in telemetryMetrics)
+                    {
+                        var designation = record.Designation?.Trim() ?? string.Empty;
+                        designationToArea.TryGetValue(designation, out var areaCode);
+                        areaCode ??= string.Empty;
+                        if (string.IsNullOrEmpty(areaCode)) continue;
+
+                        var achieved = record.Percentage;
+                        var nodes = (decimal)(record.Node_Count ?? 0);
+
+                        var maxPoints = totalTelemetryNodes > 0m
+                            ? Math.Round((nodes / totalTelemetryNodes) * (decimal)kpi.PointsApplicable, 4)
+                            : (telemetryMetrics.Count > 0 ? Math.Round((decimal)kpi.PointsApplicable / telemetryMetrics.Count, 4) : 0m);
+
+                        var targetValue = TryParseTargetValue(kpi.DescriptionOfKPI) ?? 99.990m;
+
+                        Console.WriteLine($"INSERTING {kpi.KeyPerformanceIndicators} Area={areaCode} Achieved={achieved} Nodes={nodes} MaxPoints={maxPoints}");
+                        results.Add(new OverallKpiResult
+                        {
+                            KpiCode = $"KPI-{kpi.Id}",
+                            KpiDefinitionId = kpi.Id,
+                            KpiName = kpi.KeyPerformanceIndicators,
+                            Platform = kpi.Perspectives,
+                            AreaCode = areaCode,
+                            TargetValue = targetValue,
+                            AchievedKpi = achieved,
+                            MaximumPointsPerKpi = maxPoints,
+                            PointsAchieved = CalculatePointsAchieved(maxPoints, achieved, targetValue),
                             Month = month,
                             Year = year,
                             CalculatedAt = nowUtc
@@ -957,11 +997,12 @@ namespace backend.Controllers
         {
             var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            // Collect designations from maintenance tables
+            // Collect designations from maintenance and telemetry tables
             var designations = _db.MsanMtcData.Select(x => x.Designation)
                 .Concat(_db.IpnwMtcData.Select(x => x.Designation))
                 .Concat(_db.SlbnMtcData.Select(x => x.Designation))
                 .Concat(_db.TowerMtcData.Select(x => x.Designation))
+                .Concat(_db.Telemetry.Select(x => x.Designation))
                 .Where(x => x != null)
                 .Distinct()
                 .ToList();
@@ -972,7 +1013,12 @@ namespace backend.Controllers
                 if (string.IsNullOrEmpty(designation))
                     continue;
 
-                var normalizedDesignation = NormalizeDesignation(designation);
+                // Remove name part from designation if present, e.g. "NW/WPC1(Manjula)" -> "NW/WPC1"
+                var baseDesignation = designation.Contains('(')
+                    ? designation[..designation.IndexOf('(')].Trim()
+                    : designation;
+
+                var normalizedDesignation = NormalizeDesignation(baseDesignation);
 
                 var region = dbRegions.FirstOrDefault(r =>
                 {
@@ -994,7 +1040,7 @@ namespace backend.Controllers
                 }
                 else
                 {
-                    Console.WriteLine($"No RegionData match for designation [{designation}]");
+                    Console.WriteLine($"No RegionData match for designation [{designation}] (base: [{baseDesignation}])");
                 }
             }
 
@@ -1046,12 +1092,12 @@ namespace backend.Controllers
             }
 
             // Target-based formula:
-            // If achieved > target: pointsAchieved = maxPoints
-            // Else: pointsAchieved = maxPoints * achieved / target
+            // If achieved >= target: pointsAchieved = maxPoints
+            // Else: pointsAchieved = maxPoints * achieved / 100
             var target = targetValue.Value;
-            var points = achieved > target
+            var points = achieved >= target
                 ? maxPoints
-                : Math.Round((maxPoints * achieved) / target, 4);
+                : Math.Round((maxPoints * achieved) / 100m, 4);
 
             return points;
         }
