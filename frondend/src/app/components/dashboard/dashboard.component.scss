@@ -282,51 +282,27 @@ $border-radius-meter: 999px;
   overflow: hidden;
   box-sizing: border-box;
 
-  // Different light background colors for each region
-  &:nth-child(1) {
-    background: rgba(255, 240, 220, 0.9); // Light coral/apricot
+  // Alternating between SLT's two corporate brand colors (SLT Blue and SLT Green/Teal)
+  &:nth-child(odd) {
+    background: rgba(235, 244, 255, 0.9); // Soft SLT blue tint
 
     .region-title {
-      border-left-color: #e65c2e; // Darker coral
+      border-left-color: $slt-blue;
 
       h3 {
-        color: #e65c2e;
+        color: $slt-blue;
       }
     }
   }
 
-  &:nth-child(2) {
-    background: rgba(220, 240, 255, 0.9); // Darker blue
+  &:nth-child(even) {
+    background: rgba(232, 247, 239, 0.9); // Soft SLT green/teal tint
 
     .region-title {
-      border-left-color: #2270cc; // Darker blue
+      border-left-color: $slt-teal;
 
       h3 {
-        color: #2270cc;
-      }
-    }
-  }
-
-  &:nth-child(3) {
-    background: rgba(220, 245, 235, 0.9); // Darker mint
-
-    .region-title {
-      border-left-color: #018a69; // Darker teal/mint
-
-      h3 {
-        color: #018a69;
-      }
-    }
-  }
-
-  &:nth-child(4) {
-    background: rgba(235, 230, 255, 0.9); // Darker lavender
-
-    .region-title {
-      border-left-color: #7550b8; // Darker lavender
-
-      h3 {
-        color: #7550b8;
+        color: $slt-teal;
       }
     }
   }
@@ -672,6 +648,18 @@ $border-radius-meter: 999px;
     font-weight: 700;
     color: $slt-blue;
     line-height: 1.2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+  .summary-value .engineer-code {
+    font-weight: 700;
+    color: $slt-blue;
+  }
+  .summary-value .engineer-name {
+    font-size: 0.9rem;
+    color: $slt-teal;
   }
 }
 

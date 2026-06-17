@@ -165,7 +165,10 @@
     <div class="summary-grid">
       <div class="summary-item">
         <span class="summary-label">Network Engineer</span>
-        <strong class="summary-value">{{ selectedDetails.networkEngineer }}</strong>
+        <strong class="summary-value">
+          <div class="engineer-code">{{ splitEngineerName(selectedDetails.networkEngineer).code }}</div>
+          <div class="engineer-name">{{ splitEngineerName(selectedDetails.networkEngineer).name }}</div>
+        </strong>
       </div>
       <div class="summary-item">
         <span class="summary-label">Overall KPI</span>

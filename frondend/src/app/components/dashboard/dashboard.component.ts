@@ -357,7 +357,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   getEngineerForMeter(meter: MeterData): string {
     const key = this.normalizeArea(meter.code);
-    return meter.engineer || this.engineerLookup.get(key) || '—';
+    const raw = meter.engineer || this.engineerLookup.get(key) || '—';
+    if (raw && raw !== '—') {
+      const parenIndex = raw.indexOf('(');
+      if (parenIndex !== -1) {
+        return raw.substring(0, parenIndex).trim();
+      }
+    }
+    return raw;
   }
 
   getCircularProgressBackground(meter: MeterData, meters: MeterData[]): string {
@@ -458,10 +465,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }));
 
     this.selectedRegionTitle = regionName;
-    const engineerDisplay = this.getEngineerForMeter(meter);
+    const key = this.normalizeArea(meter.code);
+    const fullEngineer = meter.engineer || this.engineerLookup.get(key) || networkEngineer || '—';
     const areaDisplay = meter.label || meter.code;
-    const compositeDisplay = engineerDisplay && engineerDisplay !== '—' ? `${engineerDisplay} (${areaDisplay})` : areaDisplay;
-    const networkEngineerValue = engineerDisplay !== '—' ? engineerDisplay : networkEngineer;
+    const compositeDisplay = fullEngineer && fullEngineer !== '—' ? `${fullEngineer} (${areaDisplay})` : areaDisplay;
+    const networkEngineerValue = fullEngineer !== '—' ? fullEngineer : networkEngineer;
     this.selectedDetails = {
       region: regionName,
       province,
@@ -474,6 +482,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
       kpiRows,
     };
     console.log('✅ Modal details set:', this.selectedDetails);
+  }
+
+  splitEngineerName(engineer: string): { code: string; name: string } {
+    if (!engineer || engineer === '—') {
+      return { code: '—', name: '' };
+    }
+    const parenIndex = engineer.indexOf('(');
+    if (parenIndex !== -1) {
+      const code = engineer.substring(0, parenIndex).trim();
+      let name = engineer.substring(parenIndex + 1);
+      const closeParenIndex = name.indexOf(')');
+      if (closeParenIndex !== -1) {
+        name = name.substring(0, closeParenIndex);
+      }
+      return { code, name: name.trim() };
+    }
+    return { code: engineer, name: '' };
   }
 
   closeDetails(): void {
