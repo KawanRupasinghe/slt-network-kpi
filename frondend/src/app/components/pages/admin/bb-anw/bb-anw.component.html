@@ -8,14 +8,17 @@
     <div class="form-container">
 
         <div class="form-header">
-          <h2>{{ editingId ? 'Update KPI Row' : 'Create KPI Row' }}</h2>
+          <div>
+            <h2>{{ editingId ? 'Update KPI Row' : 'Create KPI Row' }}</h2>
+          </div>
+          <div class="form-actions">
+            <button class="btn-submit" type="submit" form="bb-anw-form" [disabled]="bbAnwForm.invalid || saving">{{ editingId ? 'Update' : 'Add' }}</button>
+            <button type="button" class="btn-cancel" *ngIf="editingId" (click)="closeForm()">Cancel</button>
+          </div>
         </div>
 
-        <form class="kpi-form" (ngSubmit)="submitForm()">
+        <form id="bb-anw-form" #bbAnwForm="ngForm" class="kpi-form" (ngSubmit)="submitForm()">
           <div class="form-row">
-
-
-
             <div class="form-group">
               <label for="kpi">Network Engineer KPI</label>
               <input id="kpi" type="text" [(ngModel)]="form.networkEngineerKpi" name="kpi" placeholder="Network Engineer KPI" required />
@@ -35,11 +38,6 @@
               <label for="kpiPercent">KPI (%)</label>
               <input id="kpiPercent" type="number" [(ngModel)]="form.kpiPercent" name="kpiPercent" placeholder="KPI (%)" required />
             </div>
-          </div>
-
-          <div class="form-actions">
-            <button class="btn-submit" type="submit" [disabled]="saving">{{ editingId ? 'Update' : 'Add' }}</button>
-            <button type="button" class="btn-cancel" *ngIf="editingId" (click)="closeForm()">Cancel</button>
           </div>
         </form>
       </div>

@@ -36,11 +36,26 @@
   <section class="form-section" *ngIf="!loading && !error">
     <div class="form-container">
       <div class="form-header">
-        <h2>{{ editingId ? 'Update KPI Row' : 'Create KPI Row' }}</h2>
-        <p class="form-sub">Manage IP Network Operations KPI settings</p>
+        <div>
+          <h2>{{ editingId ? 'Update KPI Row' : 'Create KPI Row' }}</h2>
+          <p class="form-sub">Manage IP Network Operations KPI settings</p>
+        </div>
+        <div class="form-actions">
+          <button class="btn-submit" type="submit" form="ip-nw-op-form" [disabled]="ipNwOpForm.invalid">
+            {{ editingId ? 'Update' : 'Add' }}
+          </button>
+          <button
+            type="button"
+            class="btn-cancel secondary"
+            *ngIf="editingId"
+            (click)="cancelEdit()"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
 
-      <form class="kpi-form" (ngSubmit)="save()">
+      <form id="ip-nw-op-form" #ipNwOpForm="ngForm" class="kpi-form" (ngSubmit)="save()">
         <div class="form-row">
           <div class="form-group">
             <label for="kpi">Network Engineer KPI</label>
@@ -94,21 +109,6 @@
               placeholder="KPI (%)"
             />
           </div>
-        </div>
-
-        <div class="form-actions">
-          <button class="btn-submit" type="submit">
-            {{ editingId ? 'Update' : 'Add' }}
-          </button>
-
-          <button
-            type="button"
-            class="btn-cancel secondary"
-            *ngIf="editingId"
-            (click)="cancelEdit()"
-          >
-            Cancel
-          </button>
         </div>
       </form>
     </div>

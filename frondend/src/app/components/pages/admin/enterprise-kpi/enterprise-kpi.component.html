@@ -6,11 +6,19 @@
   <div class="dashboard-container">
     <div class="form-container">
       <div class="form-header">
-        <h2>{{ editingId ? 'Update KPI' : 'Add New KPI' }}</h2>
-        <p class="form-sub">Manage Network Engineer KPI records</p>
+        <div>
+          <h2>{{ editingId ? 'Update KPI' : 'Add New KPI' }}</h2>
+          <p class="form-sub">Manage Network Engineer KPI records</p>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-submit" form="enterprise-kpi-form" [disabled]="form.invalid || saving">
+            {{ editingId ? 'Update' : 'Add' }}
+          </button>
+          <button type="button" class="btn-cancel" *ngIf="editingId" (click)="onCancelEdit()" [disabled]="saving">Cancel</button>
+        </div>
       </div>
 
-      <form class="kpi-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+      <form id="enterprise-kpi-form" class="kpi-form" [formGroup]="form" (ngSubmit)="onSubmit()">
         <div class="form-row">
           <div class="form-group">
             <label>Network Engineer KPI</label>
@@ -31,22 +39,6 @@
             <label>KPI (%)</label>
             <input type="number" formControlName="kpiPercent" placeholder="KPI (%)" />
           </div>
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" class="btn-submit" [disabled]="form.invalid || saving">
-            {{ editingId ? 'Update' : 'Add' }}
-          </button>
-
-          <button
-            type="button"
-            class="btn-cancel"
-            *ngIf="editingId"
-            (click)="onCancelEdit()"
-            [disabled]="saving"
-          >
-            Cancel
-          </button>
         </div>
       </form>
     </div>

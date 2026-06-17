@@ -6,11 +6,21 @@
   <div class="dashboard-container">
     <div class="form-container">
       <div class="form-header">
-        <h2>{{ formTitle }}</h2>
-        <p class="form-sub">Manage Routine Maintenance KPI records</p>
+        <div>
+          <h2>{{ formTitle }}</h2>
+          <p class="form-sub">Manage Routine Maintenance KPI records</p>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-submit" form="routine-mtnc-form" [disabled]="form.invalid || saving">
+            {{ submitButtonLabel }}
+          </button>
+          <button type="button" class="btn-cancel" *ngIf="editingId" (click)="onCancelEdit()" [disabled]="saving">
+            Cancel
+          </button>
+        </div>
       </div>
 
-      <form class="kpi-form" [formGroup]="form" (ngSubmit)="onSubmit()" [class.edit-mode]="editingId">
+      <form id="routine-mtnc-form" class="kpi-form" [formGroup]="form" (ngSubmit)="onSubmit()" [class.edit-mode]="editingId">
         <div class="form-row">
           <div class="form-group">
             <label>KPI</label>
@@ -55,14 +65,7 @@
           </div>
         </div>
 
-        <div class="form-actions">
-          <button type="submit" class="btn-submit" [disabled]="form.invalid || saving">
-            {{ submitButtonLabel }}
-          </button>
-          <button type="button" class="btn-cancel" *ngIf="editingId" (click)="onCancelEdit()" [disabled]="saving">
-            Cancel
-          </button>
-        </div>
+
 
         <div class="edit-hint" *ngIf="editingId">
           <span>Editing KPI. Make changes and click <b>Update KPI</b> or <b>Cancel</b> to discard.</span>
