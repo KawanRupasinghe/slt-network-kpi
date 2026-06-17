@@ -73,16 +73,23 @@
   margin-bottom: 3rem;
 }
 
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
 .form-header h2 {
   color: #102136;
   font-size: 1.5rem;
   font-weight: 700;
-  margin: 0 0 .5rem 0;
+  margin: 0;
 }
 
 .form-header p {
   color: #94a3b8;
-  margin-bottom: 2rem;
+  margin: .25rem 0 0;
 }
 
 .kpi-form {
@@ -184,9 +191,8 @@ input.editing {
 .form-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 12px;
-  padding-top: 1.5rem;
-  border-top: 1px solid #f1f5f9;
 }
 
 .btn-submit {

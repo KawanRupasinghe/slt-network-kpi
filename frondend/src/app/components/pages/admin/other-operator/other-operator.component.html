@@ -6,11 +6,21 @@
   <div class="dashboard-container">
     <div class="form-container">
       <div class="form-header">
-        <h2>{{ editingId ? 'Update KPI' : 'Add KPI' }}</h2>
-        <p class="form-sub">Manage Other Operator KPI records</p>
+        <div>
+          <h2>{{ editingId ? 'Update KPI' : 'Add KPI' }}</h2>
+          <p class="form-sub">Manage Other Operator KPI records</p>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-submit" form="other-operator-form" [disabled]="form.invalid || saving">
+            {{ editingId ? 'Update' : 'Add' }}
+          </button>
+          <button type="button" class="btn-cancel" *ngIf="editingId" (click)="onCancelEdit()" [disabled]="saving">
+            Cancel
+          </button>
+        </div>
       </div>
 
-      <form class="kpi-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+      <form id="other-operator-form" class="kpi-form" [formGroup]="form" (ngSubmit)="onSubmit()">
         <div class="form-row">
           <div class="form-group">
             <label>Responsibility</label>
@@ -33,21 +43,7 @@
           </div>
         </div>
 
-        <div class="form-actions">
-          <button type="submit" class="btn-submit" [disabled]="saving">
-            {{ editingId ? 'Update' : 'Add' }}
-          </button>
 
-          <button
-            type="button"
-            class="btn-cancel"
-            *ngIf="editingId"
-            (click)="onCancelEdit()"
-            [disabled]="saving"
-          >
-            Cancel
-          </button>
-        </div>
       </form>
     </div>
 

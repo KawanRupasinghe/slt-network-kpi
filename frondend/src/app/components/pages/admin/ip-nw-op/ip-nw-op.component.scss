@@ -149,13 +149,14 @@
 }
 
 .form-header{
-  max-width:1100px;
-  width:100%;
-  margin-bottom:1rem;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:1.5rem;
 }
 
-.form-header h2{ margin:0; color:#102136; font-size:1.5rem; font-weight:700; margin:0 0 .5rem 0; }
-.form-header p{ color:#94a3b8; margin-bottom:2rem; }
+.form-header h2{ margin:0; color:#102136; font-size:1.5rem; font-weight:700; }
+.form-header p{ color:#94a3b8; margin:.25rem 0 0; }
 
 .form-row{
   display:grid;
@@ -175,7 +176,7 @@
 /* Table wrapper receives card visuals in this layout */
 .table-responsive{ width:100%; overflow-x:auto; border-radius:18px; box-shadow:0 18px 35px rgba(8,50,94,.12); }
 
-.form-actions{ display:flex; justify-content:flex-end; gap:12px; padding-top:1.5rem; border-top:1px solid #f1f5f9; }
+.form-actions{ display:flex; gap:12px; align-items:center; }
 
 .action-buttons{ display:flex; gap:.5rem; }
 .btn-edit{ background:#28a745; color:#fff; border:none; padding:.4rem .8rem; border-radius:6px; font-weight:600; cursor:pointer; }

@@ -6,11 +6,17 @@
   <div class="dashboard-container">
     <div class="form-container">
       <div class="form-header">
-        <h2>{{ formTitle }}</h2>
-        <p class="form-note">Manage recipients for automated KPI emails</p>
+        <div>
+          <h2>{{ formTitle }}</h2>
+          <p class="form-note">Manage recipients for automated KPI emails</p>
+        </div>
+        <div class="form-actions">
+          <button class="btn-submit" type="submit" form="email-service-form" [disabled]="form.invalid || saving">{{ submitButtonLabel }}</button>
+          <button class="btn-cancel" type="button" *ngIf="editingId" (click)="onCancelEdit()" [disabled]="saving">Cancel</button>
+        </div>
       </div>
 
-      <form class="kpi-form" [formGroup]="form" (ngSubmit)="onSubmit()" [class.edit-mode]="editingId">
+      <form id="email-service-form" class="kpi-form" [formGroup]="form" (ngSubmit)="onSubmit()" [class.edit-mode]="editingId">
         <div class="form-row">
           <div class="form-group">
             <label for="email">Email address</label>
@@ -19,10 +25,6 @@
           </div>
         </div>
 
-        <div class="form-actions">
-          <button class="btn-cancel" type="button" *ngIf="editingId" (click)="onCancelEdit()" [disabled]="saving">Cancel</button>
-          <button class="btn-submit" type="submit" [disabled]="form.invalid || saving">{{ submitButtonLabel }}</button>
-        </div>
       </form>
 
       <div *ngIf="editingId" class="edit-hint">
