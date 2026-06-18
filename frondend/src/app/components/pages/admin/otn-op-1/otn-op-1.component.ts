@@ -22,7 +22,7 @@ import { OtnOp1Service, OtnOpKpi, CreateOtnOpKpi } from '../../../../services/ot
 })
 export class OtnOp1Component implements OnInit {
 
-  pageTitle = 'INT & NT OP_1';
+  pageTitle = 'OTN OP - 01';
 
   records: OtnOpKpi[] = [];
   editingId: number | null = null;
