@@ -528,7 +528,17 @@
   border: 1.5px solid #28a745;
 }
 
-/* Row Category Specific Background Colors (Service Assurance & Service Fulfillment) */
+.enterprise-dot {
+  background-color: #f3e8ff;
+  border: 1.5px solid #8b5cf6;
+}
+
+.other-operator-dot {
+  background-color: #ffedd5;
+  border: 1.5px solid #f97316;
+}
+
+/* Row Category Specific Background Colors */
 .kpi-table tbody tr.category-assurance td,
 .final-distribution-table tbody tr.category-assurance td {
   background-color: #dbeafe !important;
@@ -547,5 +557,25 @@
 .kpi-table tbody tr.category-fulfillment:hover td,
 .final-distribution-table tbody tr.category-fulfillment:hover td {
   background-color: #bbf7d0 !important;
+}
+
+.kpi-table tbody tr.category-enterprise td,
+.final-distribution-table tbody tr.category-enterprise td {
+  background-color: #f3e8ff !important;
+}
+
+.kpi-table tbody tr.category-enterprise:hover td,
+.final-distribution-table tbody tr.category-enterprise:hover td {
+  background-color: #e9d5ff !important;
+}
+
+.kpi-table tbody tr.category-other-operator td,
+.final-distribution-table tbody tr.category-other-operator td {
+  background-color: #ffedd5 !important;
+}
+
+.kpi-table tbody tr.category-other-operator:hover td,
+.final-distribution-table tbody tr.category-other-operator:hover td {
+  background-color: #fed7aa !important;
 }
 

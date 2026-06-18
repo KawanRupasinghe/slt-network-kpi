@@ -710,11 +710,12 @@ $border-radius-meter: 999px;
 .kpi-table-row {
   display: grid;
   grid-template-columns: 1.5fr 0.7fr 0.9fr 0.9fr;
-  padding: 0.9rem 1.5rem;
+  padding: 0.9rem 1.5rem 0.9rem 2.8rem;
   background: white;
   border-bottom: 1px solid $gray-200;
   font-size: 0.95rem;
   align-items: center;
+  position: relative;
 
   &:last-child {
     border-bottom: none;
@@ -722,6 +723,33 @@ $border-radius-meter: 999px;
 
   &:nth-child(even) {
     background: rgba($pastel-blue, 0.3);
+  }
+}
+
+.row-indicator {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.indicator-badge {
+  font-size: 13.5px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  
+  &.enterprise {
+    color: #6b21a8; /* Dark purple */
+  }
+  
+  &.other {
+    color: #c2410c; /* Dark orange */
   }
 }
 
@@ -838,4 +866,66 @@ $border-radius-meter: 999px;
       color: $slt-blue;
     }
   }
+}
+
+/* Category Legend Styling (Modal) */
+.legend-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding-left: 6px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.assurance-dot {
+  background-color: #dbeafe;
+  border: 1.5px solid #0057a6;
+}
+
+.fulfillment-dot {
+  background-color: #dcfce7;
+  border: 1.5px solid #28a745;
+}
+
+.enterprise-dot {
+  background-color: #f3e8ff;
+  border: 1.5px solid #8b5cf6;
+}
+
+.other-operator-dot {
+  background-color: #ffedd5;
+  border: 1.5px solid #f97316;
+}
+
+/* Category Specific Background Colors inside Modal Table */
+.kpi-table-row.category-assurance {
+  background-color: #dbeafe !important;
+  &:hover { background-color: #bfdbfe !important; }
+}
+.kpi-table-row.category-fulfillment {
+  background-color: #dcfce7 !important;
+  &:hover { background-color: #bbf7d0 !important; }
+}
+.kpi-table-row.category-enterprise {
+  background-color: #f3e8ff !important;
+  &:hover { background-color: #e9d5ff !important; }
+}
+.kpi-table-row.category-other-operator {
+  background-color: #ffedd5 !important;
+  &:hover { background-color: #fed7aa !important; }
 }

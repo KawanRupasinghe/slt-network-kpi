@@ -58,6 +58,7 @@ type MeterKpiRow = {
   achievedKpi: number;
   maximumPointsPerKpi: number;
   pointsAchieved: number;
+  category?: string;
 };
 
 type MeterDetails = {
@@ -155,6 +156,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private readonly rtomApiBase = `${environment.apiUrl}/rtom-areas`;
   private readonly overallKpiApiBase = `${environment.apiUrl}/overall-kpi-results`;
 
+  private kpiCategoryMap = new Map<number, string>();
   private regionRows: RegionApi[] = [];
   private overallRows: OverallKpiResultApi[] = [];
   private engineerLookup = new Map<string, string>();
@@ -214,10 +216,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
       regions: this.http.get<RegionApi[]>(this.regionApiBase),
       rtomAreas: this.http.get<RtomAreaApi[]>(this.rtomApiBase),
       overall: this.http.get<OverallKpiResultApi[]>(`${this.overallKpiApiBase}?month=${month}&year=${year}`),
+      kpis: this.http.get<any[]>(`${environment.apiUrl}/kpi-definitions?month=${month}&year=${year}`)
     }).subscribe({
-      next: ({ regions, rtomAreas, overall }) => {
+      next: ({ regions, rtomAreas, overall, kpis }) => {
         this.regionRows = regions ?? [];
         this.overallRows = overall ?? [];
+        this.kpiCategoryMap.clear();
+        (kpis ?? []).forEach((kpi) => {
+          this.kpiCategoryMap.set(kpi.id, kpi.category ?? '');
+        });
         const rtomLookup = new Map<string, string>();
         (rtomAreas ?? []).forEach((area) => {
           const code = this.normalizeArea((area as any).areaCode ?? (area as any).AreaCode ?? '');
@@ -461,13 +468,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
         ? (totalPointsAchieved / totalMaximumPoints) * 100
         : 0;
 
-    const kpiRows: MeterKpiRow[] = rows.map((row) => ({
-      kpiDefinitionId: Number((row as any).kpiDefinitionId ?? (row as any).KpiDefinitionId ?? 0),
-      kpiName: String((row as any).kpiName ?? (row as any).KpiName ?? ''),
-      achievedKpi: Number((row as any).achievedKpi ?? (row as any).AchievedKpi ?? 0),
-      maximumPointsPerKpi: Number((row as any).maximumPointsPerKpi ?? (row as any).MaximumPointsPerKpi ?? 0),
-      pointsAchieved: Number((row as any).pointsAchieved ?? (row as any).PointsAchieved ?? 0),
-    }));
+    const kpiRows: MeterKpiRow[] = rows.map((row) => {
+      const defId = Number((row as any).kpiDefinitionId ?? (row as any).KpiDefinitionId ?? 0);
+      return {
+        kpiDefinitionId: defId,
+        kpiName: String((row as any).kpiName ?? (row as any).KpiName ?? ''),
+        achievedKpi: Number((row as any).achievedKpi ?? (row as any).AchievedKpi ?? 0),
+        maximumPointsPerKpi: Number((row as any).maximumPointsPerKpi ?? (row as any).MaximumPointsPerKpi ?? 0),
+        pointsAchieved: Number((row as any).pointsAchieved ?? (row as any).PointsAchieved ?? 0),
+        category: this.kpiCategoryMap.get(defId) ?? ''
+      };
+    });
 
     this.selectedRegionTitle = regionName;
     const key = this.normalizeArea(meter.code);
@@ -509,5 +520,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   closeDetails(): void {
     this.selectedDetails = null;
     this.selectedRegionTitle = '';
+  }
+
+  getKpiRowClass(row: any): string {
+    const cat = (row.category ?? '').toLowerCase();
+    if (cat.includes('enterprise') || cat.includes('enteprise')) {
+      return 'category-enterprise';
+    } else if (cat.includes('other operator') || cat.includes('operator')) {
+      return 'category-other-operator';
+    } else if (cat.includes('assurance')) {
+      return 'category-assurance';
+    } else if (cat.includes('fulfillment') || cat.includes('fullfillment')) {
+      return 'category-fulfillment';
+    }
+    return '';
   }
 }

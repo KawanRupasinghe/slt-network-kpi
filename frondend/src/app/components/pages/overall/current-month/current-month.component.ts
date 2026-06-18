@@ -867,7 +867,11 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
 
   getKpiRowClass(row: KpiRow): string {
     const cat = (row.category ?? '').toLowerCase();
-    if (cat.includes('assurance')) {
+    if (cat.includes('enterprise') || cat.includes('enteprise')) {
+      return 'category-enterprise';
+    } else if (cat.includes('other operator') || cat.includes('operator')) {
+      return 'category-other-operator';
+    } else if (cat.includes('assurance')) {
       return 'category-assurance';
     } else if (cat.includes('fulfillment') || cat.includes('fullfillment')) {
       return 'category-fulfillment';

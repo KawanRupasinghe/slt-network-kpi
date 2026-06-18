@@ -182,6 +182,26 @@
       </div>
     </div>
 
+    <!-- Legend inside modal -->
+    <div class="legend-container" style="margin-bottom: 12px; margin-top: 8px;">
+      <div class="legend-item">
+        <span class="legend-dot assurance-dot"></span>
+        <span class="legend-text">Service Assurance</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot fulfillment-dot"></span>
+        <span class="legend-text">Service Fulfillment</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot enterprise-dot"></span>
+        <span class="legend-text">Enterprise</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot other-operator-dot"></span>
+        <span class="legend-text">Other Operator</span>
+      </div>
+    </div>
+
     <!-- KPIs table (compact, readable) -->
     <div class="kpi-table" *ngIf="selectedDetails.kpiRows.length; else emptyKpi">
       <div class="kpi-table-header">
@@ -190,7 +210,11 @@
         <span>Max points</span>
         <span>Points</span>
       </div>
-      <div class="kpi-table-row" *ngFor="let row of selectedDetails.kpiRows">
+      <div class="kpi-table-row" *ngFor="let row of selectedDetails.kpiRows" [ngClass]="getKpiRowClass(row)">
+        <div class="row-indicator" *ngIf="row.category">
+          <span *ngIf="row.category.toLowerCase().includes('enterprise') || row.category.toLowerCase().includes('enteprise')" class="indicator-badge enterprise">E</span>
+          <span *ngIf="row.category.toLowerCase().includes('other operator') || row.category.toLowerCase().includes('operator')" class="indicator-badge other">O</span>
+        </div>
         <span class="kpi-name">{{ row.kpiName || 'KPI #' + row.kpiDefinitionId }}</span>
         <span>{{ row.achievedKpi | number:'1.2-2' }}%</span>
         <span>{{ row.maximumPointsPerKpi | number:'1.2-2' }}</span>
