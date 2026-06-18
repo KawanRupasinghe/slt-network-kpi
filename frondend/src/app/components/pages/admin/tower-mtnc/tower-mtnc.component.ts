@@ -53,9 +53,9 @@ export class TowerMtncComponent implements OnInit {
     target: ['', Validators.required],
     calculation: ['', Validators.required],
     platform: ['', Validators.required],
-    responsibleDGM: ['', Validators.required],
-    definedOLADetails: ['', Validators.required],
-    dataSources: ['', Validators.required]
+    responsibleDGM: [''],
+    definedOLADetails: [''],
+    dataSources: ['']
   });
 
   ngOnInit(): void {
@@ -88,7 +88,16 @@ export class TowerMtncComponent implements OnInit {
       return;
     }
 
-    const payload = this.form.getRawValue();
+    const rawForm = this.form.getRawValue();
+    const payload = {
+      kpi: (rawForm.kpi ?? '').trim(),
+      target: (rawForm.target ?? '').trim(),
+      calculation: (rawForm.calculation ?? '').trim(),
+      platform: (rawForm.platform ?? '').trim(),
+      responsibleDGM: '-',
+      definedOLADetails: '-',
+      dataSources: '-'
+    };
     const request$ = this.editingId
       ? this.http.put(`${environment.apiUrl}/TmActivityPlans/${this.editingId}`, { id: this.editingId, ...payload })
       : this.http.post(`${environment.apiUrl}/TmActivityPlans`, payload);

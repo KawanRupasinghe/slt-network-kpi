@@ -54,14 +54,10 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>No</th>
                 <th>KPI</th>
                 <th>Target</th>
-                <th>Calculation</th>
-                <th>Platform</th>
+                <th>Category</th>
                 <th>Responsible DGM</th>
-                <th>Defined OLA Details</th>
-                <th>Data Sources</th>
                 <th *ngFor="let column of columns; trackBy: trackByColumn">{{ column }}</th>
               </tr>
             </thead>
@@ -70,14 +66,10 @@
                 <td [attr.colspan]="combinedTableColspan">No KPI definitions available.</td>
               </tr>
               <tr *ngFor="let row of maintenanceRows; trackBy: trackByMaintenanceRow">
-                <td>{{ row.routine.no ?? '-' }}</td>
                 <td>{{ formatRoutineValue(row.routine.kpi) }}</td>
                 <td>{{ formatRoutineValue(row.routine.target) }}</td>
                 <td>{{ formatRoutineValue(row.routine.calculation) }}</td>
-                <td>{{ formatRoutineValue(row.routine.platform) }}</td>
                 <td>{{ formatRoutineValue(row.routine.responsibleDGM) }}</td>
-                <td>{{ formatRoutineValue(row.routine.definedOLADetails) }}</td>
-                <td>{{ formatRoutineValue(row.routine.dataSources) }}</td>
                 <td *ngFor="let column of columns; trackBy: trackByColumn">
                   {{ formatPlaceholderValue(row.platformKey, column) }}
                 </td>

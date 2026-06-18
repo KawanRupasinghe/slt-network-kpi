@@ -89,7 +89,7 @@ export class RoutineMtncComponent implements OnInit {
   heroSubtitle = 'Monitor routine maintenance schedules, node-level compliance, and performance metrics across platforms.';
 
   readonly columns = PLATFORM_COLUMNS;
-  readonly combinedTableStaticColumns = 8;
+  readonly combinedTableStaticColumns = 4;
 
   readonly platformConfigs: PlatformTableConfig[] = [
     { key: 'msan', title: 'MSAN Data Table', monthsLimit: 6 },
@@ -251,8 +251,8 @@ export class RoutineMtncComponent implements OnInit {
     const worksheet = workbook.addWorksheet('Routine Maintenance');
 
     const headers = [
-      'No', 'KPI', 'Target', 'Calculation', 'Platform',
-      'Responsible DGM', 'Defined OLA Details', 'Data Sources',
+      'KPI', 'Target', 'Category',
+      'Responsible DGM',
       ...this.columns
     ];
 
@@ -260,14 +260,10 @@ export class RoutineMtncComponent implements OnInit {
 
     this.maintenanceRows.forEach(row => {
       worksheet.addRow([
-        row.routine.no ?? '',
         row.routine.kpi ?? '',
         row.routine.target ?? '',
         row.routine.calculation ?? '',
-        row.routine.platform ?? '',
         row.routine.responsibleDGM ?? '',
-        row.routine.definedOLADetails ?? '',
-        row.routine.dataSources ?? '',
         ...this.columns.map(c => this.placeholderMap[row.platformKey!]?.[c] ?? '')
       ]);
     });

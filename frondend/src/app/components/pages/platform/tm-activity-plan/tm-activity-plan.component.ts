@@ -156,7 +156,7 @@ export class TmActivityPlanComponent implements OnInit {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Tower Maintenance Plan');
 
-    const baseColumns = ['No', 'KPI', 'Target', 'Calculation'];
+    const baseColumns = ['KPI', 'Target', 'Category'];
     const totalColumnsFirstTable = baseColumns.length + this.headers.length;
 
     worksheet.mergeCells(1, 1, 1, totalColumnsFirstTable);
@@ -171,7 +171,6 @@ export class TmActivityPlanComponent implements OnInit {
 
     this.hardcodedTableData.forEach(record => {
       const row = worksheet.addRow([
-        record.no ?? '-',
         record.kpi ?? '-',
         record.target ?? '-',
         record.calculation ?? '-',

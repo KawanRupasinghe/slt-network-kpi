@@ -53,16 +53,14 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>No</th>
                   <th>KPI</th>
                   <th>Target</th>
-                  <th>Calculation</th>
+                  <th>Category</th>
                   <th *ngFor="let header of headers; trackBy: trackByHeader">{{ header }}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr *ngFor="let row of hardcodedTableData">
-                  <td>{{ row.no || '-' }}</td>
                   <td>{{ row.kpi || '-' }}</td>
                   <td>{{ row.target || '-' }}</td>
                   <td>{{ row.calculation || '-' }}</td>
