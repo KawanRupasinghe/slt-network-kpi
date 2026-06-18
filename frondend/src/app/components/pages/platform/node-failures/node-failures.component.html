@@ -46,21 +46,24 @@
       <div class="row g-3">
         <div class="col-md-3">
           <label for="monthSelect" class="form-label">Month:</label>
-          <select id="monthSelect" class="form-select" [(ngModel)]="selectedMonth" name="month" (change)="onMonthYearChange()">
+          <select id="monthSelect" class="form-select" [(ngModel)]="selectedMonth" name="month"
+            (change)="onMonthYearChange()">
             <option *ngFor="let m of monthOptions" [value]="m.value">{{ m.label }}</option>
           </select>
         </div>
 
         <div class="col-md-3">
           <label for="yearSelect" class="form-label">Year:</label>
-          <select id="yearSelect" class="form-select" [(ngModel)]="selectedYear" name="year" (change)="onMonthYearChange()">
+          <select id="yearSelect" class="form-select" [(ngModel)]="selectedYear" name="year"
+            (change)="onMonthYearChange()">
             <option *ngFor="let y of yearOptions" [value]="y">{{ y }}</option>
           </select>
         </div>
 
         <div class="col-md-3">
           <label for="regionSelect" class="form-label">R-GM:</label>
-          <select id="regionSelect" class="form-select" [(ngModel)]="formValues.region" name="region" (change)="onPeriodChange()">
+          <select id="regionSelect" class="form-select" [(ngModel)]="formValues.region" name="region"
+            (change)="onPeriodChange()">
             <option value="">Select an option</option>
             <option *ngFor="let r of regionOptions" [value]="r">{{ r }}</option>
           </select>
@@ -86,7 +89,7 @@
     <div class="card shadow-sm border-0">
       <div class="card-header bg-primary text-white d-flex flex-wrap align-items-center justify-content-between gap-3">
         <h5 class="mb-0">
-          <i class="bi bi-table me-2"></i>
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
           Aged Network Failures (Unavailability Status)
         </h5>
         <small *ngIf="isEditingAllowed" class="text-white-50 fw-semibold">Auto-saves per field</small>
@@ -102,7 +105,7 @@
                 <th>R-GM</th>
                 <th>P-DGM</th>
                 <th>NW EE</th>
-                <th>Unavailability Percentage (%)</th>
+                <th>Achievement (%)</th>
                 <th>Remarks</th>
                 <th>Action</th>
               </tr>
@@ -119,11 +122,8 @@
                 <td>{{ row.engineer }}</td>
                 <td class="metric-cell">
                   <ng-container *ngIf="isEditingAllowed && row.isEditing; else viewModePct">
-                    <input type="number" class="form-control form-control-sm"
-                      [(ngModel)]="row.percentage"
-                      [ngModelOptions]="{standalone: true}"
-                      min="0" max="100" step="0.01"
-                      style="max-width: 120px;" />
+                    <input type="number" class="form-control form-control-sm" [(ngModel)]="row.percentage"
+                      [ngModelOptions]="{standalone: true}" min="0" max="100" step="0.01" style="max-width: 120px;" />
                   </ng-container>
                   <ng-template #viewModePct>
                     <span>{{ row.percentage | number:'1.2-2' }}%</span>
@@ -131,8 +131,7 @@
                 </td>
                 <td>
                   <ng-container *ngIf="isEditingAllowed && row.isEditing; else viewModeRemarks">
-                    <input type="text" class="form-control form-control-sm"
-                      [(ngModel)]="row.remarks"
+                    <input type="text" class="form-control form-control-sm" [(ngModel)]="row.remarks"
                       [ngModelOptions]="{standalone: true}" />
                   </ng-container>
                   <ng-template #viewModeRemarks>
@@ -146,15 +145,13 @@
                       Edit
                     </button>
                     <div *ngIf="row.isEditing" class="d-flex gap-1 justify-content-center">
-                      <button type="button" class="btn btn-primary btn-sm table-button"
-                        (click)="saveAgedFailure(row)"
+                      <button type="button" class="btn btn-primary btn-sm table-button" (click)="saveAgedFailure(row)"
                         [disabled]="row.saving">
                         <span *ngIf="row.saving" class="spinner-border spinner-border-sm me-1" role="status"></span>
                         {{ row.saving ? 'Saving...' : 'Save' }}
                       </button>
                       <button type="button" class="btn btn-outline-secondary btn-sm table-button"
-                        (click)="row.isEditing = false; refresh()"
-                        [disabled]="row.saving">
+                        (click)="row.isEditing = false; refresh()" [disabled]="row.saving">
                         Cancel
                       </button>
                     </div>

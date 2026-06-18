@@ -142,7 +142,7 @@
 			<div class="card-body p-0">
 				<div class="card-header bg-primary text-white d-flex flex-wrap align-items-center gap-3">
 					<h5 class="mb-0 d-flex align-items-center gap-2">
-						<i class="bi bi-diagram-3"></i>
+						<i class="bi bi-bezier2"></i>
 						INT & NT OP KPI (OtnOp1 & OtnOp2)
 					</h5>
 					<div class="ms-auto" *ngIf="canEditMetrics">
@@ -159,10 +159,10 @@
 							<tr>
 								<th>No.</th>
 								<th>Network Engineer KPI</th>
-								<th>Division</th>
-								<th>Section</th>
-								<th>KPI Percent</th>
-								<th *ngIf="selectedKey">{{ selectedLeaLabel || 'RTOM Area' }}</th>
+								<th>Category</th>
+								<th>Target</th>
+								<th>Weightage</th>
+								<th *ngIf="selectedKey">{{ selectedLeaLabel || 'RTOM Area' }} (Achievement %)</th>
 							</tr>
 						</thead>
 						<tbody>

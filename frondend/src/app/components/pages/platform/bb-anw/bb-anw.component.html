@@ -150,7 +150,7 @@
 				<div
 					class="card-header bg-primary text-white d-flex flex-wrap align-items-center justify-content-between gap-3">
 					<h5 class="mb-0">
-						<i class="bi bi-table me-2"></i>
+						<i class="bi bi-hdd-network-fill me-2"></i>
 						Saved BB & ANW KPI rows
 						<span *ngIf="showAreaMetrics" class="ms-2 small text-white-50">
 							(Showing metrics for {{ selectedAreaLabel }})
@@ -165,10 +165,10 @@
 							<tr>
 								<th>No</th>
 								<th>KPI</th>
-								<th>Division</th>
-								<th>Section</th>
-								<th>%</th>
-								<th *ngIf="showAreaMetrics">{{ selectedAreaLabel }}</th>
+								<th>Category</th>
+								<th>Target</th>
+								<th>Weightage</th>
+								<th *ngIf="showAreaMetrics">{{ selectedAreaLabel }} (Achievement %)</th>
 							</tr>
 						</thead>
 						<tbody>

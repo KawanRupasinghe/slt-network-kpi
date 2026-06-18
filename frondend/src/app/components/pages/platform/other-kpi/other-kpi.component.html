@@ -76,7 +76,7 @@
                 <th>R-GM</th>
                 <th>P-DGM</th>
                 <th>NW EE</th>
-                <th>Percentage (%)</th>
+                <th>Achivement (%)</th>
                 <th>Node Count</th>
                 <th>Action</th>
               </tr>
@@ -93,7 +93,8 @@
                     {{ row.percentage | number:'1.2-2' }}%
                   </ng-container>
                   <ng-container *ngIf="row.isEditing">
-                    <input type="number" class="form-control form-control-sm mx-auto" style="width: 80px;" [(ngModel)]="row.percentage">
+                    <input type="number" class="form-control form-control-sm mx-auto" style="width: 80px;"
+                      [(ngModel)]="row.percentage">
                   </ng-container>
                 </td>
                 <td class="text-center" style="min-width: 120px;">
@@ -101,7 +102,8 @@
                     {{ row.node_Count ?? '—' }}
                   </ng-container>
                   <ng-container *ngIf="row.isEditing">
-                    <input type="number" class="form-control form-control-sm mx-auto" style="width: 80px;" [(ngModel)]="row.node_Count">
+                    <input type="number" class="form-control form-control-sm mx-auto" style="width: 80px;"
+                      [(ngModel)]="row.node_Count">
                   </ng-container>
                 </td>
                 <td class="text-center" style="min-width: 120px;">
@@ -110,10 +112,12 @@
                       <i class="bi bi-pencil"></i> Edit
                     </button>
                     <div *ngIf="row.isEditing" class="d-flex justify-content-center gap-2">
-                      <button class="btn btn-sm btn-success d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0;" (click)="saveRow(row)" title="Save">
+                      <button class="btn btn-sm btn-success d-flex align-items-center justify-content-center"
+                        style="width: 32px; height: 32px; padding: 0;" (click)="saveRow(row)" title="Save">
                         <i class="bi bi-check-lg"></i>
                       </button>
-                      <button class="btn btn-sm btn-danger d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0;" (click)="cancelEdit(row)" title="Cancel">
+                      <button class="btn btn-sm btn-danger d-flex align-items-center justify-content-center"
+                        style="width: 32px; height: 32px; padding: 0;" (click)="cancelEdit(row)" title="Cancel">
                         <i class="bi bi-x-lg"></i>
                       </button>
                     </div>
@@ -144,9 +148,9 @@
       <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="bi bi-lightning-charge me-2"></i>O&amp;M of Power &amp; Air Conditioning</h5>
         <div class="d-flex align-items-center gap-2">
-          <label class="text-white mb-0 fw-semibold small">Year:</label>
-          <select class="form-select form-select-sm pac-year-select"
-                  [(ngModel)]="pacYear" name="pacYear" (change)="onPacYearChange()">
+          <label class="text-white mb-0 fw-semibold" style="font-size: 14.5px;">Year:</label>
+          <select class="form-select form-select-sm pac-year-select" [(ngModel)]="pacYear" name="pacYear"
+            (change)="onPacYearChange()">
             <option *ngFor="let y of yearOptions" [value]="y">{{ y }}</option>
           </select>
         </div>

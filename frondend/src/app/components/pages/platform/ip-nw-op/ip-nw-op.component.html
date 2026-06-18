@@ -150,7 +150,7 @@
         <div class="card-body p-0">
           <div class="card-header bg-primary text-white">
             <h5 class="mb-0">
-              <i class="bi bi-table me-2"></i>
+              <i class="bi bi-diagram-2-fill me-2"></i>
               KPI (NW Availability - IP Core NW / BSR NW / Service Edge NW)
             </h5>
           </div>
@@ -161,9 +161,9 @@
                 <tr>
                   <th>No</th>
                   <th>Network Engineer KPI</th>
-                  <th>Division</th>
-                  <th>Section</th>
-                  <th>KPI %</th>
+                  <th>Category</th>
+                  <th>Target</th>
+                  <th>Weightage</th>
                 </tr>
               </thead>
 
@@ -193,7 +193,7 @@
         <div class="card-body p-0">
           <div class="card-header bg-primary text-white d-flex flex-wrap align-items-center gap-3">
             <h5 class="mb-0 d-flex flex-wrap align-items-center gap-2">
-              <i class="bi bi-geo-alt-fill"></i>
+              <i class="bi bi-diagram-2-fill me-2"></i>
               KPI (NW Availability - IP Core NW / BSR NW / Service Edge NW)
               <span class="badge bg-light text-primary ms-auto">
                 {{ selectedAreaLabel || 'Selected Area' }}
@@ -213,10 +213,10 @@
                 <tr>
                   <th>No</th>
                   <th>Network Engineer KPI</th>
-                  <th>Division</th>
-                  <th>Section</th>
-                  <th>KPI %</th>
-                  <th>{{ selectedAreaLabel || 'Selected Area' }}</th>
+                  <th>Category</th>
+                  <th>Target</th>
+                  <th>Weightage</th>
+                  <th>{{ selectedAreaLabel || 'Selected Area' }} (Achievement %)</th>
                 </tr>
               </thead>
 

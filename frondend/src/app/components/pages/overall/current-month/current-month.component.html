@@ -1,10 +1,9 @@
 <div class="final-tables-container">
   <header class="current-month-header">
     <div class="header-left">
-      <p class="eyebrow">OVERALL KPI / KPI DATA</p>
-      <h1>KPI Monthly Data</h1>
+      <h1>Monthly KPI Details</h1>
       <p class="subtitle">
-        KPI metrics for {{ currentMonth }} {{ currentYear }} with region performance and weighted scores.
+        Detailed KPI metrics for {{ currentMonth }} {{ currentYear }} across operational areas
       </p>
     </div>
 
@@ -42,22 +41,32 @@
     No data for the selected month and year.
   </div>
 
+  <div class="legend-container" *ngIf="!loading && !(noDefinitions || noOverallResults)">
+    <div class="legend-item">
+      <span class="legend-dot assurance-dot"></span>
+      <span class="legend-text">Service Assurance</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot fulfillment-dot"></span>
+      <span class="legend-text">Service Fulfillment</span>
+    </div>
+  </div>
+
   <div class="side-by-side-tables">
     <div class="kpi-table-container sticky-left">
       <table class="kpi-table">
         <thead>
           <tr class="colSpan-header">
-            <th colspan="6">R-GM</th>
+            <th colspan="5">R-GM</th>
           </tr>
           <tr class="colSpan-header">
-            <th colspan="6">P-DGM</th>
+            <th colspan="5">P-DGM</th>
           </tr>
           <tr class="colSpan-header">
-            <th colspan="6">NW EE/RTOM AREA</th>
+            <th colspan="5">NW EE/RTOM AREA</th>
           </tr>
           <tr>
-            <th class="col-num">ID</th>
-            <th class="col-kra">Strategic<br>Objectives</th>
+            <th class="col-kra">Category</th>
             <th class="col-kpi">KPI</th>
             <th class="col-target">Target</th>
             <th class="col-weight">Weight</th>
@@ -66,9 +75,8 @@
         </thead>
 
         <tbody>
-          <tr *ngFor="let row of kpiRows">
-            <td class="col-num">{{ row.number }}</td>
-            <td class="col-kra">{{ row.strategicObjectives }}</td>
+          <tr *ngFor="let row of kpiRows" [ngClass]="getKpiRowClass(row)" #leftRowRef>
+            <td class="col-kra">{{ row.category }}</td>
             <td class="kpi-name-cell col-kpi"><b>{{ row.kpi }}</b></td>
             <td class="col-target">{{ row.target }}</td>
             <td class="col-weight">{{ getComputedWeightage(row) }}</td>
@@ -76,12 +84,12 @@
           </tr>
 
           <tr class="total-marks-row">
-            <td colspan="5" class="text-right"><b>Total Marks</b></td>
+            <td colspan="4" class="text-right"><b>Total Marks</b></td>
             <td class="text-center total-points"><b>{{ totalPointsApplicable | number }}</b></td>
           </tr>
 
           <tr class="kpi-label-row">
-            <td colspan="5" class="text-right"><b>KPI</b></td>
+            <td colspan="4" class="text-right"><b>KPI</b></td>
             <td class="kpi-label"></td>
           </tr>
         </tbody>
@@ -134,7 +142,7 @@
         </thead>
 
         <tbody>
-          <tr *ngFor="let row of kpiRows">
+          <tr *ngFor="let row of kpiRows" [ngClass]="getKpiRowClass(row)" #rightRowRef>
             <ng-container *ngFor="let metric of row.metrics">
               <td class="text-center achieved-cell">
                 {{ metric.achieved | number : '1.2-2' }}%
