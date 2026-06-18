@@ -156,6 +156,10 @@
   grid-column: span 3;
 }
 
+.form-group.span-2 {
+  grid-column: span 2;
+}
+
 .form-group label {
   color: #334155;
   font-weight: 700;
@@ -172,6 +176,16 @@
   background: #f8fafc;
   color: #102136;
   transition: all 0.2s ease;
+}
+
+/* Keep KPI input and Calculation textarea same visual height */
+.form-group input {
+  min-height: 92px;
+}
+
+.form-group textarea {
+  min-height: 92px;
+  resize: none;
 }
 
 .form-group input:focus,

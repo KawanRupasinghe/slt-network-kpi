@@ -11,46 +11,56 @@
       </div>
 
       <form [formGroup]="kpiForm" (ngSubmit)="onSubmit()" class="kpi-form">
+        <!-- Row 1: KPI + Calculation (same visual height) -->
         <div class="form-row">
-          <div class="form-group" style="grid-column: span 2;">
+          <div class="form-group span-1">
             <label for="kpi">KPI *</label>
             <input type="text" id="kpi" formControlName="kpi" placeholder="Enter KPI name" />
             <div class="error-message" *ngIf="kpiForm.get('kpi')?.invalid && kpiForm.get('kpi')?.touched">KPI is required</div>
           </div>
-          <div class="form-group">
-            <label for="target">Target *</label>
-            <input type="text" id="target" formControlName="target" placeholder="e.g. 95%" />
-          </div>
-        </div>
 
-        <div class="form-row">
-          <div class="form-group full-width">
-            <label for="calculation">Calculation Method *</label>
+          <div class="form-group span-2">
+            <label for="calculation">Calculation *</label>
             <textarea id="calculation" formControlName="calculation" rows="2" placeholder="Describe the calculation formula"></textarea>
           </div>
         </div>
 
+        <!-- Row 2: Target + Weightage + Platform (1 line) -->
         <div class="form-row">
+          <div class="form-group">
+            <label for="target">Target *</label>
+            <input type="text" id="target" formControlName="target" placeholder="e.g. 95%" />
+          </div>
+
+          <div class="form-group">
+            <label for="weightage">Weightage *</label>
+            <input type="number" id="weightage" formControlName="weightage" placeholder="e.g. 20" />
+          </div>
+
           <div class="form-group">
             <label for="platform">Platform *</label>
             <input type="text" id="platform" formControlName="platform" placeholder="Web / Mobile" />
           </div>
+        </div>
+
+        <!-- Row 3: Data Sources + Responsible DGM (1 line) -->
+        <div class="form-row">
+          <div class="form-group span-2">
+            <label for="dataSources">Data Sources *</label>
+            <textarea id="dataSources" formControlName="dataSources" rows="2" placeholder="List the data sources"></textarea>
+          </div>
+
           <div class="form-group">
             <label for="responsibleDgm">Responsible DGM *</label>
             <input type="text" id="responsibleDgm" formControlName="responsibleDgm" placeholder="Enter name" />
           </div>
         </div>
 
+        <!-- Row 4: Defined OLA Details -->
         <div class="form-row">
           <div class="form-group full-width">
             <label for="definedOla">Defined OLA Details *</label>
             <textarea id="definedOla" formControlName="definedOla" rows="2" placeholder="Enter OLA details"></textarea>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group full-width">
-            <label for="dataSources">Data Sources *</label>
-            <textarea id="dataSources" formControlName="dataSources" rows="2" placeholder="List the data sources"></textarea>
           </div>
         </div>
 

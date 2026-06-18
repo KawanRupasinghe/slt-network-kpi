@@ -1,4 +1,4 @@
-﻿﻿/*
+﻿/*
  File: ip-nw-op.component.ts
  Description: IP Network Operations KPI admin management
  Purpose: CRUD operations for IP NW OP KPI metrics and performance targets.
@@ -22,7 +22,7 @@ import { IpNwOpService, IpNwOpKpiDto } from '../../../../services/ip-nw-op.servi
 })
 export class AdminIpNwOpComponent implements OnInit {
   /* Page display title */
-  pageTitle = 'Admin - IP NW OP';
+  pageTitle = 'IP NW OP';
 
   /* IP NW OP KPI data table */
   data: IpNwOpKpiDto[] = [];
@@ -164,7 +164,7 @@ export class AdminIpNwOpComponent implements OnInit {
   }
 
   private sortData(): void {
-    this.data = [...this.data].sort((a, b) => 
+    this.data = [...this.data].sort((a, b) =>
       (a.network_engineer_kpi ?? '').localeCompare(b.network_engineer_kpi ?? '')
     );
   }
