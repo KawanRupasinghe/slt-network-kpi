@@ -10,11 +10,13 @@
         <div class="form-header">
           <div>
             <h2>{{ editingId ? 'Update KPI' : 'Create KPI' }}</h2>
-            <p class="form-note">Create or update INT & NT OP_1 KPI definitions</p>
+            <p class="form-note">Create or update OTN OP_01 KPI definitions</p>
           </div>
           <div class="form-actions">
-            <button type="submit" class="btn-submit" form="otn-op-1-form" [disabled]="form.invalid || saving">{{ editingId ? 'Update' : 'Add' }}</button>
-            <button type="button" class="btn-cancel" *ngIf="editingId" (click)="onCancelEdit()" [disabled]="saving">Cancel</button>
+            <button type="submit" class="btn-submit" form="otn-op-1-form" [disabled]="form.invalid || saving">{{
+              editingId ? 'Update' : 'Add' }}</button>
+            <button type="button" class="btn-cancel" *ngIf="editingId" (click)="onCancelEdit()"
+              [disabled]="saving">Cancel</button>
           </div>
         </div>
 
@@ -26,18 +28,18 @@
             </div>
 
             <div class="form-group">
-              <label>Division</label>
-              <input type="text" formControlName="division" placeholder="Division" />
+              <label>Category</label>
+              <input type="text" formControlName="division" placeholder="Category" />
             </div>
 
             <div class="form-group">
-              <label>Section</label>
-              <input type="text" formControlName="section" placeholder="Section" />
+              <label>Target</label>
+              <input type="text" formControlName="section" placeholder="Target" />
             </div>
 
             <div class="form-group">
-              <label>KPI (%)</label>
-              <input type="number" formControlName="kpiPercent" placeholder="KPI (%)" />
+              <label>Weightage (%)</label>
+              <input type="number" formControlName="kpiPercent" placeholder="Weightage (%)" />
             </div>
           </div>
         </form>
@@ -56,7 +58,7 @@
               <th>Network Engineers KPI</th>
               <th>Category</th>
               <th>Target</th>
-              <th>Weightage</th>
+              <th>Weightage (%)</th>
               <th class="actions-col">Actions</th>
             </tr>
           </thead>

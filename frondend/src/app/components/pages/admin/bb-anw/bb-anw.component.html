@@ -7,40 +7,43 @@
 
     <div class="form-container">
 
-        <div class="form-header">
-          <div>
-            <h2>{{ editingId ? 'Update KPI Row' : 'Create KPI Row' }}</h2>
+      <div class="form-header">
+        <div>
+          <h2>{{ editingId ? 'Update KPI Row' : 'Create KPI Row' }}</h2>
+        </div>
+        <div class="form-actions">
+          <button class="btn-submit" type="submit" form="bb-anw-form" [disabled]="bbAnwForm.invalid || saving">{{
+            editingId ? 'Update' : 'Add' }}</button>
+          <button type="button" class="btn-cancel" *ngIf="editingId" (click)="closeForm()">Cancel</button>
+        </div>
+      </div>
+
+      <form id="bb-anw-form" #bbAnwForm="ngForm" class="kpi-form" (ngSubmit)="submitForm()">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="kpi">Network Engineer KPI</label>
+            <input id="kpi" type="text" [(ngModel)]="form.networkEngineerKpi" name="kpi"
+              placeholder="Network Engineer KPI" required />
           </div>
-          <div class="form-actions">
-            <button class="btn-submit" type="submit" form="bb-anw-form" [disabled]="bbAnwForm.invalid || saving">{{ editingId ? 'Update' : 'Add' }}</button>
-            <button type="button" class="btn-cancel" *ngIf="editingId" (click)="closeForm()">Cancel</button>
+
+          <div class="form-group">
+            <label for="division">Category</label>
+            <input id="division" type="text" [(ngModel)]="form.division" name="division" placeholder="Category" />
+          </div>
+
+          <div class="form-group">
+            <label for="section">Target</label>
+            <input id="section" type="text" [(ngModel)]="form.section" name="section" placeholder="Target" />
+          </div>
+
+          <div class="form-group">
+            <label for="kpiPercent">Weightage (%)</label>
+            <input id="kpiPercent" type="number" [(ngModel)]="form.kpiPercent" name="kpiPercent"
+              placeholder="Weightage (%)" required />
           </div>
         </div>
-
-        <form id="bb-anw-form" #bbAnwForm="ngForm" class="kpi-form" (ngSubmit)="submitForm()">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="kpi">Network Engineer KPI</label>
-              <input id="kpi" type="text" [(ngModel)]="form.networkEngineerKpi" name="kpi" placeholder="Network Engineer KPI" required />
-            </div>
-
-            <div class="form-group">
-              <label for="division">Division</label>
-              <input id="division" type="text" [(ngModel)]="form.division" name="division" placeholder="Division" />
-            </div>
-
-            <div class="form-group">
-              <label for="section">Section</label>
-              <input id="section" type="text" [(ngModel)]="form.section" name="section" placeholder="Section" />
-            </div>
-
-            <div class="form-group">
-              <label for="kpiPercent">KPI (%)</label>
-              <input id="kpiPercent" type="number" [(ngModel)]="form.kpiPercent" name="kpiPercent" placeholder="KPI (%)" required />
-            </div>
-          </div>
-        </form>
-      </div>
+      </form>
+    </div>
     <!-- </section> -->
 
     <section class="table-section">
@@ -53,7 +56,7 @@
               <th>Network Engineers KPI</th>
               <th>Category</th>
               <th>Target</th>
-              <th>Weightage</th>
+              <th>Weightage (%)</th>
               <th class="actions-col">Actions</th>
             </tr>
           </thead>

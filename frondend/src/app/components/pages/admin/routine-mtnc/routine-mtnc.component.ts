@@ -57,10 +57,10 @@ export class AdminRoutineMtncComponent implements OnInit {
     kpi: ['', Validators.required],
     target: ['', Validators.required],
     calculation: ['', Validators.required],
-    platform: ['', Validators.required],
+    platform: [''],
     responsibleDGM: ['', Validators.required],
-    definedOLADetails: ['', Validators.required],
-    dataSources: ['', Validators.required]
+    definedOLADetails: [''],
+    dataSources: ['']
   });
 
   ngOnInit(): void {
@@ -100,10 +100,10 @@ export class AdminRoutineMtncComponent implements OnInit {
       kpi: (this.form.value.kpi ?? '').trim(),
       target: (this.form.value.target ?? '').trim(),
       calculation: (this.form.value.calculation ?? '').trim(),
-      platform: (this.form.value.platform ?? '').trim(),
+      platform: '-',
       responsibleDGM: (this.form.value.responsibleDGM ?? '').trim(),
-      definedOLADetails: (this.form.value.definedOLADetails ?? '').trim(),
-      dataSources: (this.form.value.dataSources ?? '').trim()
+      definedOLADetails: '-',
+      dataSources: '-'
     };
 
     const request$ = this.editingId

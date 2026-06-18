@@ -85,14 +85,14 @@ export const platformNavOptions: NavOption[] = [
 
 export const adminNavOptions: NavOption[] = [
   {
-    label: 'Admin Registration',
+    label: 'Admin Management',
     path: 'admin/admin-registration',
-    title: 'Admin — Admin Registration'
+    title: 'Admin — Admin Management'
   },
   {
-    label: 'User Registration',
+    label: 'User Management',
     path: 'admin/user-registration',
-    title: 'Admin — User Registration'
+    title: 'Admin — User Management'
   },
   {
     label: 'Service Fulfilment',

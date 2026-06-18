@@ -14,7 +14,7 @@
   background-position: center;
   background-attachment: fixed;
   position: relative;
-  font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+  font-family: Arial, sans-serif;
 }
 
 :host::before {
@@ -47,10 +47,11 @@
 }
 
 .page-header h1 {
-  color: var(--accent-primary);
-  font-size: 1.8rem;
-  font-weight: 700;
+  color: #0057A6;
+  font-size: 2.1rem;
+  font-weight: 600;
   margin: 0.5rem 0;
+  font-family: Arial, sans-serif;
   letter-spacing: 0.3px;
 }
 
@@ -163,7 +164,7 @@
 }
 
 @font-face {
-  font-family: 'Space Grotesk';
+  font-family: Arial, sans-serif;
   src: url('/assets/fonts/SpaceGrotesk/SpaceGrotesk-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
@@ -171,7 +172,7 @@
 }
 
 @font-face {
-  font-family: 'Space Grotesk';
+  font-family: Arial, sans-serif;
   src: url('/assets/fonts/SpaceGrotesk/SpaceGrotesk-Medium.ttf') format('truetype');
   font-weight: 500;
   font-style: normal;
@@ -179,7 +180,7 @@
 }
 
 @font-face {
-  font-family: 'Space Grotesk';
+  font-family: Arial, sans-serif;
   src: url('/assets/fonts/SpaceGrotesk/SpaceGrotesk-SemiBold.ttf') format('truetype');
   font-weight: 600;
   font-style: normal;

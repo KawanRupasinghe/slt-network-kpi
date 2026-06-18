@@ -24,7 +24,7 @@ import { CreateUserDto, UpdateUserDto, User, UserService } from '../../../../ser
 })
 export class UserRegistrationComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
-  pageTitle = 'User Registration';
+  pageTitle = 'User Management';
   @ViewChild('formCard') formCard?: ElementRef<HTMLElement>;
   @ViewChild('nameField') nameField?: ElementRef<HTMLInputElement>;
 

@@ -48,8 +48,8 @@ export class AdminDropdownComponent implements OnChanges {
 
   /* Labels for admin-related navigation options */
   private readonly adminSet = new Set([
-    'Admin Registration',
-    'User Registration',
+    'Admin Management',
+    'User Management',
     'Region Management',
     'E-mail Service',
     'KPI Management'
