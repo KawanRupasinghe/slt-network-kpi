@@ -36,9 +36,9 @@ const MONTH_ORDER = [
 ];
 
 const TABLE_TITLES = [
-  '2. Proper maintaining and cleaning of tower sites, access roads, tower leg bases, and guy bases.',
-  '3. Visual inspection of tower condition, aviation lighting system, etc.',
-  '4. Measure earth readings and inspect Earthing system.'
+  'Proper maintaining and cleaning of tower sites, access roads, tower leg bases, and guy bases.',
+  'Visual inspection of tower condition, aviation lighting system, etc.',
+  'Measure earth readings and inspect Earthing system.'
 ];
 
 @Component({

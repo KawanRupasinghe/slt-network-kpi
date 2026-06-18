@@ -38,7 +38,7 @@ export class AdminRoutineMtncComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  pageTitle = 'Routine MTNC';
+  pageTitle = 'Routine Maintenance';
   formTitle = 'Add KPI';
   submitButtonLabel = 'Add KPI';
 

@@ -4,7 +4,7 @@
   <section class="hero-panel">
     <div class="hero-content">
       <h1>{{ pageTitle }}</h1>
-      <p class="hero-subtitle">Tower maintenance KPIs, regional execution, and compliance planning.</p>
+      <p class="hero-subtitle">Track tower maintenance activities across network areas.</p>
     </div>
     <div class="hero-actions">
       <button type="button" class="export-btn" (click)="exportToExcel()" [disabled]="!headers.length || loading">
@@ -21,19 +21,16 @@
       <article class="data-card">
         <header>
           <div>
-            <h2>1. Strategic KPI Overview</h2>
+            <h2><i class="bi bi-clipboard-data-fill me-2"></i>Strategic KPI Overview</h2>
             <p>Definitions retrieved from Tower Maintenance (hardcoded) dataset.</p>
           </div>
-        </header>
 
-        <!-- ✅ FILTER BAR -->
-        <div class="filter-bar">
+          <!-- ✅ FILTER BAR INSIDE TABLE TITLE STRIPE -->
           <div class="header-filters">
             <div class="filter-group">
               <label for="tm-activity-month-select">Month:</label>
-              <select id="tm-activity-month-select" class="filter-select"
-                      [(ngModel)]="selectedMonth"
-                      (ngModelChange)="onMonthChange($event)">
+              <select id="tm-activity-month-select" class="filter-select" [(ngModel)]="selectedMonth"
+                (ngModelChange)="onMonthChange($event)">
                 <option *ngFor="let month of monthOptions" [ngValue]="month.value">
                   {{ month.label }}
                 </option>
@@ -41,16 +38,15 @@
             </div>
             <div class="filter-group">
               <label for="tm-activity-year-select">Year:</label>
-              <select id="tm-activity-year-select" class="filter-select"
-                      [(ngModel)]="selectedYear"
-                      (ngModelChange)="onYearChange($event)">
+              <select id="tm-activity-year-select" class="filter-select" [(ngModel)]="selectedYear"
+                (ngModelChange)="onYearChange($event)">
                 <option *ngFor="let year of yearOptions" [ngValue]="year">
                   {{ year }}
                 </option>
               </select>
             </div>
           </div>
-        </div>
+        </header>
 
         <ng-container *ngIf="hardcodedTableData.length; else noKpiRows">
           <div class="table-wrapper">
@@ -87,7 +83,13 @@
         <article class="data-card" *ngFor="let title of tableTitles; let i = index">
           <header>
             <div>
-              <h2>{{ title }}</h2>
+              <h2>
+                <i class="bi me-2" [ngClass]="{
+                  'bi-brush-fill': i === 0,
+                  'bi-eye-fill': i === 1,
+                  'bi-lightning-charge-fill': i === 2
+                }"></i>{{ title }}
+              </h2>
               <p>Distribution vs achievement per region.</p>
             </div>
           </header>

@@ -85,8 +85,8 @@ export class RoutineMtncComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  pageTitle = 'Routine MTNC';
-  heroSubtitle = 'Routine maintenance cadence across IPNW, INT & NT, and BB&ANW footprints.';
+  pageTitle = 'Routine Maintenance';
+  heroSubtitle = 'Monitor routine maintenance schedules, node-level compliance, and performance metrics across platforms.';
 
   readonly columns = PLATFORM_COLUMNS;
   readonly combinedTableStaticColumns = 8;
@@ -125,21 +125,21 @@ export class RoutineMtncComponent implements OnInit {
   private readonly now = new Date();
 
   selectedMonth: number = this.now.getMonth() + 1;   // 1-indexed (1 = January)
-  selectedYear: number  = this.now.getFullYear();
+  selectedYear: number = this.now.getFullYear();
 
   readonly monthOptions: { value: number; label: string }[] = [
-    { value:  1, label: 'January'   },
-    { value:  2, label: 'February'  },
-    { value:  3, label: 'March'     },
-    { value:  4, label: 'April'     },
-    { value:  5, label: 'May'       },
-    { value:  6, label: 'June'      },
-    { value:  7, label: 'July'      },
-    { value:  8, label: 'August'    },
-    { value:  9, label: 'September' },
-    { value: 10, label: 'October'   },
-    { value: 11, label: 'November'  },
-    { value: 12, label: 'December'  }
+    { value: 1, label: 'January' },
+    { value: 2, label: 'February' },
+    { value: 3, label: 'March' },
+    { value: 4, label: 'April' },
+    { value: 5, label: 'May' },
+    { value: 6, label: 'June' },
+    { value: 7, label: 'July' },
+    { value: 8, label: 'August' },
+    { value: 9, label: 'September' },
+    { value: 10, label: 'October' },
+    { value: 11, label: 'November' },
+    { value: 12, label: 'December' }
   ];
 
   yearOptions: number[] = [

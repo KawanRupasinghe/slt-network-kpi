@@ -144,7 +144,7 @@
       <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="bi bi-lightning-charge me-2"></i>O&amp;M of Power &amp; Air Conditioning</h5>
         <div class="d-flex align-items-center gap-2">
-          <label class="text-white mb-0 fw-semibold small">Year:</label>
+          <label class="text-white mb-0 fw-semibold" style="font-size: 14.5px;">Year:</label>
           <select class="form-select form-select-sm pac-year-select"
                   [(ngModel)]="pacYear" name="pacYear" (change)="onPacYearChange()">
             <option *ngFor="let y of yearOptions" [value]="y">{{ y }}</option>

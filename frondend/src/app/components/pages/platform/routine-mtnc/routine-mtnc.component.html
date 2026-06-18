@@ -21,13 +21,11 @@
       <article class="data-card">
         <header>
           <div>
-            <h2>Multi-Platform Maintenance Tables</h2>
+            <h2><i class="bi bi-tools me-2"></i>Multi-Platform Maintenance Tables</h2>
             <p>Routine KPI definitions aligned with current placeholder compliance snapshots.</p>
           </div>
-        </header>
 
-        <!-- ✅ FILTER BAR -->
-        <div class="filter-bar">
+          <!-- ✅ FILTER BAR INSIDE TABLE TITLE STRIPE -->
           <div class="header-filters">
             <div class="filter-group">
               <label for="routine-month-select">Month:</label>
@@ -50,7 +48,7 @@
               </select>
             </div>
           </div>
-        </div>
+        </header>
 
         <div class="table-wrapper">
           <table class="data-table">
@@ -92,7 +90,13 @@
       <article class="data-card" *ngFor="let config of platformConfigs">
         <header>
           <div>
-            <h2>{{ config.title }}</h2>
+            <h2>
+              <i class="bi me-2" [ngClass]="{
+                'bi-cpu-fill': config.key === 'msan',
+                'bi-shield-lock-fill': config.key === 'vpn',
+                'bi-diagram-3-fill': config.key === 'slbn'
+              }"></i>{{ config.title }}
+            </h2>
             <p>Distribution vs achievement for each NW region.</p>
           </div>
         </header>
