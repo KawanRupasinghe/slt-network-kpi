@@ -84,7 +84,7 @@ export const routes: Routes = [
 
   { path: 'admin/routine-mtnc', component: AdminRoutineMtncComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
   { path: 'admin/email-service', component: EmailServiceComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
-  { path: 'admin/final-table', component: FinalTableComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
+  { path: 'admin/final-table', component: FinalTableComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin', 'PlatformAdmin', 'User'] } },
   { path: 'admin/enterprise-kpi', component: AdminEnterpriseKpiComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
   { path: 'admin/other-kpi', component: AdminOtherKpiComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
   { path: '**', redirectTo: 'dashboard' },
