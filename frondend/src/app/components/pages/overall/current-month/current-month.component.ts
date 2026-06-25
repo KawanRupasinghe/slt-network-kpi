@@ -585,6 +585,14 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     return `${weightage.toFixed(2)}%`;
   }
 
+  /** Compute the total KPI percentage achieved by all engineers for a row, capped at 100% */
+  getTotalKpiPercentage(row: KpiRow): number {
+    if (!row.metrics || row.metrics.length === 0 || !row.pointsApplicable) return 0;
+    const totalPoints = row.metrics.reduce((sum, m) => sum + (m.pointsAchieved ?? 0), 0);
+    const cappedPoints = Math.min(totalPoints, row.pointsApplicable);
+    return (cappedPoints / row.pointsApplicable) * 100;
+  }
+
   async exportToExcel(): Promise<void> {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Current Month KPI');
@@ -606,7 +614,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     rgmCell.font = { bold: true, color: { argb: headerTextColor }, size: 12 };
     rgmCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
     rgmCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    worksheet.mergeCells(1, currentCol, 1, currentCol + 5);
+    worksheet.mergeCells(1, currentCol, 1, currentCol + 6);
 
     // Header row 2: P-DGM
     const pdgmCell = worksheet.getCell(2, currentCol);
@@ -614,7 +622,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     pdgmCell.font = { bold: true, color: { argb: headerTextColor }, size: 12 };
     pdgmCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
     pdgmCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    worksheet.mergeCells(2, currentCol, 2, currentCol + 5);
+    worksheet.mergeCells(2, currentCol, 2, currentCol + 6);
 
     // Header row 3: NW EE/RTOM AREA
     const nwCell = worksheet.getCell(3, currentCol);
@@ -622,10 +630,10 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     nwCell.font = { bold: true, color: { argb: headerTextColor }, size: 12 };
     nwCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
     nwCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    worksheet.mergeCells(3, currentCol, 3, currentCol + 5);
+    worksheet.mergeCells(3, currentCol, 3, currentCol + 6);
 
     // Column headers row 4
-    const leftHeaders = ['Perspectives', 'Category', 'Key Performance Indicators (KPI)', 'Target', 'Weightage', 'Points Applicable'];
+    const leftHeaders = ['Perspectives', 'Category', 'Key Performance Indicators (KPI)', 'Target', 'Weightage', 'Points Applicable', 'Total KPI Percentage'];
     leftHeaders.forEach((header, idx) => {
       const cell = worksheet.getCell(4, currentCol + idx);
       cell.value = header;
@@ -647,6 +655,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     worksheet.getColumn(currentCol + 3).width = 20; // Target
     worksheet.getColumn(currentCol + 4).width = 12; // Weightage
     worksheet.getColumn(currentCol + 5).width = 15; // Points Applicable
+    worksheet.getColumn(currentCol + 6).width = 20; // Total KPI Percentage
 
     // Data rows
     let currentRow = 5;
@@ -658,13 +667,19 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
         row.kpi,
         row.target,
         this.getComputedWeightage(row),
-        row.pointsApplicable
+        row.pointsApplicable,
+        Number(this.getTotalKpiPercentage(row).toFixed(2))
       ];
 
       rowData.forEach((value, colIdx) => {
         const cell = worksheet.getCell(currentRow, currentCol + colIdx);
         cell.value = value;
-        cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        if (colIdx === 6) {
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.numFmt = '0.00"%"';
+        } else {
+          cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        }
         if (isAltRow) {
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: altRowBgColor } };
         }
@@ -694,6 +709,15 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     totalCell2.font = { bold: true, color: { argb: headerTextColor } };
     totalCell2.alignment = { horizontal: 'center', vertical: 'middle' };
     totalCell2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
+
+    const totalCell3 = worksheet.getCell(currentRow, currentCol + 6);
+    totalCell3.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
+    totalCell3.border = {
+      top: { style: 'thin', color: { argb: borderColor } },
+      bottom: { style: 'thin', color: { argb: borderColor } },
+      left: { style: 'thin', color: { argb: borderColor } },
+      right: { style: 'thin', color: { argb: borderColor } }
+    };
     currentRow++;
 
     // KPI label row
@@ -703,10 +727,28 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     kpiLabelCell.alignment = { horizontal: 'right', vertical: 'middle' };
     kpiLabelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F3F4F6' } };
     worksheet.mergeCells(currentRow, currentCol, currentRow, currentCol + 4);
+
+    const kpiLabelCell2 = worksheet.getCell(currentRow, currentCol + 5);
+    kpiLabelCell2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F3F4F6' } };
+    kpiLabelCell2.border = {
+      top: { style: 'thin', color: { argb: borderColor } },
+      bottom: { style: 'thin', color: { argb: borderColor } },
+      left: { style: 'thin', color: { argb: borderColor } },
+      right: { style: 'thin', color: { argb: borderColor } }
+    };
+
+    const kpiLabelCell3 = worksheet.getCell(currentRow, currentCol + 6);
+    kpiLabelCell3.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F3F4F6' } };
+    kpiLabelCell3.border = {
+      top: { style: 'thin', color: { argb: borderColor } },
+      bottom: { style: 'thin', color: { argb: borderColor } },
+      left: { style: 'thin', color: { argb: borderColor } },
+      right: { style: 'thin', color: { argb: borderColor } }
+    };
     currentRow++;
 
     // ===== RIGHT TABLE: REGION PERFORMANCE =====
-    currentCol = 7; // Start after left table columns
+    currentCol = 8; // Start after left table columns
     currentRow = 1;
 
     // Region headers
@@ -722,7 +764,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     // Province headers
-    currentCol = 7;
+    currentCol = 8;
     currentRow = 2;
     this.regionGroups.forEach(region => {
       region.provinces.forEach(province => {
@@ -738,7 +780,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     // Network Engineer headers
-    currentCol = 7;
+    currentCol = 8;
     currentRow = 3;
     this.engineersFlat.forEach(eng => {
       const startCol = currentCol;
@@ -752,7 +794,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     // Column sub-headers (Achieved KPI, Maximum Points, Points Achieved)
-    currentCol = 7;
+    currentCol = 8;
     currentRow = 4;
     this.engineersFlat.forEach(() => {
       const headers = ['Achieved KPI', 'Maximum Points Per KPI', 'Points Achieved'];
@@ -777,7 +819,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     currentRow = 5;
     this.kpiRows.forEach((row, idx) => {
       const isAltRow = idx % 2 === 1;
-      currentCol = 7;
+      currentCol = 8;
 
       row.metrics.forEach(metric => {
         const achievedCell = worksheet.getCell(currentRow, currentCol);
@@ -822,7 +864,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     // Summary row (totals)
-    currentCol = 7;
+    currentCol = 8;
     this.totalPointsAchievedByRegion.forEach((total, idx) => {
       const emptyCell = worksheet.getCell(currentRow, currentCol);
       emptyCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
@@ -846,7 +888,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     currentRow++;
 
     // Normalized percentage row
-    currentCol = 7;
+    currentCol = 8;
     this.totalPointsNormalized.forEach(norm => {
       const emptyCell1 = worksheet.getCell(currentRow, currentCol);
       emptyCell1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
@@ -869,6 +911,11 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const selectedLabel = this.getMonthLabel(this.selectedMonth) || 'Month';
     saveAs(blob, `Current_Month_KPI_${selectedLabel}_${this.selectedYear}.xlsx`);
+  }
+
+  getAchievedCellClass(metric: KpiMetric): string {
+    if (!metric || !metric.maximumPoints || metric.maximumPoints <= 0) return '';
+    return metric.pointsAchieved >= metric.maximumPoints ? 'target-achieved' : 'target-failed';
   }
 
   getKpiRowClass(row: KpiRow): string {

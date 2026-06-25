@@ -265,6 +265,10 @@
   width: 120px;
 }
 
+.kpi-table .col-total-pct {
+  width: 130px;
+}
+
 /* KPI table headers — SLT blue */
 .kpi-table th {
   height: 64px;
@@ -429,7 +433,22 @@
 }
 
 /* Metric Cells Colors — SLT blue & green */
-.achieved-cell { background-color: #ECFDF5; color: #ffffff; }         /* green-50 / green-700 */
+.achieved-cell {
+  background-color: #f8fafc;
+  color: #0f1724;
+}
+
+.final-distribution-table tbody tr td.achieved-cell.target-achieved {
+  background-color: #e6f4ea !important;
+  color: #137333 !important;
+  font-weight: 600;
+}
+
+.final-distribution-table tbody tr td.achieved-cell.target-failed {
+  background-color: #fce8e6 !important;
+  color: #c5221f !important;
+  font-weight: 600;
+}
 .maximum-points-cell { background-color: #EAF4FF; color: #0B63D6; }    /* light-blue bg / SLT blue text */
 .points-achieved-cell {
   background-color: #F7FFFB;
@@ -523,8 +542,8 @@
 }
 
 .fulfillment-dot {
-  background-color: #dcfce7;
-  border: 1.5px solid #28a745;
+  background-color: #cffafe;
+  border: 1.5px solid #0891b2;
 }
 
 .enterprise-dot {
@@ -540,41 +559,41 @@
 /* Row Category Specific Background Colors */
 .kpi-table tbody tr.category-assurance td,
 .final-distribution-table tbody tr.category-assurance td {
-  background-color: #dbeafe !important;
+  background-color: #e6efff !important;
 }
 
 .kpi-table tbody tr.category-assurance.row-hovered td,
 .final-distribution-table tbody tr.category-assurance.row-hovered td {
-  background-color: #bfdbfe !important;
+  background-color: #d5e4ff !important;
 }
 
 .kpi-table tbody tr.category-fulfillment td,
 .final-distribution-table tbody tr.category-fulfillment td {
-  background-color: #dcfce7 !important;
+  background-color: #ecfeff !important;
 }
 
 .kpi-table tbody tr.category-fulfillment.row-hovered td,
 .final-distribution-table tbody tr.category-fulfillment.row-hovered td {
-  background-color: #bbf7d0 !important;
+  background-color: #cffafe !important;
 }
 
 .kpi-table tbody tr.category-enterprise td,
 .final-distribution-table tbody tr.category-enterprise td {
-  background-color: #f3e8ff !important;
+  background-color: #f8f0ff !important;
 }
 
 .kpi-table tbody tr.category-enterprise.row-hovered td,
 .final-distribution-table tbody tr.category-enterprise.row-hovered td {
-  background-color: #e9d5ff !important;
+  background-color: #ebd9ff !important;
 }
 
 .kpi-table tbody tr.category-other-operator td,
 .final-distribution-table tbody tr.category-other-operator td {
-  background-color: #ffedd5 !important;
+  background-color: #fff4e5 !important;
 }
 
 .kpi-table tbody tr.category-other-operator.row-hovered td,
 .final-distribution-table tbody tr.category-other-operator.row-hovered td {
-  background-color: #fed7aa !important;
+  background-color: #ffe5c7 !important;
 }
 

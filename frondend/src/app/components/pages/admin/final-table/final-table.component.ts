@@ -11,6 +11,7 @@ import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
+import { AuthService } from '../../../../services/auth.service';
 
 /* ========== DATA TYPES ========== */
 
@@ -63,6 +64,7 @@ export class FinalTableComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly authService = inject(AuthService);
   private readonly totalPointsStorageKey = 'kpi.final-table.totalPoints';
 
   pageTitle = 'Strategic KPI Management';
@@ -73,6 +75,7 @@ export class FinalTableComponent implements OnInit {
   loading = false;
   saving = false;
   errorMessage = '';
+  isAdmin = false;
 
   private readonly apiBase = `${environment.apiUrl}/kpi-definitions`;
 
@@ -94,6 +97,8 @@ export class FinalTableComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    const role = this.authService.getRole();
+    this.isAdmin = role === 'Admin' || role === 'SuperAdmin';
     this.form.patchValue({ totalPoints: this.getPersistedTotalPoints() });
     this.form.patchValue({ category: '' });
     this.fetchData();

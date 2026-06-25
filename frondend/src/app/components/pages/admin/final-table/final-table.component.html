@@ -4,7 +4,7 @@
       <h1>{{ pageTitle }}</h1>
     </div>
 
-    <div class="form-container">
+    <div class="form-container" *ngIf="isAdmin">
       <div class="form-header">
         <h2>{{ editingId ? 'Update KPI Row' : 'Create KPI Row' }}</h2>
         <p class="form-sub">Manage Strategic KPI records</p>
@@ -103,7 +103,7 @@
               <th>Unit</th>
               <th>Weightage (%)</th>
               <th>Points</th>
-              <th>Actions</th>
+              <th *ngIf="isAdmin">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -116,7 +116,7 @@
               <td>{{ record.unit }}</td>
               <td>{{ getComputedWeightageForRecord(record) }}</td>
               <td>{{ record.pointsApplicable }}</td>
-              <td class="actions-col">
+              <td class="actions-col" *ngIf="isAdmin">
                 <div class="action-buttons">
                   <button type="button" class="btn-edit" (click)="onEdit(record)">Edit</button>
                   <button type="button" class="btn-delete" (click)="onDelete(record.id)">Delete</button>

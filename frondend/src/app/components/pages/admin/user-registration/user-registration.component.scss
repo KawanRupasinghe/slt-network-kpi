@@ -612,28 +612,210 @@
 }
 
 // User list specific
-.user-list {
-  max-height: 70vh;
-  overflow-y: auto;
-  padding-right: 0.5rem;
+.table-responsive {
+  overflow-x: hidden;
+  padding-right: 0.25rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.table {
+  width: 100%;
+  margin-bottom: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table thead th {
+  border: none;
+  background-color: #0057A6;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.6rem 0.4rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.85);
+  background-clip: padding-box;
+}
+
+.table thead th:last-child {
+  border-right: none;
+}
+
+.table thead tr:first-child th:first-child {
+  border-top-left-radius: 12px;
+}
+
+.table thead tr:first-child th:last-child {
+  border-top-right-radius: 12px;
+}
+
+.table tbody td {
+  vertical-align: middle;
+  padding: 0.6rem 0.4rem;
+  border-color: rgba(243, 244, 246, 0.5);
+  background-color: rgba(255, 255, 255, 0.72);
+  font-size: 0.88rem;
+}
+
+.pages-cell {
+  position: relative;
+}
+
+.pages-display-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   
-  &::-webkit-scrollbar {
-    width: 8px;
+  &:hover {
+    .assigned-pages {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      left: 0.4rem;
+      max-height: 200px;
+      max-width: 320px;
+      overflow: visible;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+      padding: 0.4rem;
+      border-radius: 6px;
+      z-index: 100;
+    }
+    
+    .more-indicator-badge {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+}
+
+.assigned-pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  max-height: 24px;
+  overflow: hidden;
+  max-width: 105px;
+  padding: 2px;
+  border-radius: 4px;
+  transition: all 0.15s ease-in-out;
+  
+  .badge {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.35rem;
+    white-space: nowrap;
+    line-height: 1.25;
+    font-weight: 500;
+  }
+}
+
+.more-indicator-badge {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.35rem;
+  background-color: #0057A6;
+  color: white;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.user-row {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: rgba(248, 250, 252, 0.85);
   }
   
-  &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
+  &.editing {
+    border-color: #fbbf24;
+    box-shadow: 0 14px 30px rgba(251, 191, 36, 0.35);
   }
-  
-  &::-webkit-scrollbar-thumb {
-    background: #0057A6;
-    border-radius: 4px;
-  }
-  
-  &::-webkit-scrollbar-thumb:hover {
-    background: #004c8c;
-  }
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.88rem;
+  word-break: break-word;
+}
+
+.service-number {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #0057a6;
+  font-size: 0.88rem;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+  color: #6b7280;
+}
+
+.status-badge.active {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #16a34a;
+}
+
+.status-badge:not(.active) {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.status-badge i {
+  font-size: 0.5rem;
+}
+
+.date-info {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+.action-buttons .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
 }
 
 // Responsive adjustments
