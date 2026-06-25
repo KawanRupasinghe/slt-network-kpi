@@ -913,6 +913,11 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     saveAs(blob, `Current_Month_KPI_${selectedLabel}_${this.selectedYear}.xlsx`);
   }
 
+  getAchievedCellClass(metric: KpiMetric): string {
+    if (!metric || !metric.maximumPoints || metric.maximumPoints <= 0) return '';
+    return metric.pointsAchieved >= metric.maximumPoints ? 'target-achieved' : 'target-failed';
+  }
+
   getKpiRowClass(row: KpiRow): string {
     const cat = (row.category ?? '').toLowerCase();
     if (cat.includes('enterprise') || cat.includes('enteprise')) {

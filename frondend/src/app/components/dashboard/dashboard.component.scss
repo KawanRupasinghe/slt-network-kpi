@@ -893,39 +893,39 @@ $border-radius-meter: 999px;
 }
 
 .assurance-dot {
-  background-color: #dbeafe;
+  background-color: #e6efff;
   border: 1.5px solid #0057a6;
 }
 
 .fulfillment-dot {
-  background-color: #dcfce7;
-  border: 1.5px solid #28a745;
+  background-color: #cffafe;
+  border: 1.5px solid #0891b2;
 }
 
 .enterprise-dot {
-  background-color: #f3e8ff;
+  background-color: #f8f0ff;
   border: 1.5px solid #8b5cf6;
 }
 
 .other-operator-dot {
-  background-color: #ffedd5;
+  background-color: #fff4e5;
   border: 1.5px solid #f97316;
 }
 
 /* Category Specific Background Colors inside Modal Table */
 .kpi-table-row.category-assurance {
-  background-color: #dbeafe !important;
-  &:hover { background-color: #bfdbfe !important; }
+  background-color: #e6efff !important;
+  &:hover { background-color: #d5e4ff !important; }
 }
 .kpi-table-row.category-fulfillment {
-  background-color: #dcfce7 !important;
-  &:hover { background-color: #bbf7d0 !important; }
+  background-color: #ecfeff !important;
+  &:hover { background-color: #cffafe !important; }
 }
 .kpi-table-row.category-enterprise {
-  background-color: #f3e8ff !important;
-  &:hover { background-color: #e9d5ff !important; }
+  background-color: #f8f0ff !important;
+  &:hover { background-color: #ebd9ff !important; }
 }
 .kpi-table-row.category-other-operator {
-  background-color: #ffedd5 !important;
-  &:hover { background-color: #fed7aa !important; }
+  background-color: #fff4e5 !important;
+  &:hover { background-color: #ffe5c7 !important; }
 }

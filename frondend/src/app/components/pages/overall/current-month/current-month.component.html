@@ -162,7 +162,7 @@
               (mouseleave)="setHoveredRowIndex(null)"
               #rightRowRef>
             <ng-container *ngFor="let metric of row.metrics">
-              <td class="text-center achieved-cell">
+              <td class="text-center achieved-cell" [ngClass]="getAchievedCellClass(metric)">
                 {{ metric.achieved | number : '1.2-2' }}%
               </td>
               <td class="text-center maximum-points-cell">
