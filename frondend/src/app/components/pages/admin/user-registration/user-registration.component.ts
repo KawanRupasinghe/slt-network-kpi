@@ -214,6 +214,19 @@ export class UserRegistrationComponent implements OnInit {
     this.editingUser = null;
   }
 
+  getAvatarColor(name: string): string {
+    const colors = [
+      'linear-gradient(135deg, #0057a6, #0077cc)',
+      'linear-gradient(135deg, #00a86b, #00cc88)',
+      'linear-gradient(135deg, #8e44ad, #9b59b6)',
+      'linear-gradient(135deg, #ff6b35, #ff9e5c)',
+      'linear-gradient(135deg, #3498db, #2ecc71)',
+    ];
+    const safe = name || 'A';
+    const index = safe.charCodeAt(0) % colors.length;
+    return colors[index];
+  }
+
   fillBasicTestData() {
     this.formData.name = 'Test User';
     this.formData.serviceId = (10000 + this.users.length).toString();

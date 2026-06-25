@@ -13,8 +13,8 @@
 
   <div class="row g-4">
     <!-- Form Column -->
-    <div class="col-lg-6">
-      <div #formCard class="card shadow-sm border-0 form-card" [class.card-editing]="editingUser">
+    <div class="col-lg-5 col-xl-4">
+      <div #formCard class="card shadow-sm border-0 h-100 form-card" [class.card-editing]="editingUser">
         <div class="card-body p-4">
           <form (submit)="handleSubmit($event)" class="needs-validation" novalidate>
             <h3 class="card-title mb-4 text-primary">
@@ -65,7 +65,7 @@
                   <input class="form-check-input" type="radio" name="role" id="role-user" value="User"
                     [(ngModel)]="formData.role" [disabled]="isLoading" />
                   <label class="form-check-label" for="role-user">
-                    User (Region)
+                    User
                   </label>
                 </div>
                 <div class="form-check">
@@ -107,31 +107,13 @@
                 <i class="bi bi-x-circle me-1"></i>Cancel
               </button>
             </div>
-
-            <!-- Quick Form Fill for Testing -->
-            <div class="mt-4 pt-3 border-top">
-              <small class="text-muted d-block mb-2">Quick Test Data:</small>
-              <div class="d-flex flex-wrap gap-2">
-                <button type="button" class="btn btn-outline-info btn-sm" (click)="fillBasicTestData()"
-                  [disabled]="isLoading">
-                  Fill Basic
-                </button>
-                <button type="button" class="btn btn-outline-info btn-sm" (click)="selectAllPages()"
-                  [disabled]="isLoading">
-                  Select All Pages
-                </button>
-                <button type="button" class="btn btn-outline-info btn-sm" (click)="clearPages()" [disabled]="isLoading">
-                  Clear Pages
-                </button>
-              </div>
-            </div>
           </form>
         </div>
       </div>
     </div>
 
     <!-- User List Column -->
-    <div class="col-lg-6">
+    <div class="col-lg-7 col-xl-8">
       <div class="card shadow-sm border-0 h-100">
         <div class="card-body p-4">
           <div class="d-flex justify-content-between align-items-center mb-4">
@@ -160,85 +142,83 @@
             </button>
           </div>
 
-          <div class="user-list" *ngIf="users.length > 0 && !isLoading">
-            <div *ngFor="let user of users" class="user-item card border mb-3"
-              [class.editing]="editingUser?.userId === user.userId">
-              <div class="card-body">
-                <div class="row align-items-center">
-                  <div class="col-md-8">
-                    <div class="user-heading mb-2">
-                      <i class="bi bi-person"></i>
-                      <span class="user-name">{{ user.name }}</span>
-                      <span *ngIf="editingUser?.userId === user.userId" class="badge bg-warning text-dark ms-2">
-                        Editing
-                      </span>
-                      <span class="badge ms-2" [ngClass]="user.isActive ? 'bg-success' : 'bg-danger'">
-                        {{ user.isActive ? 'Active' : 'Inactive' }}
-                      </span>
-                    </div>
-                    <p class="card-text mb-1">
-                      <small class="text-muted">
-                        <i class="bi bi-card-text me-1"></i>
-                        Service No: {{ user.serviceId }}
-                      </small>
-                    </p>
-                    <p class="card-text mb-1">
-                      <small class="text-muted">
-                        <i class="bi bi-shield me-1"></i>
-                        Role:
-                        <span class="badge"
-                          [ngClass]="user.role === 'PlatformAdmin' ? 'bg-info text-dark' : 'bg-light text-dark border'">
-                          {{ user.role }}
+          <div class="table-responsive" *ngIf="users.length > 0 && !isLoading">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Service ID</th>
+                  <th>Status</th>
+                  <th>Role</th>
+                  <th>Pages</th>
+                  <th>Created</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let user of users" class="user-row" [class.editing]="editingUser?.userId === user.userId">
+                  <td>
+                    <div class="user-info">
+                      <div class="user-avatar" [style.background]="getAvatarColor(user.name)">
+                        {{ user.name.charAt(0) }}
+                      </div>
+                      <div>
+                        <div class="user-name fw-bold">{{ user.name }}</div>
+                        <span *ngIf="editingUser?.userId === user.userId" class="badge bg-warning text-dark">
+                          Editing
                         </span>
-                      </small>
-                    </p>
-                    <p class="card-text mb-1">
-                      <small class="text-muted">
-                        <i class="bi bi-calendar me-1"></i>
-                        Created: {{ user.createdAt | date:'short' }}
-                      </small>
-                    </p>
-                    <div class="mt-2" *ngIf="user.role === 'PlatformAdmin'">
-                      <small class="text-muted d-block mb-1">
-                        <i class="bi bi-file-text me-1"></i>
-                        Assigned Pages ({{ user.pages.length }}):
-                      </small>
-                      <div class="d-flex flex-wrap gap-1">
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="service-number">
+                      {{ user.serviceId }}
+                    </div>
+                  </td>
+                  <td>
+                    <span class="status-badge" [class.active]="user.isActive">
+                      <i class="bi bi-circle-fill me-1"></i>
+                      {{ user.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="user.role === 'PlatformAdmin' ? 'bg-info text-dark font-semibold' : 'bg-light text-dark border'">
+                      {{ user.role }}
+                    </span>
+                  </td>
+                  <td class="pages-cell">
+                    <div class="pages-display-wrapper" *ngIf="user.role === 'PlatformAdmin'">
+                      <div class="assigned-pages d-flex flex-wrap gap-1">
                         <span *ngFor="let page of user.pages" class="badge bg-light text-dark border">
                           {{ page }}
                         </span>
                       </div>
+                      <span *ngIf="user.pages.length > 1" class="more-indicator-badge">
+                        +{{ user.pages.length - 1 }}
+                      </span>
                     </div>
-                  </div>
-                  <div class="col-md-4 text-end mt-3 mt-md-0">
-                    <div class="d-flex flex-column gap-2">
+                    <span class="text-muted" *ngIf="user.role !== 'PlatformAdmin'">—</span>
+                  </td>
+                  <td>
+                    <div class="date-info">
+                      {{ user.createdAt | date:'yyyy-MM-dd' }}
+                    </div>
+                  </td>
+                  <td class="text-end">
+                    <div class="action-buttons">
                       <button (click)="handleEdit(user)" class="btn btn-warning btn-sm"
-                        [disabled]="editingUser?.userId === user.userId || isLoading">
-                        <i class="bi bi-pencil me-1"></i>
-                        {{ editingUser?.userId === user.userId ? 'Editing...' : 'Edit' }}
+                        [disabled]="editingUser?.userId === user.userId || isLoading" title="Edit">
+                        <i class="bi bi-pencil"></i>
                       </button>
                       <button *ngIf="user.role !== 'SuperAdmin'" (click)="handleDelete(user.userId)"
-                        class="btn btn-outline-danger btn-sm" [disabled]="isLoading">
-                        <i class="bi bi-trash me-1"></i>Delete
+                        class="btn btn-outline-danger btn-sm" [disabled]="isLoading" title="Delete">
+                        <i class="bi bi-trash"></i>
                       </button>
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Backend Info -->
-          <div class="mt-4 pt-3 border-top text-center">
-            <small class="text-muted">
-              <i class="bi bi-server me-1"></i>
-              Connected to: https://socapps.intranet.slt.com.lk
-            </small>
-            <br>
-            <small class="text-muted">
-              <i class="bi bi-database me-1"></i>
-              Database: NWKPI (SQL Server)
-            </small>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
