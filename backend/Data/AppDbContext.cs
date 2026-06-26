@@ -352,6 +352,7 @@ namespace backend.Data
                 entity.Property(x => x.Id).HasColumnName("id").ValueGeneratedOnAdd();
                 entity.Property(x => x.Perspectives).HasColumnName("perspectives").HasMaxLength(50).IsRequired();
                 entity.Property(x => x.Category).HasColumnName("category").HasMaxLength(50).IsRequired(false);
+                entity.Property(x => x.EngineerResponsible).HasColumnName("engineerResponsible").HasMaxLength(100).IsRequired(false);
                 entity.Property(x => x.StrategicObjectives).HasColumnName("strategicObjectives").HasMaxLength(50).IsRequired();
                 entity.Property(x => x.KeyPerformanceIndicators).HasColumnName("keyPerformanceIndicators").HasMaxLength(100).IsRequired();
                 entity.Property(x => x.Unit).HasColumnName("unit").HasMaxLength(50).IsRequired();
