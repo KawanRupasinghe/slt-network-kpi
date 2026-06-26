@@ -45,7 +45,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("SuperAdminOnly", policy => policy.RequireClaim("role", "SuperAdmin"));
     options.AddPolicy("AdminOnly", policy => policy.RequireClaim("role", "Admin", "SuperAdmin"));
     options.AddPolicy("PlatformAdminOnly", policy => policy.RequireClaim("role", "PlatformAdmin", "SuperAdmin"));
-    
+
     options.AddPolicy("ViewPagePolicy", policy =>
         policy.AddRequirements(new backend.Helpers.Authorization.PageAccessRequirement()));
 
@@ -68,6 +68,15 @@ builder.Services.AddCors(options =>
 
 // Register MultiTable Service for SOAP UI data fetching
 builder.Services.AddHttpClient<IMultiTableService, MultiTableService>();
+builder.Services.AddScoped<backend.Services.IKpiDefinitionService, backend.Services.KpiDefinitionService>();
+builder.Services.AddScoped<IMsanMtcDataCumulativeService, MsanMtcDataCumulativeService>();
+builder.Services.AddScoped<ISlbnMtcDataCumulativeService, SlbnMtcDataCumulativeService>();
+builder.Services.AddScoped<ITowerMtcDataCumulativeService, TowerMtcDataCumulativeService>();
+
+builder.Services.AddScoped<IIpnwMtcDataCumulativeService, IpnwMtcDataCumulativeService>();
+builder.Services.AddScoped<RoutineMaintenanceService>();
+builder.Services.AddScoped<TowerMaintenanceService>();
+builder.Services.AddScoped<PowerAndACService>();
 
 var app = builder.Build();
 
@@ -107,19 +116,50 @@ using (var scope = app.Services.CreateScope())
             new backend.Models.Page { PageId = 2, PageCode = "SERVICE_FULFILMENT", PageName = "SERVICE FULFILMENT" },
             new backend.Models.Page { PageId = 3, PageCode = "BB_ANW", PageName = "BB ANW" },
             new backend.Models.Page { PageId = 4, PageCode = "OTN_OP", PageName = "OTN OP" },
-            new backend.Models.Page { PageId = 5, PageCode = "TM_ACTIVITY", PageName = "TM Activity Plan" },
+            new backend.Models.Page { PageId = 5, PageCode = "TM_ACTIVITY", PageName = "Other Operator" },
             new backend.Models.Page { PageId = 6, PageCode = "ROUTINE_MTNC", PageName = "ROUTINE MTNC" },
-            new backend.Models.Page { PageId = 7, PageCode = "TOWER_MTCE", PageName = "TOWER MTCE ACHIEVEMENT" }
+            new backend.Models.Page { PageId = 7, PageCode = "TOWER_MTCE", PageName = "TOWER MTCE ACHIEVEMENT" },
+            new backend.Models.Page { PageId = 8, PageCode = "ENTERPRISE_KPI", PageName = "Enterprise KPI" },
+            new backend.Models.Page { PageId = 9, PageCode = "OTHER_OPERATOR_KPI", PageName = "Other Operator KPI" },
+            new backend.Models.Page { PageId = 10, PageCode = "OTHER_KPI", PageName = "Other KPI" }
         };
 
         var existingPageIds = context.Pages.Select(p => p.PageId).ToList();
         var missingPages = pageSeeds.Where(p => !existingPageIds.Contains(p.PageId)).ToList();
         if (missingPages.Any())
         {
-            context.Pages.AddRange(missingPages);
-            context.SaveChanges();
+            try
+            {
+                // Ensure we use the same physical connection for SET IDENTITY_INSERT and the insert.
+                await context.Database.OpenConnectionAsync();
+                try
+                {
+                    await context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT dbo.Page ON;");
+                    context.Pages.AddRange(missingPages);
+                    context.SaveChanges();
+                    await context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT dbo.Page OFF;");
+                }
+                finally
+                {
+                    await context.Database.CloseConnectionAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                // If enabling IDENTITY_INSERT fails (e.g., PageId is not an identity column), fall back to normal insert.
+                try
+                {
+                    context.Pages.AddRange(missingPages);
+                    context.SaveChanges();
+                }
+                catch (Exception innerEx)
+                {
+                    Console.WriteLine($"Failed inserting pages: {innerEx.Message}");
+                    throw;
+                }
+            }
         }
-        
+
         // Fix: Ensure Admin has correct Role (SuperAdmin = 1) and Password hash if missing
         var adminUser = context.Users.FirstOrDefault(u => u.ServiceId == "admin");
         if (adminUser != null)
@@ -163,6 +203,92 @@ using (var scope = app.Services.CreateScope())
                 }
             }
         }
+
+        await context.Database.ExecuteSqlRawAsync(@"
+IF OBJECT_ID(N'dbo.msanmtcdata', N'U') IS NOT NULL
+AND EXISTS (
+    SELECT 1
+    FROM sys.columns c
+    INNER JOIN sys.types t ON c.user_type_id = t.user_type_id
+    WHERE c.object_id = OBJECT_ID(N'dbo.msanmtcdata')
+      AND c.name = N'year'
+      AND t.name IN (N'varchar', N'nvarchar', N'char', N'nchar')
+)
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM dbo.msanmtcdata
+        WHERE [year] IS NOT NULL
+          AND LTRIM(RTRIM([year])) <> ''
+          AND TRY_CONVERT(int, LTRIM(RTRIM([year]))) IS NULL
+    )
+    BEGIN
+        THROW 50001, 'Cannot convert dbo.msanmtcdata.year to int because one or more values are not numeric.', 1;
+    END;
+
+    UPDATE dbo.msanmtcdata
+    SET [year] = NULL
+    WHERE [year] IS NOT NULL
+      AND LTRIM(RTRIM([year])) = '';
+
+    ALTER TABLE dbo.msanmtcdata ALTER COLUMN [year] int NULL;
+END;
+");
+
+        var msanBackfill = services.GetRequiredService<IMsanMtcDataCumulativeService>();
+        var msanBackfillResult = await msanBackfill.RecalculateAllAsync();
+        Console.WriteLine(
+            "MSAN cumulative backfill completed. Records: {0}, Groups: {1}, Rows updated: {2}.",
+            msanBackfillResult.TotalRecords,
+            msanBackfillResult.GroupsProcessed,
+            msanBackfillResult.RecordsUpdated);
+
+        await context.Database.ExecuteSqlRawAsync(@"
+IF OBJECT_ID(N'dbo.slbnmtcdata', N'U') IS NOT NULL
+AND EXISTS (
+    SELECT 1
+    FROM sys.columns c
+    INNER JOIN sys.types t ON c.user_type_id = t.user_type_id
+    WHERE c.object_id = OBJECT_ID(N'dbo.slbnmtcdata')
+      AND c.name = N'year'
+      AND t.name IN (N'varchar', N'nvarchar', N'char', N'nchar')
+)
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM dbo.slbnmtcdata
+        WHERE [year] IS NOT NULL
+          AND LTRIM(RTRIM([year])) <> ''
+          AND TRY_CONVERT(int, LTRIM(RTRIM([year]))) IS NULL
+    )
+    BEGIN
+        THROW 50002, 'Cannot convert dbo.slbnmtcdata.year to int because one or more values are not numeric.', 1;
+    END;
+
+    UPDATE dbo.slbnmtcdata
+    SET [year] = NULL
+    WHERE [year] IS NOT NULL
+      AND LTRIM(RTRIM([year])) = '';
+
+    ALTER TABLE dbo.slbnmtcdata ALTER COLUMN [year] int NULL;
+END;
+");
+
+        var slbnBackfill = services.GetRequiredService<ISlbnMtcDataCumulativeService>();
+        var slbnBackfillResult = await slbnBackfill.RecalculateAllAsync();
+        Console.WriteLine(
+            "SLBN cumulative backfill completed. Records: {0}, Groups: {1}, Rows updated: {2}.",
+            slbnBackfillResult.TotalRecords,
+            slbnBackfillResult.GroupsProcessed,
+            slbnBackfillResult.RecordsUpdated);
+
+        var towerBackfill = services.GetRequiredService<ITowerMtcDataCumulativeService>();
+        var towerBackfillResult = await towerBackfill.RecalculateAllAsync();
+        Console.WriteLine(
+            "Tower MTC cumulative backfill completed. Records: {0}, Groups: {1}, Rows updated: {2}.",
+            towerBackfillResult.TotalRecords,
+            towerBackfillResult.GroupsProcessed,
+            towerBackfillResult.RecordsUpdated);
     }
     catch (Exception ex)
     {

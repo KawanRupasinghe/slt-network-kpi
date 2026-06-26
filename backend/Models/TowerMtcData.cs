@@ -16,7 +16,7 @@ namespace backend.Models
         public string? Designation { get; set; }
 
         [Column("year")]
-        public short? Year { get; set; }
+        public int? Year { get; set; }
 
         [Column("month", TypeName = "nchar(10)")]
         public string? Month { get; set; }
@@ -27,7 +27,10 @@ namespace backend.Models
         [Column("attended")]
         public int? Attended { get; set; }
 
-        [Column("cumulative_count")]
-        public int? CumulativeCount { get; set; }
+        [Column("Cumulative_Scheduled")]
+        public int CumulativeScheduled { get; set; }
+
+        [Column("Cumulative_Achieved")]
+        public int CumulativeAttended { get; set; }
     }
 }

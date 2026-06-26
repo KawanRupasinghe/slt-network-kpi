@@ -86,3 +86,12 @@ packages/
 .sonarqube/
 .sonar/
 sonarqube-analysis.xml
+
+info.md
+
+.cora/*
+.cora*
+.cora/
+
+YB-Notes/
+YB-Notes/*

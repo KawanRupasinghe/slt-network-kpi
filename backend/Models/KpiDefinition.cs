@@ -50,6 +50,15 @@ namespace backend.Models
         [Column("pointsApplicable")]
         public int PointsApplicable { get; set; } = 0;
 
+        // Total points used for weightage calculation
+        [Column("totalPoints")]
+        public int TotalPoints { get; set; } = 36000;
+
+        // Optional category for the KPI
+        [Column("category")]
+        [MaxLength(50)]
+        public string? Category { get; set; } = string.Empty;
+
         // Timestamp when the KPI definition was created
         [Column("createdAt")]
         public string? CreatedAt { get; set; }
@@ -58,12 +67,5 @@ namespace backend.Models
         [Column("updatedAt")]
         public string? UpdatedAt { get; set; }
 
-        // Month for which this KPI definition applies
-        [Column("month")]
-        public byte Month { get; set; }
-
-        // Year for which this KPI definition applies
-        [Column("year")]
-        public short Year { get; set; }
     }
 }

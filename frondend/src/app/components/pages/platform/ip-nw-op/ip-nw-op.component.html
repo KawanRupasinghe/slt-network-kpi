@@ -150,7 +150,7 @@
         <div class="card-body p-0">
           <div class="card-header bg-primary text-white">
             <h5 class="mb-0">
-              <i class="bi bi-table me-2"></i>
+              <i class="bi bi-diagram-2-fill me-2"></i>
               KPI (NW Availability - IP Core NW / BSR NW / Service Edge NW)
             </h5>
           </div>
@@ -161,9 +161,9 @@
                 <tr>
                   <th>No</th>
                   <th>Network Engineer KPI</th>
-                  <th>Division</th>
-                  <th>Section</th>
-                  <th>KPI %</th>
+                  <th>Category</th>
+                  <th>Target</th>
+                  <th>Weightage</th>
                 </tr>
               </thead>
 
@@ -193,7 +193,7 @@
         <div class="card-body p-0">
           <div class="card-header bg-primary text-white d-flex flex-wrap align-items-center gap-3">
             <h5 class="mb-0 d-flex flex-wrap align-items-center gap-2">
-              <i class="bi bi-geo-alt-fill"></i>
+              <i class="bi bi-diagram-2-fill me-2"></i>
               KPI (NW Availability - IP Core NW / BSR NW / Service Edge NW)
               <span class="badge bg-light text-primary ms-auto">
                 {{ selectedAreaLabel || 'Selected Area' }}
@@ -213,10 +213,10 @@
                 <tr>
                   <th>No</th>
                   <th>Network Engineer KPI</th>
-                  <th>Division</th>
-                  <th>Section</th>
-                  <th>KPI %</th>
-                  <th>{{ selectedAreaLabel || 'Selected Area' }}</th>
+                  <th>Category</th>
+                  <th>Target</th>
+                  <th>Weightage</th>
+                  <th>{{ selectedAreaLabel || 'Selected Area' }} (Achievement %)</th>
                 </tr>
               </thead>
 
@@ -264,31 +264,10 @@
                     <tr class="sub-row">
                       <td></td>
                       <td colspan="4" class="sub-label">Total Minutes</td>
-                      <td class="metric-cell" [class.can-edit]="canEditMetrics">
-                        <ng-container *ngIf="isCellEditing(row.id, 'total_minutes'); else totalMinutesView">
-                          <div class="edit-box">
-                            <input type="number" class="form-control form-control-sm" [ngModel]="editCell.value"
-                              (ngModelChange)="onEditInput($event)" (keydown)="handleEditKey($event)"
-                              placeholder="Enter minutes" />
-                            <div class="edit-actions">
-                              <button type="button" class="table-button" (click)="doneEdit()">
-                                Save
-                              </button>
-                              <button type="button" class="table-button btn-outline-warning" (click)="cancelEdit()">
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        </ng-container>
-                        <ng-template #totalMinutesView>
-                          <div class="cell-view">
-                            <span>{{ getAreaMetric(row, 'total_minutes') }}</span>
-                            <button *ngIf="canEditMetrics" type="button" class="table-button btn-outline-warning"
-                              (click)="startEdit(row, 'total_minutes')">
-                              Edit
-                            </button>
-                          </div>
-                        </ng-template>
+                      <td class="metric-cell">
+                        <div class="cell-view">
+                          <span>{{ getAreaMetric(row, 'total_minutes') }}</span>
+                        </div>
                       </td>
                     </tr>
                     <tr class="sub-row">
@@ -321,6 +300,7 @@
                         </ng-template>
                       </td>
                     </tr>
+
                   </ng-container>
                 </ng-container>
               </tbody>

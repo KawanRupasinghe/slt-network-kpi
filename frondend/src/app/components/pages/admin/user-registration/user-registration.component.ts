@@ -24,7 +24,7 @@ import { CreateUserDto, UpdateUserDto, User, UserService } from '../../../../ser
 })
 export class UserRegistrationComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
-  pageTitle = 'User Registration';
+  pageTitle = 'User Management';
   @ViewChild('formCard') formCard?: ElementRef<HTMLElement>;
   @ViewChild('nameField') nameField?: ElementRef<HTMLInputElement>;
 
@@ -47,9 +47,13 @@ export class UserRegistrationComponent implements OnInit {
     'IP NW OP',
     'BB ANW',
     'OTN OP',
-    'TM Activity Plan',
+    'Other Operator',
     'ROUTINE MTNC',
-    'TOWER MTCE ACHIEVEMENT'
+    'TOWER MTCE ACHIEVEMENT',
+    'Enterprise KPI',
+    'Other Operator KPI',
+    'Other KPI',
+    'Aged Network Failures'
   ];
 
   constructor(private userService: UserService) { }
@@ -208,6 +212,19 @@ export class UserRegistrationComponent implements OnInit {
       isActive: true
     };
     this.editingUser = null;
+  }
+
+  getAvatarColor(name: string): string {
+    const colors = [
+      'linear-gradient(135deg, #0057a6, #0077cc)',
+      'linear-gradient(135deg, #00a86b, #00cc88)',
+      'linear-gradient(135deg, #8e44ad, #9b59b6)',
+      'linear-gradient(135deg, #ff6b35, #ff9e5c)',
+      'linear-gradient(135deg, #3498db, #2ecc71)',
+    ];
+    const safe = name || 'A';
+    const index = safe.charCodeAt(0) % colors.length;
+    return colors[index];
   }
 
   fillBasicTestData() {

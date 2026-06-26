@@ -15,8 +15,8 @@ namespace backend.Models
         [Column("designation")]
         public string? Designation { get; set; }
 
-        [Column("year")]
-        public int? Year { get; set; }   // FIXED
+        [Column("year", TypeName = "varchar(10)")]
+        public string? Year { get; set; }   // FIXED
 
         [Column("month", TypeName = "varchar(10)")]
         public string? Month { get; set; }
@@ -27,7 +27,10 @@ namespace backend.Models
         [Column("attended")]
         public int? Attended { get; set; }
 
-        [Column("cumulative_count")]
-        public int? CumulativeCount { get; set; }
+        [Column("Cumulative_Sched")]
+        public int CumulativeSched { get; set; }
+
+        [Column("Cumulative_Achieved")]
+        public int CumulativeAchieved { get; set; }
     }
 }

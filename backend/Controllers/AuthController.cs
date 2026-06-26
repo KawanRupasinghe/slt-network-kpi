@@ -158,14 +158,13 @@ namespace backend.Controllers
                 issuer: jwtSettings["Issuer"] ?? "KPI_Backend",
                 audience: jwtSettings["Audience"] ?? "KPI_Frontend",
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(8),
+                expires: DateTime.UtcNow.AddHours(5),
                 signingCredentials: creds
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        // Map platform page names to system page IDs
         private static byte? MapKnownPageId(string? input)
         {
             var key = NormalizeKey(input);
@@ -175,11 +174,18 @@ namespace backend.Controllers
             {
                 "ipnwop" => (byte)1,
                 "servicefulfilment" => (byte)2,
+                "servicefulfillment" => (byte)2,
                 "bbanw" => (byte)3,
+                "otnop" => (byte)4,
                 "otonop" => (byte)4,
                 "tmactivityplan" => (byte)5,
+                "otheroperator" => (byte)5,
                 "routinemtnc" => (byte)6,
                 "towermtceachievement" => (byte)7,
+                "towermtce" => (byte)7,
+                "enterprisekpi" => (byte)8,
+                "otheroperatorkpi" => (byte)9,
+                "otherkpi" => (byte)10,
                 _ => null
             };
         }

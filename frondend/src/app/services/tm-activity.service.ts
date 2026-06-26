@@ -22,14 +22,6 @@ export interface ActivityRecord {
   target: string;
   /* Calculation method */
   calculation: string;
-  /* Platform this applies to */
-  platform: string;
-  /* Responsible Director General Manager */
-  responsibleDGM: string;
-  /* Defined OLA (Operating Level Agreement) details */
-  definedOLADetails: string;
-  /* Data sources for this activity */
-  dataSources: string;
 }
 
 /* ========== TM ACTIVITY SERVICE ========== */

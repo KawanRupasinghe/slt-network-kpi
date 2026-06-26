@@ -1,4 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../services/auth.service';
 import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -8,6 +8,9 @@ import { catchError, map } from 'rxjs/operators';
 import { OtnOp1Service, OtnOpKpi, OtnOp1Metric } from '../../../../services/otn-op1.service';
 import { OtnOp2Service, OtnOp2Metric } from '../../../../services/otn-op2.service';
 import { RegionService, Region } from '../../../../services/region.service';
+
+
+
 
 type Dict<T = any> = Record<string, T>;
 
@@ -31,6 +34,8 @@ interface BaseEntry {
 interface MetricMeta {
 	id?: number;
 	site?: string;
+	month?: number;
+	year?: number;
 }
 
 interface OtnOp1Entry extends BaseEntry {
@@ -87,7 +92,7 @@ const LOCAL_REGION_TABLE: RegionRow[] = [
 	styleUrls: ['./otn-op.component.scss'],
 })
 export class OtnOpComponent implements OnInit, OnDestroy {
-	pageTitle = 'OTN & Optical';
+	pageTitle = 'OTN Operations';
 
 	otnOp1Data: OtnOp1Entry[] = [];
 	otnOp2Data: OtnOp2Entry[] = [];
@@ -100,11 +105,10 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 	devRoleOverride: 'padmin' | 'user' | null = null;
 	saving = false;
 
-	readonly daysInMonth: number = new Date(
-		new Date().getFullYear(),
-		new Date().getMonth() + 1,
-		0
-	).getDate();
+
+
+	// daysInMonth must be derived from the reporting period or per-metric metadata.
+	// Use getDaysInMonth(year, month) to compute month length when needed.
 
 	private permissionTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -179,10 +183,11 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 		private otnOp2Service: OtnOp2Service,
 		private regionService: RegionService,
 		private authService: AuthService,
+
 		private cdr: ChangeDetectorRef
 	) {}
 
-	ngOnInit(): void {
+ngOnInit(): void {
 		this.buildFriendlyMap();
 		
 		// Initialize year options (last 3 years)
@@ -200,6 +205,7 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 		this.loadData();
 
 		this.permissionTimer = setInterval(() => this.refreshEditPermission(), 60000);
+
 	}
 
 	ngOnDestroy(): void {
@@ -269,7 +275,8 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 			const pct = this.calculatePercentageOtnOp1(
 				(entry as OtnOp1Entry).totalMinutes?.[this.selectedKey],
 				(entry as OtnOp1Entry).unavailableMinutes?.[this.selectedKey],
-				(entry as OtnOp1Entry).totalNodes?.[this.selectedKey]
+				(entry as OtnOp1Entry).totalNodes?.[this.selectedKey],
+				(entry as OtnOp1Entry).metricMeta?.[this.selectedKey]
 			);
 			return isNaN(pct) ? '' : `${pct.toFixed(2)}%`;
 		}
@@ -288,7 +295,8 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 
 		const manual = Number((entry as OtnOp1Entry).totalMinutes?.[this.selectedKey]) || 0;
 		const nodes = Number((entry as OtnOp1Entry).totalNodes?.[this.selectedKey]) || 0;
-		const computed = 24 * 60 * this.daysInMonth * nodes;
+		const days = this.getDaysForEntry(entry as OtnOp1Entry, this.selectedKey);
+		const computed = 24 * 60 * days * nodes;
 		const value = manual || computed;
 		return value ? String(value) : '';
 	}
@@ -317,6 +325,17 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 
 	private norm(value: string | null | undefined): string {
 		return value ? value.replace(/[^A-Za-z0-9]/g, '').toLowerCase() : '';
+	}
+
+	private getDaysInMonth(year: number, month: number): number {
+		return new Date(year, month, 0).getDate();
+	}
+
+	private getDaysForEntry(entry: OtnOp1Entry | OtnOp2Entry, areaKey: string): number {
+		const meta = (entry as any)?.metricMeta?.[areaKey];
+		const year = meta?.year ?? this.selectedYear;
+		const month = meta?.month ?? this.selectedMonth;
+		return this.getDaysInMonth(year, month);
 	}
 
 	private toCanonicalSiteKey(value: string | null | undefined): string {
@@ -798,6 +817,7 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 		this.loadData();
 	}
 
+
 	onDropdownChange(
 		name: 'dropdown1' | 'dropdown2' | 'dropdown3' | 'dropdown4',
 		value: string
@@ -832,22 +852,28 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 			return;
 		}
 
-		this.formValues.dropdown4 = value;
-		this.cancelEdit();
+	this.formValues.dropdown4 = value;
+	this.cancelEdit();
+
 	}
 
-	calculatePercentageOtnOp1(totalMinutes: any, unavailableMinutes: any, totalNodes: any): number {
+	calculatePercentageOtnOp1(
+		totalMinutes: any,
+		unavailableMinutes: any,
+		totalNodes: any,
+		meta?: { month?: number; year?: number }
+	): number {
 		const tm = Number(totalMinutes) || 0;
 		const um = Number(unavailableMinutes) || 0;
 		const tn = Number(totalNodes) || 0;
 
 		const totalAvailableMinutes = tm - um;
-		const totalMin = 24 * 60 * this.daysInMonth * tn;
-		if (totalMin <= 0) {
+		const denominator = tm > 0 ? tm : (24 * 60 * this.getDaysInMonth(meta?.year ?? this.selectedYear, meta?.month ?? this.selectedMonth) * tn);
+		if (denominator <= 0) {
 			return 100;
 		}
 
-		const pct = (100 * totalAvailableMinutes) / totalMin;
+		const pct = (100 * totalAvailableMinutes) / denominator;
 		return Math.max(0, Math.min(100, pct));
 	}
 
@@ -922,7 +948,8 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 
 				if (parentKey === 'totalNodes') {
 					const nodes = typeof nextValue === 'number' ? nextValue : 0;
-					const computed = 24 * 60 * this.daysInMonth * nodes;
+					const days = this.getDaysForEntry(entry, childKey);
+					const computed = 24 * 60 * days * nodes;
 					next.totalMinutes = {
 						...(entry.totalMinutes || {}),
 						[childKey]: computed,
@@ -990,7 +1017,14 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 		}
 	}
 
+
+
+
+
+
+
 	private async persistMetricChange(entry: OtnOp1Entry | OtnOp2Entry, siteKey: string): Promise<void> {
+
 		const meta = entry.metricMeta?.[siteKey];
 		const siteLabel = this.resolveSiteLabel(siteKey, meta);
 
@@ -1088,7 +1122,8 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 					const pct = this.calculatePercentageOtnOp1(
 						(entry as OtnOp1Entry).totalMinutes?.[area],
 						(entry as OtnOp1Entry).unavailableMinutes?.[area],
-						(entry as OtnOp1Entry).totalNodes?.[area]
+						(entry as OtnOp1Entry).totalNodes?.[area],
+						(entry as OtnOp1Entry).metricMeta?.[area]
 					);
 					baseRow.push(isNaN(pct) ? '' : `${pct.toFixed(2)}%`);
 				} else {
@@ -1119,7 +1154,8 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 				areas.forEach((area) => {
 					const nodes = Number((entry as OtnOp1Entry).totalNodes?.[area]) || 0;
 					const manual = Number((entry as OtnOp1Entry).totalMinutes?.[area]) || 0;
-					const computed = 24 * 60 * this.daysInMonth * nodes;
+					const days = this.getDaysForEntry(entry as OtnOp1Entry, area);
+					const computed = 24 * 60 * days * nodes;
 					totalMinutesRow.push(manual || computed || '');
 					unavailableRow.push((entry as OtnOp1Entry).unavailableMinutes?.[area] ?? '');
 					totalNodesRow.push((entry as OtnOp1Entry).totalNodes?.[area] ?? '');

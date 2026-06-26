@@ -1,103 +1,94 @@
-<div class="kpi-page">
-  <div class="kpi-overlay"></div>
-
-  <section class="kpi-hero">
+<div class="page-container">
+  <div class="page-header">
     <h1>{{ pageTitle }}</h1>
-    <p>Fiber and transport KPI oversight for INT &amp; NT OP_02.</p>
-  </section>
+  </div>
 
-  <section class="form-section">
-    <form class="kpi-form" [formGroup]="form" (ngSubmit)="onSubmit()">
-      <h2>{{ editingId ? 'Update KPI' : 'Create KPI' }}</h2>
+  <div class="dashboard-container">
 
-      <div class="field-group">
-        <input type="text"
-               formControlName="networkEngineerKpi"
-               placeholder="Network Engineer KPI"
-               required />
-        <span class="error"
-              *ngIf="form.controls.networkEngineerKpi.invalid && form.controls.networkEngineerKpi.touched">
-          Required
-        </span>
+    <section class="table-section" *ngIf="loading">
+      <div class="state">Loading KPI data...</div>
+    </section>
+
+    <section class="table-section" *ngIf="!loading && errorMessage">
+      <div class="state error">{{ errorMessage }}</div>
+    </section>
+
+    <section class="form-section" *ngIf="!loading && !errorMessage">
+      <div class="form-container">
+        <div class="form-header">
+          <div>
+            <h2>{{ editingId ? 'Update KPI' : 'Create KPI' }}</h2>
+            <p class="form-note">Create or update OTN OP_02 KPI definitions</p>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-submit" form="otn-op-2-form" [disabled]="form.invalid || saving">{{
+              editingId ? 'Update' : 'Add' }}</button>
+            <button type="button" class="btn-cancel" *ngIf="editingId" (click)="onCancelEdit()"
+              [disabled]="saving">Cancel</button>
+          </div>
+        </div>
+
+        <form id="otn-op-2-form" class="kpi-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Network Engineer KPI</label>
+              <input type="text" formControlName="networkEngineerKpi" placeholder="Network Engineer KPI" required />
+              <span class="error"
+                *ngIf="form.controls.networkEngineerKpi.invalid && form.controls.networkEngineerKpi.touched">Required</span>
+            </div>
+
+            <div class="form-group">
+              <label>Category</label>
+              <input type="text" formControlName="division" placeholder="Category" />
+            </div>
+
+            <div class="form-group">
+              <label>Target</label>
+              <input type="text" formControlName="section" placeholder="Target" />
+            </div>
+
+            <div class="form-group">
+              <label>Weightage (%)</label>
+              <input type="number" formControlName="kpiPercent" placeholder="Weightage (%)" />
+            </div>
+          </div>
+        </form>
       </div>
+    </section>
 
-      <div class="field-group">
-        <input type="text"
-               formControlName="division"
-               placeholder="Division" />
+    <section class="table-section" *ngIf="!loading && !errorMessage">
+      <div class="state" *ngIf="!records.length">No KPI entries yet.</div>
+
+      <div class="table-responsive" *ngIf="records.length">
+        <table class="kpi-table">
+          <thead>
+            <tr>
+              <th>Network Engineers KPI</th>
+              <th>Category</th>
+              <th>Target</th>
+              <th>Weightage (%)</th>
+              <th class="actions-col">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let record of records">
+              <td>{{ record.networkEngineerKpi }}</td>
+              <td>{{ record.division }}</td>
+              <td>{{ record.section }}</td>
+              <td>{{ record.kpiPercent }}</td>
+              <td class="actions-col">
+                <div class="action-buttons">
+                  <button type="button" class="btn-edit" (click)="onEdit(record)" [disabled]="saving">Edit</button>
+                  <button type="button" class="btn-delete" (click)="onDelete(record.id)"
+                    [disabled]="saving">Delete</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
+    </section>
 
-      <div class="field-group">
-        <input type="text"
-               formControlName="section"
-               placeholder="Section" />
-      </div>
-
-      <div class="field-group">
-        <input type="number"
-               formControlName="kpiPercent"
-               placeholder="KPI (%)" />
-      </div>
-
-      <div class="actions">
-        <button type="submit" [disabled]="form.invalid || saving">
-          {{ editingId ? 'Update' : 'Add' }}
-        </button>
-
-        <button type="button"
-                class="secondary"
-                *ngIf="editingId"
-                (click)="onCancelEdit()"
-                [disabled]="saving">
-          Cancel
-        </button>
-      </div>
-    </form>
-  </section>
-
-  <section class="table-section">
-    <div class="state" *ngIf="loading">Loading KPI data...</div>
-    <div class="state error" *ngIf="!loading && errorMessage">
-      {{ errorMessage }}
-    </div>
-    <div class="state"
-         *ngIf="!loading && !errorMessage && !records.length">
-      No KPI entries yet.
-    </div>
-
-    <table *ngIf="!loading && records.length" class="kpi-table">
-      <thead>
-        <tr>
-          <th>Network Engineers KPI</th>
-          <th>Division</th>
-          <th>Section</th>
-          <th>KPI (%)</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr *ngFor="let record of records">
-          <td>{{ record.networkEngineerKpi }}</td>
-          <td>{{ record.division }}</td>
-          <td>{{ record.section }}</td>
-          <td>{{ record.kpiPercent }}</td>
-          <td>
-            <button class="edit"
-                    type="button"
-                    (click)="onEdit(record)"
-                    [disabled]="saving">
-              Edit
-            </button>
-            <button class="delete"
-                    type="button"
-                    (click)="onDelete(record.id)"
-                    [disabled]="saving">
-              Delete
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+  </div>
 </div>

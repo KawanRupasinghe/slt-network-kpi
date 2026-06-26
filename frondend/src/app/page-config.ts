@@ -34,6 +34,17 @@ export const platformNavOptions: NavOption[] = [
     title: 'Platform KPI — Service Fulfilment'
   },
   {
+    label: 'Enterprise KPI',
+    path: 'platform/enterprise-kpi',
+    title: 'Platform KPI — Enterprise KPI'
+  },
+  {
+    /* Removed: Other Operator KPI */
+    label: 'Other KPI',
+    path: 'platform/other-kpi',
+    title: 'Platform KPI — Other KPI'
+  },
+  {
     label: 'IP NW OP',
     path: 'platform/ip-nw-op',
     title: 'Platform KPI — IP NW OP'
@@ -49,19 +60,24 @@ export const platformNavOptions: NavOption[] = [
     title: 'Platform KPI — OTN OP'
   },
   {
-    label: 'TM Activity Plan',
+    label: 'Tower Maintenance',
     path: 'platform/tm-activity-plan',
-    title: 'Platform KPI — TM Activity Plan'
+    title: 'Platform KPI — Tower Maintenance'
   },
   {
-    label: 'Routine MTNC',
+    label: 'Routine Maintenance',
     path: 'platform/routine-mtnc',
-    title: 'Platform KPI — Routine MTNC'
+    title: 'Platform KPI — Routine Maintenance'
   },
   {
-    label: 'Tower MTCE Achievement',
+    label: 'Other Operator',
     path: 'platform/tower-mtce-achievement',
-    title: 'Platform KPI — Tower MTCE Achievement'
+    title: 'Platform KPI — Other Operator'
+  },
+  {
+    label: 'Aged Network Failures',
+    path: 'platform/node-failures',
+    title: 'Platform KPI — Aged Network Failures'
   }
 ];
 
@@ -69,14 +85,14 @@ export const platformNavOptions: NavOption[] = [
 
 export const adminNavOptions: NavOption[] = [
   {
-    label: 'Admin Registration',
+    label: 'Admin Management',
     path: 'admin/admin-registration',
-    title: 'Admin — Admin Registration'
+    title: 'Admin — Admin Management'
   },
   {
-    label: 'User Registration',
+    label: 'User Management',
     path: 'admin/user-registration',
-    title: 'Admin — User Registration'
+    title: 'Admin — User Management'
   },
   {
     label: 'Service Fulfilment',
@@ -109,19 +125,19 @@ export const adminNavOptions: NavOption[] = [
     title: 'Admin — OTN OP 2'
   },
   {
-    label: 'Tower MTCE Achievement',
+    label: 'Other Operator',
     path: 'admin/tower-mtce-achievement',
-    title: 'Admin — Tower MTCE Achievement'
+    title: 'Admin — Other Operator'
   },
   {
-    label: 'TM Activity Plan',
+    label: 'Tower Maintenance',
     path: 'admin/tm-activity-plan',
-    title: 'Admin — TM Activity Plan'
+    title: 'Admin — Tower Maintenance'
   },
   {
-    label: 'Routine MTNC',
+    label: 'Routine Maintenance',
     path: 'admin/routine-mtnc',
-    title: 'Admin — Routine MTNC'
+    title: 'Admin — Routine Maintenance'
   },
   {
     label: 'E-mail Service',
@@ -132,6 +148,16 @@ export const adminNavOptions: NavOption[] = [
     label: 'KPI Management',
     path: 'admin/final-table',
     title: 'Admin — KPI Management'
+  },
+  {
+    label: 'Enterprise KPI',
+    path: 'admin/enterprise-kpi',
+    title: 'Admin — Enterprise KPI'
+  },
+  {
+    label: 'Other KPI',
+    path: 'admin/other-kpi',
+    title: 'Admin — Other KPI'
   }
 ];
 
@@ -140,4 +166,3 @@ export const infoPages = [
   ...platformNavOptions,
   ...adminNavOptions
 ];
-

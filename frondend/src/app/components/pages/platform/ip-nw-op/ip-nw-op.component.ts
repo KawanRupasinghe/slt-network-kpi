@@ -8,6 +8,9 @@ import { IpNwOpService, IpNwOpKpiDto, IpNwOpMetricPayload, IpNwOpMetric } from '
 import { RegionService, Region } from '../../../../services/region.service';
 import { AuthService } from '../../../../services/auth.service';
 
+
+const AGED_FAILURE_PLATFORM = 'IP_NW_OP';
+
 interface RegionRow {
   region?: string;
   province?: string;
@@ -56,6 +59,8 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
   loading = true;
   saving = false;
   error: string | null = null;
+
+
 
   // Month/Year selection (current month default)
   selectedMonth: number = new Date().getMonth() + 1; // 1-12
@@ -121,6 +126,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     private regionService: RegionService,
     private authService: AuthService,
     private cdr: ChangeDetectorRef
+
   ) { }
 
   ngOnInit(): void {
@@ -129,6 +135,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     this.initializeFilters();
     this.loadData();
   }
+
 
   ngOnDestroy(): void {
     // Cleanup if needed
@@ -315,6 +322,16 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     });
   }
 
+
+
+  // NOTE: Aged Network Failure metrics are now shown/edited in the Node Failures page (platform/node-failures)
+  // so this page no longer fetches or persists them.
+
+
+  // Aged Network Failure metrics are now shown/edited in: platform/node-failures
+  // Intentionally no API calls from IP NW OP page.
+
+
   onMonthYearChange(): void {
     // Update daysInMonth when month/year changes
     this.daysInMonth = this.getDaysInMonth(this.selectedYear, this.selectedMonth);
@@ -323,6 +340,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     // Reload data with new month/year
     this.loadData();
   }
+
 
   // -------------------------
   // Dropdown cascading
@@ -436,6 +454,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     this.cancelEdit();
     this.loadData();
   }
+
 
   // -------------------------
   // KPI calculations

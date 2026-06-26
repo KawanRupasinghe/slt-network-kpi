@@ -27,13 +27,9 @@ namespace backend.Helpers.Authorization
         // HTTP context accessor for extracting page IDs from requests
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        // Date helper for checking if edit window is open
-        private readonly IDateHelper _dateHelper;
-
         public PlatformKpiEditHandler(IHttpContextAccessor httpContextAccessor, IDateHelper dateHelper)
         {
             _httpContextAccessor = httpContextAccessor;
-            _dateHelper = dateHelper;
         }
 
         // Handles Platform KPI edit authorization with multiple conditions
@@ -43,18 +39,16 @@ namespace backend.Helpers.Authorization
             if (!user.Identity?.IsAuthenticated ?? true) return Task.CompletedTask;
 
             // Check 1: Role must be PlatformAdmin
-            if (!user.HasClaim(c => c.Type == "role" && c.Value == "PlatformAdmin"))
+            bool isPlatformAdmin = user.HasClaim(c =>
+                (c.Type == "role" || c.Type == ClaimTypes.Role) &&
+                string.Equals(c.Value, "PlatformAdmin", StringComparison.OrdinalIgnoreCase));
+
+            if (!isPlatformAdmin)
             {
                 return Task.CompletedTask;
             }
 
-            // Check 2: Edit window must be open (day 1-20 of month)
-            if (!_dateHelper.IsEditWindowOpen())
-            {
-                 return Task.CompletedTask;
-            }
-
-            // Check 3: User must have page assignment (assigned KPI pages or allowed pages)
+            // Check 2: User must have page assignment (assigned KPI pages or allowed pages)
             var httpContext = _httpContextAccessor.HttpContext;
             
             object? pageIdObj = null;

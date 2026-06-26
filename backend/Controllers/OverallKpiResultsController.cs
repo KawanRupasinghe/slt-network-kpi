@@ -26,10 +26,20 @@ namespace backend.Controllers
     public class OverallKpiResultsController : ControllerBase
     {
         private readonly AppDbContext _db;
+        private readonly backend.Services.RoutineMaintenanceService _routineService;
+        private readonly backend.Services.TowerMaintenanceService _towerService;
+        private readonly backend.Services.PowerAndACService _powerService;
 
-        public OverallKpiResultsController(AppDbContext db)
+        public OverallKpiResultsController(
+            AppDbContext db,
+            backend.Services.RoutineMaintenanceService routineService,
+            backend.Services.TowerMaintenanceService towerService,
+            backend.Services.PowerAndACService powerService)
         {
             _db = db;
+            _routineService = routineService;
+            _towerService = towerService;
+            _powerService = powerService;
         }
 
         // =========================================================
@@ -72,14 +82,13 @@ namespace backend.Controllers
         // Returns: List of newly calculated KPI results
         // =========================================================
         [HttpPost("calculate")]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<ActionResult<List<OverallKpiResultDto>>> Calculate(
             [FromQuery] int? month,
             [FromQuery] int? year)
         {
             var now = DateTime.UtcNow;
-            //byte m = (byte)(month ?? now.Month);
-            byte m = (byte)(month ?? 2);
+            byte m = (byte)(month ?? now.Month);
             short y = (short)(year ?? now.Year);
 
             var calculated = await CalculateAndPersistAsync(m, y);
@@ -92,36 +101,17 @@ namespace backend.Controllers
         // =========================================================
         private async Task<List<OverallKpiResult>> CalculateAndPersistAsync(byte month, short year)
         {
-            Console.WriteLine("month: "+month);
+            Console.WriteLine("month: " + month);
             // =========================================================
             // STEP 1: LOAD KPI DEFINITIONS
             // Fetch master KPI definitions for selected month/year
             // Fallback to latest definitions if none exist for selected period
             // =========================================================
+            // KpiDefinition no longer has month/year columns — load all definitions
             var kpis = await _db.KpiDefinitions
                 .AsNoTracking()
-                .Where(x => x.Month == month && x.Year == year)
                 .OrderBy(x => x.Id)
                 .ToListAsync();
-
-            if (!kpis.Any())
-            {
-                var latest = await _db.KpiDefinitions
-                    .AsNoTracking()
-                    .OrderByDescending(x => x.Year)
-                    .ThenByDescending(x => x.Month)
-                    .Select(x => new { x.Month, x.Year })
-                    .FirstOrDefaultAsync();
-
-                if (latest != null)
-                {
-                    kpis = await _db.KpiDefinitions
-                        .AsNoTracking()
-                        .Where(x => x.Month == latest.Month && x.Year == latest.Year)
-                        .OrderBy(x => x.Id)
-                        .ToListAsync();
-                }
-            }
 
             // =========================================================
             // STEP 2: LOAD ALL PLATFORM METRICS
@@ -150,6 +140,22 @@ namespace backend.Controllers
                 .Where(x => x.Month == month && x.Year == year)
                 .ToListAsync();
 
+            var agedFailureMetrics = await _db.AgedNetworkFailureMetrics.AsNoTracking()
+                .Where(x => x.Month == month && x.Year == year)
+                .ToListAsync();
+
+            var entMetrics = await _db.EnterpriseKpiMetrics.AsNoTracking()
+                .Where(x => x.Month == month && x.Year == year)
+                .ToListAsync();
+
+            var otherMetrics = await _db.OtherOperatorKpiMetrics.AsNoTracking()
+                .Where(x => x.Month == month && x.Year == year)
+                .ToListAsync();
+
+            var telemetryMetrics = await _db.Telemetry.AsNoTracking()
+                .Where(x => x.Month == month && x.Year == year)
+                .ToListAsync();
+
             // =========================================================
             // STEP 3: EXTRACT AREA CODES FROM METRICS
             // Aggregate all unique area codes from actual metric data
@@ -161,7 +167,7 @@ namespace backend.Controllers
             // =========================================================
             // Retrieve all distinct area codes from metrics (not RegionData)
             var allAreaCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            
+
             allAreaCodes.UnionWith(ipMetrics
                 .Select(x => x.AreaCode)
                 .Where(x => x != null && x.Trim() != string.Empty)
@@ -183,15 +189,49 @@ namespace backend.Controllers
                 .Select(x => x.Trim()));
 
             allAreaCodes.UnionWith(sfMetrics
+                .Select(x => x.AreaCode ?? string.Empty)
+                .Where(x => x.Trim() != string.Empty)
+                .Select(x => x.Trim()));
+
+            allAreaCodes.UnionWith(entMetrics
                 .Select(x => x.AreaCode)
                 .Where(x => x != null && x.Trim() != string.Empty)
                 .Select(x => x.Trim()));
 
-            // Normalize area codes
-            var normalizedAreas = allAreaCodes
-                .Select(a => NormalizeArea(a))
-                .Where(x => x != string.Empty)
-                .ToList();
+            allAreaCodes.UnionWith(otherMetrics
+                .Select(x => x.Site ?? string.Empty)
+                .Where(x => x.Trim() != string.Empty)
+                .Select(x => x.Trim()));
+
+            // Normalize area codes, prioritizing RegionData if populated
+            var dbRegions = await _db.RegionData.AsNoTracking().ToListAsync();
+            var normalizedAreas = dbRegions.Any()
+                ? dbRegions.Select(x => NormalizeArea(x.LeaCode)).Where(x => x != string.Empty).Distinct().ToList()
+                : allAreaCodes.Select(a => NormalizeArea(a)).Where(x => x != string.Empty).Distinct().ToList();
+
+            // Build designation -> area map from region and maintenance tables
+            var designationToArea = BuildDesignationToAreaMap(dbRegions);
+
+            var ipnwResults = await _routineService.GetIpnwPercentagesAsync(
+                    year, month, designationToArea);
+
+            var slbnResults = await _routineService.GetSlbnPercentagesAsync(
+                    year, month, designationToArea);
+
+            var msanResults = await _routineService.GetMsanPercentagesAsync(
+                    year, month, designationToArea);
+
+            var towerResults = await _towerService.GetTowerPercentagesAsync(
+                    year, month, designationToArea);
+
+            var powerResults = await _powerService.GetPowerAndACPercentagesAsync(
+                    (short)year, month, designationToArea);
+
+            Console.WriteLine($"IPNW results count = {ipnwResults.Count}");
+            Console.WriteLine($"SLBN results count = {slbnResults.Count}");
+            Console.WriteLine($"MSAN results count = {msanResults.Count}");
+            Console.WriteLine($"Tower results count = {towerResults.Count}");
+            Console.WriteLine($"Power & AC results count = {powerResults.Count}");
 
             // =========================================================
             // STEP 4: VALIDATE DATA AVAILABILITY
@@ -227,16 +267,31 @@ namespace backend.Controllers
                 .Select(x => new NamedKpi("otn2", x.Id, x.NetworkEngineerKpi ?? string.Empty))
                 .ToListAsync();
             var sfKpis = await _db.ServiceFulfilmentKpis.AsNoTracking()
-                .Where(x => x.Month == month && x.Year == year)
                 .Select(x => new NamedKpi("sf", x.Id, x.Kpi ?? string.Empty))
+                .ToListAsync();
+
+            var entKpis = await _db.EnterpriseKpis.AsNoTracking()
+                .Select(x => new NamedKpi("ent", x.Id, x.NetworkEngineerKpi ?? string.Empty))
+                .ToListAsync();
+
+            var otherKpis = await _db.OtherOperatorKpis.AsNoTracking()
+                .Select(x => new NamedKpi("other", x.Id, x.NetworkEngineerKpi ?? string.Empty))
                 .ToListAsync();
 
             var allNamedKpis = ipKpis
                 .Concat(bbKpis)
                 .Concat(otn1Kpis)
                 .Concat(otn2Kpis)
+                .Concat(entKpis)
+                .Concat(otherKpis)
                 .Concat(sfKpis)
                 .ToList();
+
+            var enterpriseTargets = await _db.EnterpriseKpis.AsNoTracking()
+                .ToDictionaryAsync(x => x.Id, x => x.KpiPercent ?? 0m);
+
+            var otherTargets = await _db.OtherOperatorKpis.AsNoTracking()
+                .ToDictionaryAsync(x => x.Id, x => x.KpiPercent ?? 0m);
 
             var daysInMonth = DateTime.DaysInMonth(year, month);
             var results = new List<OverallKpiResult>();
@@ -252,8 +307,272 @@ namespace backend.Controllers
             // =========================================================
             foreach (var kpi in kpis)
             {
-                var matchedKpi = FindBestMatch(kpi.KeyPerformanceIndicators, allNamedKpis);
-                var snapshots = BuildAreaSnapshots(matchedKpi, ipMetrics, bbMetrics, otn1Metrics, otn2Metrics, sfMetrics, daysInMonth);
+                var sourceFilter = new List<string>();
+                var p = kpi.Perspectives?.Trim().ToUpperInvariant() ?? string.Empty;
+                var cat = kpi.Category?.Trim().ToUpperInvariant() ?? string.Empty;
+                if (p == "IP NW OP" || p.Contains("IP")) sourceFilter.Add("ip");
+                if (p == "BB ANW" || p.Contains("BB")) sourceFilter.Add("bb");
+                if (p == "OTN OP" || p.Contains("OTN")) { sourceFilter.Add("otn1"); sourceFilter.Add("otn2"); }
+                if (p == "SERVICE FULFILMENT" || p.Contains("FULFILMENT")) sourceFilter.Add("sf");
+                if (p == "ENTERPRISE KPI" || p.Contains("ENTERPRISE"))
+                {
+                    if (cat == "OTHER OPERATOR" || cat.Contains("OPERATOR"))
+                    {
+                        sourceFilter.Add("other");
+                    }
+                    else
+                    {
+                        sourceFilter.Add("ent");
+                    }
+                }
+                if (p == "OTHER OPERATOR KPI" || p == "OTHER OPERATOR" || p.Contains("OPERATOR")) sourceFilter.Add("other");
+
+                if (kpi.KeyPerformanceIndicators.Equals("Routine Maintenance - IPNW", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("ENTERED IPNW BLOCK");
+                    var totalIpnwNodes = ipnwResults.Sum(x => x.NodesCount);
+                    foreach (var record in ipnwResults)
+                    {
+                        var area = record.NormalizedAreaCode;
+                        var achieved = record.Percentage;
+                        var nodes = record.NodesCount;
+                        var maxPoints = totalIpnwNodes > 0m
+                            ? Math.Round((nodes / totalIpnwNodes) * (decimal)kpi.PointsApplicable, 4)
+                            : (ipnwResults.Count > 0 ? Math.Round((decimal)kpi.PointsApplicable / ipnwResults.Count, 4) : 0m);
+
+                        Console.WriteLine($"INSERTING {kpi.KeyPerformanceIndicators} Area={area} Achieved={achieved} Nodes={nodes} MaxPoints={maxPoints}");
+                        results.Add(new OverallKpiResult
+                        {
+                            KpiCode = $"KPI-{kpi.Id}",
+                            KpiDefinitionId = kpi.Id,
+                            KpiName = kpi.KeyPerformanceIndicators,
+                            Platform = kpi.Perspectives,
+                            AreaCode = area,
+                            TargetValue = 100m,
+                            AchievedKpi = achieved,
+                            MaximumPointsPerKpi = maxPoints,
+                            PointsAchieved = CalculatePointsAchieved(maxPoints, achieved, 100m),
+                            Month = month,
+                            Year = year,
+                            CalculatedAt = nowUtc
+                        });
+                    }
+                    continue;
+                }
+
+                if (kpi.KeyPerformanceIndicators.Equals("Routine Maintenance - SLBN/SDH", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("ENTERED SLBN BLOCK");
+                    var totalSlbnNodes = slbnResults.Sum(x => x.NodesCount);
+                    foreach (var record in slbnResults)
+                    {
+                        var area = record.NormalizedAreaCode;
+                        var achieved = record.Percentage;
+                        var nodes = record.NodesCount;
+                        var maxPoints = totalSlbnNodes > 0m
+                            ? Math.Round((nodes / totalSlbnNodes) * (decimal)kpi.PointsApplicable, 4)
+                            : (slbnResults.Count > 0 ? Math.Round((decimal)kpi.PointsApplicable / slbnResults.Count, 4) : 0m);
+
+                        Console.WriteLine($"INSERTING {kpi.KeyPerformanceIndicators} Area={area} Achieved={achieved} Nodes={nodes} MaxPoints={maxPoints}");
+                        results.Add(new OverallKpiResult
+                        {
+                            KpiCode = $"KPI-{kpi.Id}",
+                            KpiDefinitionId = kpi.Id,
+                            KpiName = kpi.KeyPerformanceIndicators,
+                            Platform = kpi.Perspectives,
+                            AreaCode = area,
+                            TargetValue = 100m,
+                            AchievedKpi = achieved,
+                            MaximumPointsPerKpi = maxPoints,
+                            PointsAchieved = CalculatePointsAchieved(maxPoints, achieved, 100m),
+                            Month = month,
+                            Year = year,
+                            CalculatedAt = nowUtc
+                        });
+                    }
+                    continue;
+                }
+
+                if (kpi.KeyPerformanceIndicators.Equals("Routine Maintenance - MSAN/OLTE", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("ENTERED MSAN BLOCK");
+                    var totalMsanNodes = msanResults.Sum(x => x.NodesCount);
+                    foreach (var record in msanResults)
+                    {
+                        var area = record.NormalizedAreaCode;
+                        var achieved = record.Percentage;
+                        var nodes = record.NodesCount;
+                        var maxPoints = totalMsanNodes > 0m
+                            ? Math.Round((nodes / totalMsanNodes) * (decimal)kpi.PointsApplicable, 4)
+                            : (msanResults.Count > 0 ? Math.Round((decimal)kpi.PointsApplicable / msanResults.Count, 4) : 0m);
+
+                        Console.WriteLine($"INSERTING {kpi.KeyPerformanceIndicators} Area={area} Achieved={achieved} Nodes={nodes} MaxPoints={maxPoints}");
+                        results.Add(new OverallKpiResult
+                        {
+                            KpiCode = $"KPI-{kpi.Id}",
+                            KpiDefinitionId = kpi.Id,
+                            KpiName = kpi.KeyPerformanceIndicators,
+                            Platform = kpi.Perspectives,
+                            AreaCode = area,
+                            TargetValue = 100m,
+                            AchievedKpi = achieved,
+                            MaximumPointsPerKpi = maxPoints,
+                            PointsAchieved = CalculatePointsAchieved(maxPoints, achieved, 100m),
+                            Month = month,
+                            Year = year,
+                            CalculatedAt = nowUtc
+                        });
+                    }
+                    continue;
+                }
+
+                if (kpi.KeyPerformanceIndicators.Equals("Operation & Maintenance of SLT towers and tower premises", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("ENTERED TOWER BLOCK");
+                    var totalTowerNodes = towerResults.Sum(x => x.NodesCount);
+                    foreach (var record in towerResults)
+                    {
+                        var area = record.NormalizedAreaCode;
+                        var achieved = record.Percentage;
+                        var nodes = record.NodesCount;
+
+                        var maxPoints = totalTowerNodes > 0m
+                            ? Math.Round((nodes / totalTowerNodes) * (decimal)kpi.PointsApplicable, 4)
+                            : (towerResults.Count > 0 ? Math.Round((decimal)kpi.PointsApplicable / towerResults.Count, 4) : 0m);
+
+                        Console.WriteLine($"INSERTING {kpi.KeyPerformanceIndicators} Area={area} Achieved={achieved} Nodes={nodes} MaxPoints={maxPoints}");
+                        results.Add(new OverallKpiResult
+                        {
+                            KpiCode = $"KPI-{kpi.Id}",
+                            KpiDefinitionId = kpi.Id,
+                            KpiName = kpi.KeyPerformanceIndicators,
+                            Platform = kpi.Perspectives,
+                            AreaCode = area,
+                            TargetValue = 95m,
+                            AchievedKpi = achieved,
+                            MaximumPointsPerKpi = maxPoints,
+                            PointsAchieved = CalculatePointsAchieved(maxPoints, achieved, 95m),
+                            Month = month,
+                            Year = year,
+                            CalculatedAt = nowUtc
+                        });
+                    }
+                    continue;
+                }
+
+                if (kpi.KeyPerformanceIndicators.Contains("Power", StringComparison.OrdinalIgnoreCase)
+                    && (kpi.KeyPerformanceIndicators.Contains("Air", StringComparison.OrdinalIgnoreCase)
+                        || kpi.KeyPerformanceIndicators.Contains("AC", StringComparison.OrdinalIgnoreCase)))
+                {
+                    Console.WriteLine("ENTERED POWER & AC BLOCK");
+                    var totalPowerNodes = powerResults.Sum(x => x.NodesCount);
+                    foreach (var record in powerResults)
+                    {
+                        var area = record.NormalizedAreaCode;
+                        var achieved = record.Percentage;
+                        var nodes = record.NodesCount;
+
+                        var maxPoints = totalPowerNodes > 0m
+                            ? Math.Round((nodes / totalPowerNodes) * (decimal)kpi.PointsApplicable, 4)
+                            : (powerResults.Count > 0 ? Math.Round((decimal)kpi.PointsApplicable / powerResults.Count, 4) : 0m);
+
+                        Console.WriteLine($"INSERTING {kpi.KeyPerformanceIndicators} Area={area} Achieved={achieved} Nodes={nodes} MaxPoints={maxPoints}");
+                        results.Add(new OverallKpiResult
+                        {
+                            KpiCode = $"KPI-{kpi.Id}",
+                            KpiDefinitionId = kpi.Id,
+                            KpiName = kpi.KeyPerformanceIndicators,
+                            Platform = kpi.Perspectives,
+                            AreaCode = area,
+                            TargetValue = 90m,
+                            AchievedKpi = achieved,
+                            MaximumPointsPerKpi = maxPoints,
+                            PointsAchieved = CalculatePointsAchieved(maxPoints, achieved, 90m),
+                            Month = month,
+                            Year = year,
+                            CalculatedAt = nowUtc
+                        });
+                    }
+                    continue;
+                }
+
+                if (kpi.KeyPerformanceIndicators.Contains("Telemetry", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("ENTERED TELEMETRY BLOCK");
+                    var totalTelemetryNodes = (decimal)telemetryMetrics.Sum(x => x.Node_Count ?? 0);
+                    foreach (var record in telemetryMetrics)
+                    {
+                        var designation = record.Designation?.Trim() ?? string.Empty;
+                        designationToArea.TryGetValue(designation, out var areaCode);
+                        areaCode ??= string.Empty;
+                        if (string.IsNullOrEmpty(areaCode)) continue;
+
+                        var achieved = record.Percentage;
+                        var nodes = (decimal)(record.Node_Count ?? 0);
+
+                        var maxPoints = totalTelemetryNodes > 0m
+                            ? Math.Round((nodes / totalTelemetryNodes) * (decimal)kpi.PointsApplicable, 4)
+                            : (telemetryMetrics.Count > 0 ? Math.Round((decimal)kpi.PointsApplicable / telemetryMetrics.Count, 4) : 0m);
+
+                        var targetValue = TryParseTargetValue(kpi.DescriptionOfKPI) ?? 99.990m;
+
+                        Console.WriteLine($"INSERTING {kpi.KeyPerformanceIndicators} Area={areaCode} Achieved={achieved} Nodes={nodes} MaxPoints={maxPoints}");
+                        results.Add(new OverallKpiResult
+                        {
+                            KpiCode = $"KPI-{kpi.Id}",
+                            KpiDefinitionId = kpi.Id,
+                            KpiName = kpi.KeyPerformanceIndicators,
+                            Platform = kpi.Perspectives,
+                            AreaCode = areaCode,
+                            TargetValue = targetValue,
+                            AchievedKpi = achieved,
+                            MaximumPointsPerKpi = maxPoints,
+                            PointsAchieved = CalculatePointsAchieved(maxPoints, achieved, targetValue),
+                            Month = month,
+                            Year = year,
+                            CalculatedAt = nowUtc
+                        });
+                    }
+                    continue;
+                }
+
+                var candidates = sourceFilter.Any()
+                    ? allNamedKpis.Where(x => sourceFilter.Contains(x.Source)).ToList()
+                    : allNamedKpis;
+
+                var matchedKpi = FindBestMatch(kpi.KeyPerformanceIndicators, candidates);
+                // Special handling for Aged Network Failure KPIs
+                if (IsAgedNetworkFailureKpi(kpi.KeyPerformanceIndicators))
+                {
+                    foreach (var area in normalizedAreas)
+                    {
+                        var achieved = CalculateAgedNetworkFailureKpi(agedFailureMetrics, area);
+                        var maxPoints = normalizedAreas.Count > 0
+                            ? Math.Round((decimal)kpi.PointsApplicable / normalizedAreas.Count, 4)
+                            : 0m;
+                        var targetValue = TryParseTargetValue(kpi.DescriptionOfKPI);
+                        var pointsAchieved = CalculatePointsAchieved(maxPoints, achieved, targetValue);
+
+                        results.Add(new OverallKpiResult
+                        {
+                            KpiCode = $"KPI-{kpi.Id}",
+                            KpiDefinitionId = kpi.Id,
+                            KpiName = kpi.KeyPerformanceIndicators,
+                            Platform = kpi.Perspectives,
+                            AreaCode = area,
+                            TargetValue = targetValue ?? 0m,
+                            AchievedKpi = achieved,
+                            MaximumPointsPerKpi = maxPoints,
+                            PointsAchieved = pointsAchieved,
+                            Month = month,
+                            Year = year,
+                            CalculatedAt = nowUtc
+                        });
+                    }
+                    continue;
+                }
+
+                var snapshots = BuildAreaSnapshots(matchedKpi, ipMetrics, bbMetrics, otn1Metrics, otn2Metrics, sfMetrics, entMetrics, otherMetrics, enterpriseTargets, otherTargets, daysInMonth);
 
                 var areaSnapshots = normalizedAreas
                     .Select(area => (area, snapshot: FindSnapshotForArea(snapshots, NormalizeArea(area))))
@@ -268,16 +587,28 @@ namespace backend.Controllers
                     ? (decimal)kpi.PointsApplicable / normalizedAreas.Count
                     : 0m;
 
+                var isFibreRestoration = IsFibreFailuresRestorationKpi(kpi.KeyPerformanceIndicators);
+                var numEngineers = dbRegions.Any()
+                    ? dbRegions.Select(x => x.NetworkEngineer?.Trim()).Where(x => !string.IsNullOrEmpty(x)).Distinct(StringComparer.OrdinalIgnoreCase).Count()
+                    : (normalizedAreas.Count > 0 ? normalizedAreas.Count : 1);
+
+                if (numEngineers <= 0) numEngineers = 1;
+                var pointsPerEngineer = (decimal)kpi.PointsApplicable / numEngineers;
+
                 foreach (var (area, snapshot) in areaSnapshots)
                 {
                     var achieved = Math.Round(Math.Clamp(snapshot?.Achieved ?? 0m, 0m, 100m), 4);
-                    var maxPoints = hasNodeBasedWeight && totalNodes > 0m
-                        ? Math.Round(((decimal)kpi.PointsApplicable * (snapshot?.TotalNodes ?? 0m)) / totalNodes, 4)
-                        : Math.Round(equalShare, 4);
-                    
+                    var maxPoints = isFibreRestoration
+                        ? Math.Round(pointsPerEngineer, 4)
+                        : (hasNodeBasedWeight && totalNodes > 0m
+                            ? Math.Round(((decimal)kpi.PointsApplicable * (snapshot?.TotalNodes ?? 0m)) / totalNodes, 4)
+                            : Math.Round(equalShare, 4));
+
                     // Calculate pointsAchieved based on target value
                     var targetValue = TryParseTargetValue(kpi.DescriptionOfKPI);
-                    var pointsAchieved = CalculatePointsAchieved(maxPoints, achieved, targetValue);
+                    var pointsAchieved = snapshot?.NormalizedAchieved is decimal normalizedAchieved
+                        ? Math.Round(maxPoints * normalizedAchieved, 4)
+                        : CalculatePointsAchieved(maxPoints, achieved, targetValue);
 
                     results.Add(new OverallKpiResult
                     {
@@ -286,7 +617,7 @@ namespace backend.Controllers
                         KpiName = kpi.KeyPerformanceIndicators,
                         Platform = kpi.Perspectives,
                         AreaCode = area,
-                        TargetValue = targetValue,
+                        TargetValue = targetValue ?? 0m,
                         AchievedKpi = achieved,
                         MaximumPointsPerKpi = maxPoints,
                         PointsAchieved = pointsAchieved,
@@ -353,6 +684,10 @@ namespace backend.Controllers
             List<OtnOp1Metrics> otn1Metrics,
             List<OtnOp2Metrics> otn2Metrics,
             List<ServiceFulfilmentKpiMetric> sfMetrics,
+            List<EnterpriseKpiMetric> entMetrics,
+            List<OtherOperatorKpiMetric> otherMetrics,
+            IReadOnlyDictionary<int, decimal> enterpriseTargets,
+            IReadOnlyDictionary<int, decimal> otherTargets,
             int daysInMonth)
         {
             var result = new Dictionary<string, AreaSnapshot>();
@@ -404,6 +739,34 @@ namespace backend.Controllers
                     var achieved = CalculateSlaRatio(row.TotalFailedLinks, row.LinksSlaNotViolated);
                     result[area] = new AreaSnapshot(achieved, row.TotalFailedLinks);
                 }
+                return result;
+            }
+
+            if (matchedKpi.Source == "ent")
+            {
+                foreach (var row in entMetrics.Where(x => x.EnterpriseKpiId == matchedKpi.Id))
+                {
+                    var area = NormalizeArea(row.AreaCode);
+                    if (area == string.Empty) continue;
+
+                    var achieved = Math.Round(Math.Clamp(row.KpiValue ?? 0m, 0m, 100m), 4);
+                    result[area] = new AreaSnapshot(achieved, 0m);
+                }
+
+                return result;
+            }
+
+            if (matchedKpi.Source == "other")
+            {
+                foreach (var row in otherMetrics.Where(x => x.OtherOperatorKpiId == matchedKpi.Id))
+                {
+                    var area = NormalizeArea(row.Site);
+                    if (area == string.Empty) continue;
+
+                    var achieved = Math.Round(Math.Clamp(row.KpiValue ?? 0m, 0m, 100m), 4);
+                    result[area] = new AreaSnapshot(achieved, 0m);
+                }
+
                 return result;
             }
 
@@ -487,6 +850,14 @@ namespace backend.Controllers
             if (normalizedArea == string.Empty || snapshots.Count == 0) return null;
             if (snapshots.TryGetValue(normalizedArea, out var exact)) return exact;
 
+            // Handle special mappings for combined metro areas (CEN/HK/MD)
+            if (normalizedArea == "hk" || normalizedArea == "cenmd")
+            {
+                if (snapshots.TryGetValue("cenhkmd", out var s1)) return s1;
+                if (snapshots.TryGetValue("cenhkmd1", out var s2)) return s2;
+                if (snapshots.TryGetValue("cenhk", out var s3)) return s3;
+            }
+
             var partial = snapshots
                 .Where(kv => kv.Key.Contains(normalizedArea) || normalizedArea.Contains(kv.Key))
                 .OrderByDescending(kv => CommonPrefixLength(kv.Key, normalizedArea))
@@ -523,7 +894,7 @@ namespace backend.Controllers
             decimal um = unavailableMinutes ?? 0;
             decimal tn = totalNodes ?? 0;
 
-            var denominator = 24m * 60m * daysInMonth * tn;
+            var denominator = tm > 0m ? tm : (24m * 60m * daysInMonth * tn);
             if (denominator <= 0m) return 100m;
 
             var numerator = tm - um;
@@ -537,7 +908,7 @@ namespace backend.Controllers
             decimal um = unavailableMinutes ?? 0;
             decimal tn = totalNodes;
 
-            var denominator = 24m * 60m * daysInMonth * tn;
+            var denominator = tm > 0m ? tm : (24m * 60m * daysInMonth * tn);
             if (denominator <= 0m) return 100m;
 
             var numerator = tm - um;
@@ -561,6 +932,11 @@ namespace backend.Controllers
             return Math.Clamp(pct, 0m, 100m);
         }
 
+        private static decimal CalculateOtherMetricPercentage(OtherKpiMetric row)
+        {
+            return Math.Clamp(row.KpiValue ?? 0m, 0m, 100m);
+        }
+
         // =========================================================
         // TEXT NORMALIZATION HELPERS
         // NormalizeText: For KPI name matching (preserves spaces for tokenization)
@@ -571,7 +947,25 @@ namespace backend.Controllers
             => Regex.Replace(value ?? string.Empty, "[^A-Za-z0-9]+", " ").Trim().ToLowerInvariant();
 
         private static string NormalizeArea(string value)
-            => Regex.Replace(value ?? string.Empty, "[^A-Za-z0-9]+", "").ToLowerInvariant();
+        {
+            var normalized = Regex.Replace(value ?? string.Empty, "[^A-Za-z0-9]+", "").ToLowerInvariant();
+            if (normalized == "kpivalue") return string.Empty;
+
+            // Map metric area code variations/shorthands to standard normalized LEA codes
+            return normalized switch
+            {
+                "ndfrm" => "ndrm",
+                "ngivt" => "ngwt",
+                "debkymt" => "kymt",
+                "bddwmrg" => "bdbwmrg",
+                "keirn" => "kern",
+                "embmbmh" => "embhbmh",
+                "bcjrdkltc" => "bcapkltc",
+                "adipr" => "adpr",
+                "konix" => "konkx",
+                _ => normalized
+            };
+        }
 
         // =========================================================
         // TOKENIZATION FOR MATCHING
@@ -588,6 +982,69 @@ namespace backend.Controllers
                 .Select(x => x.Trim().ToLowerInvariant())
                 .Distinct()
                 .ToList();
+        }
+
+        private static string NormalizeDesignation(string value)
+        {
+            return new string(
+                value
+                    .ToUpperInvariant()
+                    .Where(char.IsLetterOrDigit)
+                    .ToArray());
+        }
+
+        private Dictionary<string, string> BuildDesignationToAreaMap(List<RegionData> dbRegions)
+        {
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            // Collect designations from maintenance and telemetry tables
+            var designations = _db.MsanMtcData.Select(x => x.Designation)
+                .Concat(_db.IpnwMtcData.Select(x => x.Designation))
+                .Concat(_db.SlbnMtcData.Select(x => x.Designation))
+                .Concat(_db.TowerMtcData.Select(x => x.Designation))
+                .Concat(_db.Telemetry.Select(x => x.Designation))
+                .Where(x => x != null)
+                .Distinct()
+                .ToList();
+
+            foreach (var d in designations)
+            {
+                var designation = d?.Trim() ?? string.Empty;
+                if (string.IsNullOrEmpty(designation))
+                    continue;
+
+                // Remove name part from designation if present, e.g. "NW/WPC1(Manjula)" -> "NW/WPC1"
+                var baseDesignation = designation.Contains('(')
+                    ? designation[..designation.IndexOf('(')].Trim()
+                    : designation;
+
+                var normalizedDesignation = NormalizeDesignation(baseDesignation);
+
+                var region = dbRegions.FirstOrDefault(r =>
+                {
+                    var engineer = r.NetworkEngineer ?? "";
+
+                    // remove name part "(Manjula)"
+                    var engineerDesignation =
+                        engineer.Contains('(')
+                        ? engineer[..engineer.IndexOf('(')]
+                        : engineer;
+
+                    return NormalizeDesignation(engineerDesignation)
+                            == normalizedDesignation;
+                });
+
+                if (region != null)
+                {
+                    map[designation] = NormalizeArea(region.LeaCode);
+                }
+                else
+                {
+                    Console.WriteLine($"No RegionData match for designation [{designation}] (base: [{baseDesignation}])");
+                }
+            }
+
+            return map;
         }
 
         // =========================================================
@@ -615,7 +1072,7 @@ namespace backend.Controllers
         // AreaSnapshot: Calculated KPI value and node weight for an area
         // =========================================================
         private sealed record NamedKpi(string Source, int Id, string Name);
-        private sealed record AreaSnapshot(decimal Achieved, decimal TotalNodes);
+        private sealed record AreaSnapshot(decimal Achieved, decimal TotalNodes, decimal? NormalizedAchieved = null);
 
         // =========================================================
         // POINT CALCULATION WITH TARGET-BASED SCALING
@@ -635,12 +1092,12 @@ namespace backend.Controllers
             }
 
             // Target-based formula:
-            // If achieved > target: pointsAchieved = maxPoints
-            // Else: pointsAchieved = maxPoints * achieved / target
+            // If achieved >= target: pointsAchieved = maxPoints
+            // Else: pointsAchieved = maxPoints * achieved / 100
             var target = targetValue.Value;
-            var points = achieved > target
+            var points = achieved >= target
                 ? maxPoints
-                : Math.Round((maxPoints * achieved) / target, 4);
+                : Math.Round((maxPoints * achieved) / 100m, 4);
 
             return points;
         }
@@ -658,6 +1115,25 @@ namespace backend.Controllers
             var m = Regex.Match(text, @"\d+(\.\d+)?");
             if (!m.Success) return null;
             return decimal.TryParse(m.Value, out var value) ? value : null;
+        }
+
+        private static decimal CalculateEnterpriseOrOtherNormalized(string kpiName, decimal actual, decimal target)
+        {
+            var normalizedName = NormalizeText(kpiName);
+
+            if (normalizedName.Contains("fault clearance rate") || normalizedName.Contains("clearance rate"))
+            {
+                return actual > 0.9m ? 1m : actual / 0.9m;
+            }
+
+            if (target <= 0m)
+            {
+                return 0m;
+            }
+
+            return actual < target
+                ? 1m
+                : 1m - ((actual - target) / target);
         }
 
         // =========================================================
@@ -678,6 +1154,35 @@ namespace backend.Controllers
 
             var minutesPerNode = 24m * 60m * daysInMonth;
             return totalMinutes / minutesPerNode;
+        }
+
+        // =========================================================
+        // AGED NETWORK FAILURE KPI HELPERS
+        // =========================================================
+        private static bool IsAgedNetworkFailureKpi(string kpiName)
+            => (kpiName ?? string.Empty).Contains("Unavailability of Aged Network Failures",
+                StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsFibreFailuresRestorationKpi(string kpiName)
+        {
+            if (string.IsNullOrEmpty(kpiName)) return false;
+            var normalized = kpiName.Replace(" ", "").ToLowerInvariant();
+            return normalized.Contains("fiberfailuresrestoration(general)")
+                || normalized.Contains("fibrefailuresrestoration(general)")
+                || normalized.Contains("fiberfailurerestoration(largescale")
+                || normalized.Contains("fibrefailurerestoration(largescale");
+        }
+
+        // Returns the percentage value directly.
+        private static decimal CalculateAgedNetworkFailureKpi(
+            List<AgedNetworkFailureMetric> metrics, string normalizedArea)
+        {
+            var areaMetrics = metrics
+                .Where(x => NormalizeArea(x.AreaCode) == normalizedArea)
+                .ToList();
+
+            if (!areaMetrics.Any()) return 0m;
+            return Math.Clamp(areaMetrics.First().Percentage, 0m, 100m);
         }
     }
 }

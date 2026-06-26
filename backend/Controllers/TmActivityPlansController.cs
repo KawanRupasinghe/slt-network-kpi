@@ -109,13 +109,8 @@ namespace backend.Controllers
                 Kpi = dto.Kpi,
                 Target = dto.Target,
                 Calculation = dto.Calculation,
-                Platform = dto.Platform,
-                ResponsibleDGM = dto.ResponsibleDGM,
-                DefinedOLADetails = dto.DefinedOLADetails,
-                DataSources = dto.DataSources,
                 CreatedAt = now,
-                UpdatedAt = now,
-                V = 0
+                UpdatedAt = now
             };
 
             // Insert new record
@@ -153,10 +148,6 @@ namespace backend.Controllers
             entity.Kpi = dto.Kpi;
             entity.Target = dto.Target;
             entity.Calculation = dto.Calculation;
-            entity.Platform = dto.Platform;
-            entity.ResponsibleDGM = dto.ResponsibleDGM;
-            entity.DefinedOLADetails = dto.DefinedOLADetails;
-            entity.DataSources = dto.DataSources;
 
             // Update modification timestamp
             entity.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");

@@ -36,6 +36,7 @@ interface KpiRow {
   id: number;
   number: number;
   perspectives: string;
+  category: string;
   strategicObjectives: string;
   kpi: string;
 
@@ -51,6 +52,7 @@ interface KpiRow {
 type KpiDefinition = {
   id: number;
   perspectives: string;
+  category?: string;
   strategicObjectives: string;
   keyPerformanceIndicators: string;
 
@@ -88,6 +90,12 @@ type OverallKpiResultApi = {
 export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
   currentMonth: string;
   currentYear: number;
+  hoveredRowIndex: number | null = null;
+
+  setHoveredRowIndex(index: number | null): void {
+    this.hoveredRowIndex = index;
+    this.cdr.detectChanges();
+  }
 
   selectedMonth: number;
   selectedYear: number;
@@ -225,7 +233,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /** Manually trigger calculation/refresh of KPI results */
   calculate(): void {
-    this.loadRegions();
+    this.recalculateOverallResults();
   }
 
   @HostListener('window:resize')
@@ -352,6 +360,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
               id: row.id,
               number: rowIndex + 1,
               perspectives: row.perspectives,
+              category: row.category ?? '',
               strategicObjectives: (row.strategicObjectives ?? '').replace(
                 /service assurance/gi,
                 'SA'
@@ -372,6 +381,8 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
 
           this.computeTotals();
           this.scheduleRowSync();
+          console.log('KPI definitions');
+          this.kpiRows.forEach(x => console.log(x.id, x.kpi));
           this.loadOverallResultsFromApi();
         },
         error: (err) => {
@@ -392,12 +403,28 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     this.noOverallResults = false;
     const month = this.selectedMonth;
     const year = this.selectedYear;
-    const url = `${this.overallResultsApiBase}/calculate?month=${month}&year=${year}`;
+    const url = `${this.overallResultsApiBase}?month=${month}&year=${year}`;
 
-    this.http.post<OverallKpiResultApi[]>(url, {}).subscribe({
+    this.http.get<OverallKpiResultApi[]>(url).subscribe({
       next: (rows) => {
-        const list = Array.isArray(rows) ? rows : [];
+        const raw = Array.isArray(rows) ? rows : [];
+
+        // Normalize incoming JSON property casing (handle both camelCase and PascalCase)
+        const list: OverallKpiResultApi[] = raw.map((r: any) => ({
+          id: Number(r.id ?? r.Id ?? 0),
+          kpiDefinitionId: Number(r.kpiDefinitionId ?? r.KpiDefinitionId ?? 0),
+          areaCode: String(r.areaCode ?? r.AreaCode ?? ''),
+          achievedKpi: Number(r.achievedKpi ?? r.AchievedKpi ?? 0),
+          maximumPointsPerKpi: Number(r.maximumPointsPerKpi ?? r.MaximumPointsPerKpi ?? 0),
+          pointsAchieved: Number(r.pointsAchieved ?? r.PointsAchieved ?? 0),
+          overallKpiValuePercent: Number(r.overallKpiValuePercent ?? r.OverallKpiValuePercent ?? 0),
+          month: Number(r.month ?? r.Month ?? 0),
+          year: Number(r.year ?? r.Year ?? 0),
+        }));
+
         this.noOverallResults = list.length === 0;
+        console.log('Overall results');
+        list.forEach(x => console.log(x.kpiDefinitionId, x.areaCode, x.achievedKpi));
         const grouped = new Map<number, OverallKpiResultApi[]>();
 
         list.forEach((row) => {
@@ -408,6 +435,8 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.kpiRows = this.kpiRows.map((kpiRow) => {
           const byKpi = grouped.get(kpiRow.id) ?? [];
+          console.log('Engineers');
+          this.engineersFlat.forEach(x => console.log(x.networkEngineer, x.lea));
           const metrics = this.engineersFlat.map((engineer) => {
             const match = this.findOverallResultForArea(byKpi, engineer.lea);
             return {
@@ -443,6 +472,27 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
         this.computeTotals();
         this.scheduleRowSync();
         this.loading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  private recalculateOverallResults(): void {
+    this.loading = true;
+    this.error = null;
+
+    const month = this.selectedMonth;
+    const year = this.selectedYear;
+    const url = `${this.overallResultsApiBase}/calculate?month=${month}&year=${year}`;
+
+    this.http.post<OverallKpiResultApi[]>(url, {}).subscribe({
+      next: () => {
+        this.loadRegions();
+      },
+      error: (err) => {
+        console.error('Failed recalculating overall KPI results:', err);
+        this.loading = false;
+        this.error = 'Unable to recalculate overall KPI results.';
         this.cdr.detectChanges();
       },
     });
@@ -535,6 +585,14 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     return `${weightage.toFixed(2)}%`;
   }
 
+  /** Compute the total KPI percentage achieved by all engineers for a row, capped at 100% */
+  getTotalKpiPercentage(row: KpiRow): number {
+    if (!row.metrics || row.metrics.length === 0 || !row.pointsApplicable) return 0;
+    const totalPoints = row.metrics.reduce((sum, m) => sum + (m.pointsAchieved ?? 0), 0);
+    const cappedPoints = Math.min(totalPoints, row.pointsApplicable);
+    return (cappedPoints / row.pointsApplicable) * 100;
+  }
+
   async exportToExcel(): Promise<void> {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Current Month KPI');
@@ -575,7 +633,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     worksheet.mergeCells(3, currentCol, 3, currentCol + 6);
 
     // Column headers row 4
-    const leftHeaders = ['Number', 'Perspectives', 'Strategic Objectives (KRA)', 'Key Performance Indicators (KPI)', 'Target', 'Weightage', 'Points Applicable'];
+    const leftHeaders = ['Perspectives', 'Category', 'Key Performance Indicators (KPI)', 'Target', 'Weightage', 'Points Applicable', 'Total KPI Percentage'];
     leftHeaders.forEach((header, idx) => {
       const cell = worksheet.getCell(4, currentCol + idx);
       cell.value = header;
@@ -591,32 +649,37 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     // Set column widths for left table
-    worksheet.getColumn(currentCol).width = 8;     // Number
-    worksheet.getColumn(currentCol + 1).width = 18; // Perspectives
-    worksheet.getColumn(currentCol + 2).width = 25; // Strategic Objectives
-    worksheet.getColumn(currentCol + 3).width = 35; // KPI
-    worksheet.getColumn(currentCol + 4).width = 20; // Target
-    worksheet.getColumn(currentCol + 5).width = 12; // Weightage
-    worksheet.getColumn(currentCol + 6).width = 15; // Points Applicable
+    worksheet.getColumn(currentCol).width = 18;     // Perspectives
+    worksheet.getColumn(currentCol + 1).width = 25; // Category
+    worksheet.getColumn(currentCol + 2).width = 35; // KPI
+    worksheet.getColumn(currentCol + 3).width = 20; // Target
+    worksheet.getColumn(currentCol + 4).width = 12; // Weightage
+    worksheet.getColumn(currentCol + 5).width = 15; // Points Applicable
+    worksheet.getColumn(currentCol + 6).width = 20; // Total KPI Percentage
 
     // Data rows
     let currentRow = 5;
     this.kpiRows.forEach((row, idx) => {
       const isAltRow = idx % 2 === 1;
       const rowData = [
-        row.number,
         row.perspectives,
-        row.strategicObjectives,
+        row.category,
         row.kpi,
         row.target,
         this.getComputedWeightage(row),
-        row.pointsApplicable
+        row.pointsApplicable,
+        Number(this.getTotalKpiPercentage(row).toFixed(2))
       ];
 
       rowData.forEach((value, colIdx) => {
         const cell = worksheet.getCell(currentRow, currentCol + colIdx);
         cell.value = value;
-        cell.alignment = { horizontal: colIdx === 0 ? 'center' : 'left', vertical: 'middle', wrapText: true };
+        if (colIdx === 6) {
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.numFmt = '0.00"%"';
+        } else {
+          cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        }
         if (isAltRow) {
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: altRowBgColor } };
         }
@@ -626,7 +689,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
           left: { style: 'thin', color: { argb: borderColor } },
           right: { style: 'thin', color: { argb: borderColor } }
         };
-        if (colIdx === 3) { // KPI column
+        if (colIdx === 2) { // KPI column
           cell.font = { bold: true };
         }
       });
@@ -639,13 +702,22 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     totalCell1.font = { bold: true, color: { argb: headerTextColor } };
     totalCell1.alignment = { horizontal: 'right', vertical: 'middle' };
     totalCell1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
-    worksheet.mergeCells(currentRow, currentCol, currentRow, currentCol + 5);
+    worksheet.mergeCells(currentRow, currentCol, currentRow, currentCol + 4);
 
-    const totalCell2 = worksheet.getCell(currentRow, currentCol + 6);
+    const totalCell2 = worksheet.getCell(currentRow, currentCol + 5);
     totalCell2.value = this.totalPointsApplicable;
     totalCell2.font = { bold: true, color: { argb: headerTextColor } };
     totalCell2.alignment = { horizontal: 'center', vertical: 'middle' };
     totalCell2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
+
+    const totalCell3 = worksheet.getCell(currentRow, currentCol + 6);
+    totalCell3.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
+    totalCell3.border = {
+      top: { style: 'thin', color: { argb: borderColor } },
+      bottom: { style: 'thin', color: { argb: borderColor } },
+      left: { style: 'thin', color: { argb: borderColor } },
+      right: { style: 'thin', color: { argb: borderColor } }
+    };
     currentRow++;
 
     // KPI label row
@@ -654,7 +726,26 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     kpiLabelCell.font = { bold: true };
     kpiLabelCell.alignment = { horizontal: 'right', vertical: 'middle' };
     kpiLabelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F3F4F6' } };
-    worksheet.mergeCells(currentRow, currentCol, currentRow, currentCol + 5);
+    worksheet.mergeCells(currentRow, currentCol, currentRow, currentCol + 4);
+
+    const kpiLabelCell2 = worksheet.getCell(currentRow, currentCol + 5);
+    kpiLabelCell2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F3F4F6' } };
+    kpiLabelCell2.border = {
+      top: { style: 'thin', color: { argb: borderColor } },
+      bottom: { style: 'thin', color: { argb: borderColor } },
+      left: { style: 'thin', color: { argb: borderColor } },
+      right: { style: 'thin', color: { argb: borderColor } }
+    };
+
+    const kpiLabelCell3 = worksheet.getCell(currentRow, currentCol + 6);
+    kpiLabelCell3.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F3F4F6' } };
+    kpiLabelCell3.border = {
+      top: { style: 'thin', color: { argb: borderColor } },
+      bottom: { style: 'thin', color: { argb: borderColor } },
+      left: { style: 'thin', color: { argb: borderColor } },
+      right: { style: 'thin', color: { argb: borderColor } }
+    };
+    currentRow++;
 
     // ===== RIGHT TABLE: REGION PERFORMANCE =====
     currentCol = 8; // Start after left table columns
@@ -820,5 +911,24 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const selectedLabel = this.getMonthLabel(this.selectedMonth) || 'Month';
     saveAs(blob, `Current_Month_KPI_${selectedLabel}_${this.selectedYear}.xlsx`);
+  }
+
+  getAchievedCellClass(metric: KpiMetric): string {
+    if (!metric || !metric.maximumPoints || metric.maximumPoints <= 0) return '';
+    return metric.pointsAchieved >= metric.maximumPoints ? 'target-achieved' : 'target-failed';
+  }
+
+  getKpiRowClass(row: KpiRow): string {
+    const cat = (row.category ?? '').toLowerCase();
+    if (cat.includes('enterprise') || cat.includes('enteprise')) {
+      return 'category-enterprise';
+    } else if (cat.includes('other operator') || cat.includes('operator')) {
+      return 'category-other-operator';
+    } else if (cat.includes('assurance')) {
+      return 'category-assurance';
+    } else if (cat.includes('fulfillment') || cat.includes('fullfillment')) {
+      return 'category-fulfillment';
+    }
+    return '';
   }
 }
