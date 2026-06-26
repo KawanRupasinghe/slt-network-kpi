@@ -33,6 +33,7 @@ export type KpiDefinition = {
   totalPoints?: number;
 
   engineerResponsible?: string;
+  contactNo?: string;
 
   month?: number;
   year?: number;
@@ -50,6 +51,7 @@ export type UpsertKpiDefinitionRequest = {
   totalPoints: number;
   category?: string;
   engineerResponsible?: string;
+  contactNo?: string;
   weightage: number;
 
   month: number;
@@ -93,6 +95,9 @@ export class FinalTableComponent implements OnInit {
 
     // ✅ engineer responsible
     engineerResponsible: ['', []],
+
+    // ✅ contact number
+    contactNo: ['', []],
 
     // ✅ calculated field (readonly)
     weightage: this.fb.nonNullable.control({ value: 0, disabled: true }),
@@ -179,6 +184,7 @@ export class FinalTableComponent implements OnInit {
       unit: record.unit ?? '',
       descriptionOfKPI: record.descriptionOfKPI ?? '',
       engineerResponsible: record.engineerResponsible ?? '',
+      contactNo: record.contactNo ?? '',
       pointsApplicable: record.pointsApplicable ?? 0,
       totalPoints: record.totalPoints ?? 36000,
     });
@@ -242,8 +248,9 @@ export class FinalTableComponent implements OnInit {
       unit: raw.unit.trim(),
       descriptionOfKPI: raw.descriptionOfKPI.trim(),
 
-      // ✅ engineer responsible
+      // ✅ engineer responsible and contact
       engineerResponsible: (raw.engineerResponsible ?? '').trim(),
+      contactNo: (raw.contactNo ?? '').trim(),
 
       // ✅ only input needed
       pointsApplicable: Number(raw.pointsApplicable),
@@ -264,6 +271,7 @@ export class FinalTableComponent implements OnInit {
       unit: '',
       descriptionOfKPI: '',
       engineerResponsible: '',
+      contactNo: '',
       pointsApplicable: 0,
       totalPoints: this.getPersistedTotalPoints(),
       weightage: 0, // will be set by backend after save

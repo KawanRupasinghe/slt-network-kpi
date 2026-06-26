@@ -16,6 +16,7 @@ namespace backend.DTOs
         public int TotalPoints { get; set; }
         public string? Category { get; set; }
         public string? EngineerResponsible { get; set; }
+        public string? ContactNo { get; set; }
         public string? CreatedAt { get; set; }
         public string? UpdatedAt { get; set; }
     }
@@ -49,5 +50,8 @@ namespace backend.DTOs
 
         [MaxLength(100)]
         public string? EngineerResponsible { get; set; }
+
+        [MaxLength(20)]
+        public string? ContactNo { get; set; }
     }
 }
