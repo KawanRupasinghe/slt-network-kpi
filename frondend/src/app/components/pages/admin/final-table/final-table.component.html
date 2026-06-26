@@ -48,6 +48,10 @@
             <input type="text" formControlName="engineerResponsible" placeholder="Engineer Responsible" />
           </div>
 
+          <div class="form-group">
+            <input type="text" formControlName="contactNo" placeholder="Contact No" />
+          </div>
+
           <div class="weightage-row">
             <div class="form-group">
               <label>Points Applicable *</label>
@@ -106,6 +110,7 @@
               <th>Weightage (%)</th>
               <th>Points</th>
               <th>Engineer Responsible</th>
+              <th>Contact No</th>
               <th *ngIf="isAdmin">Actions</th>
             </tr>
           </thead>
@@ -120,6 +125,7 @@
               <td>{{ getComputedWeightageForRecord(record) }}</td>
               <td>{{ record.pointsApplicable }}</td>
               <td>{{ record.engineerResponsible }}</td>
+              <td>{{ record.contactNo }}</td>
               <td class="actions-col" *ngIf="isAdmin">
                 <div class="action-buttons">
                   <button type="button" class="btn-edit" (click)="onEdit(record)">Edit</button>
