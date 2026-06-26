@@ -32,6 +32,8 @@ export type KpiDefinition = {
   pointsApplicable: number;
   totalPoints?: number;
 
+  engineerResponsible?: string;
+
   month?: number;
   year?: number;
 };
@@ -47,6 +49,7 @@ export type UpsertKpiDefinitionRequest = {
   pointsApplicable: number;
   totalPoints: number;
   category?: string;
+  engineerResponsible?: string;
   weightage: number;
 
   month: number;
@@ -87,6 +90,9 @@ export class FinalTableComponent implements OnInit {
     keyPerformanceIndicators: ['', [Validators.required]],
     unit: ['', [Validators.required]],
     descriptionOfKPI: ['', [Validators.required]],
+
+    // ✅ engineer responsible
+    engineerResponsible: ['', []],
 
     // ✅ calculated field (readonly)
     weightage: this.fb.nonNullable.control({ value: 0, disabled: true }),
@@ -172,6 +178,7 @@ export class FinalTableComponent implements OnInit {
       keyPerformanceIndicators: record.keyPerformanceIndicators ?? '',
       unit: record.unit ?? '',
       descriptionOfKPI: record.descriptionOfKPI ?? '',
+      engineerResponsible: record.engineerResponsible ?? '',
       pointsApplicable: record.pointsApplicable ?? 0,
       totalPoints: record.totalPoints ?? 36000,
     });
@@ -235,6 +242,9 @@ export class FinalTableComponent implements OnInit {
       unit: raw.unit.trim(),
       descriptionOfKPI: raw.descriptionOfKPI.trim(),
 
+      // ✅ engineer responsible
+      engineerResponsible: (raw.engineerResponsible ?? '').trim(),
+
       // ✅ only input needed
       pointsApplicable: Number(raw.pointsApplicable),
       totalPoints: Number(raw.totalPoints),
@@ -253,6 +263,7 @@ export class FinalTableComponent implements OnInit {
       keyPerformanceIndicators: '',
       unit: '',
       descriptionOfKPI: '',
+      engineerResponsible: '',
       pointsApplicable: 0,
       totalPoints: this.getPersistedTotalPoints(),
       weightage: 0, // will be set by backend after save
@@ -303,6 +314,7 @@ export class FinalTableComponent implements OnInit {
       keyPerformanceIndicators: raw?.keyPerformanceIndicators ?? raw?.KeyPerformanceIndicators ?? '',
       unit: raw?.unit ?? raw?.Unit ?? '',
       descriptionOfKPI: raw?.descriptionOfKPI ?? raw?.DescriptionOfKPI ?? '',
+      engineerResponsible: raw?.engineerResponsible ?? raw?.EngineerResponsible ?? '',
       weightage: Number(raw?.weightage ?? raw?.Weightage ?? 0),
       pointsApplicable: Number(raw?.pointsApplicable ?? raw?.PointsApplicable ?? 0),
       totalPoints: Number(raw?.totalPoints ?? raw?.TotalPoints ?? 36000),

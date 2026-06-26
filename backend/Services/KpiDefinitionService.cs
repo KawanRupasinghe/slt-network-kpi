@@ -55,6 +55,7 @@ namespace backend.Services
                 Unit = dto.Unit.Trim(),
                 DescriptionOfKPI = dto.DescriptionOfKPI.Trim(),
                 Category = dto.Category?.Trim() ?? string.Empty,
+                EngineerResponsible = dto.EngineerResponsible?.Trim() ?? string.Empty,
                 PointsApplicable = dto.PointsApplicable,
                 TotalPoints = totalPoints,
                 Weightage = 0m,
@@ -81,6 +82,7 @@ namespace backend.Services
             entity.Unit = dto.Unit.Trim();
             entity.DescriptionOfKPI = dto.DescriptionOfKPI.Trim();
             entity.Category = dto.Category?.Trim() ?? entity.Category;
+            entity.EngineerResponsible = dto.EngineerResponsible?.Trim() ?? entity.EngineerResponsible;
             entity.PointsApplicable = dto.PointsApplicable;
             entity.TotalPoints = ResolveTotalPoints(dto.TotalPoints ?? entity.TotalPoints);
             entity.UpdatedAt = DateTime.UtcNow.ToString("o");
@@ -134,6 +136,7 @@ namespace backend.Services
             Unit = x.Unit,
             DescriptionOfKPI = x.DescriptionOfKPI,
             Category = x.Category,
+            EngineerResponsible = x.EngineerResponsible,
             Weightage = x.Weightage,
             PointsApplicable = x.PointsApplicable,
             TotalPoints = x.TotalPoints,
