@@ -58,6 +58,7 @@ type MeterKpiRow = {
   achievedKpi: number;
   maximumPointsPerKpi: number;
   pointsAchieved: number;
+  category?: string;
 };
 
 type MeterDetails = {
@@ -155,6 +156,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private readonly rtomApiBase = `${environment.apiUrl}/rtom-areas`;
   private readonly overallKpiApiBase = `${environment.apiUrl}/overall-kpi-results`;
 
+  private kpiCategoryMap = new Map<number, string>();
   private regionRows: RegionApi[] = [];
   private overallRows: OverallKpiResultApi[] = [];
   private engineerLookup = new Map<string, string>();
@@ -164,6 +166,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: any
   ) {}
+
+  get currentMonthLabel(): string {
+    const found = this.monthOptions.find((m) => m.value === this.selectedMonth);
+    return found ? found.label : '';
+  }
 
   ngOnInit(): void {
     this.loadDashboardData();
@@ -209,10 +216,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
       regions: this.http.get<RegionApi[]>(this.regionApiBase),
       rtomAreas: this.http.get<RtomAreaApi[]>(this.rtomApiBase),
       overall: this.http.get<OverallKpiResultApi[]>(`${this.overallKpiApiBase}?month=${month}&year=${year}`),
+      kpis: this.http.get<any[]>(`${environment.apiUrl}/kpi-definitions?month=${month}&year=${year}`)
     }).subscribe({
-      next: ({ regions, rtomAreas, overall }) => {
+      next: ({ regions, rtomAreas, overall, kpis }) => {
         this.regionRows = regions ?? [];
         this.overallRows = overall ?? [];
+        this.kpiCategoryMap.clear();
+        (kpis ?? []).forEach((kpi) => {
+          this.kpiCategoryMap.set(kpi.id, kpi.category ?? '');
+        });
         const rtomLookup = new Map<string, string>();
         (rtomAreas ?? []).forEach((area) => {
           const code = this.normalizeArea((area as any).areaCode ?? (area as any).AreaCode ?? '');
@@ -357,7 +369,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   getEngineerForMeter(meter: MeterData): string {
     const key = this.normalizeArea(meter.code);
-    return meter.engineer || this.engineerLookup.get(key) || '—';
+    const raw = meter.engineer || this.engineerLookup.get(key) || '—';
+    if (raw && raw !== '—') {
+      const parenIndex = raw.indexOf('(');
+      if (parenIndex !== -1) {
+        return raw.substring(0, parenIndex).trim();
+      }
+    }
+    return raw;
   }
 
   getCircularProgressBackground(meter: MeterData, meters: MeterData[]): string {
@@ -449,19 +468,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
         ? (totalPointsAchieved / totalMaximumPoints) * 100
         : 0;
 
-    const kpiRows: MeterKpiRow[] = rows.map((row) => ({
-      kpiDefinitionId: Number((row as any).kpiDefinitionId ?? (row as any).KpiDefinitionId ?? 0),
-      kpiName: String((row as any).kpiName ?? (row as any).KpiName ?? ''),
-      achievedKpi: Number((row as any).achievedKpi ?? (row as any).AchievedKpi ?? 0),
-      maximumPointsPerKpi: Number((row as any).maximumPointsPerKpi ?? (row as any).MaximumPointsPerKpi ?? 0),
-      pointsAchieved: Number((row as any).pointsAchieved ?? (row as any).PointsAchieved ?? 0),
-    }));
+    const kpiRows: MeterKpiRow[] = rows.map((row) => {
+      const defId = Number((row as any).kpiDefinitionId ?? (row as any).KpiDefinitionId ?? 0);
+      return {
+        kpiDefinitionId: defId,
+        kpiName: String((row as any).kpiName ?? (row as any).KpiName ?? ''),
+        achievedKpi: Number((row as any).achievedKpi ?? (row as any).AchievedKpi ?? 0),
+        maximumPointsPerKpi: Number((row as any).maximumPointsPerKpi ?? (row as any).MaximumPointsPerKpi ?? 0),
+        pointsAchieved: Number((row as any).pointsAchieved ?? (row as any).PointsAchieved ?? 0),
+        category: this.kpiCategoryMap.get(defId) ?? ''
+      };
+    });
 
     this.selectedRegionTitle = regionName;
-    const engineerDisplay = this.getEngineerForMeter(meter);
+    const key = this.normalizeArea(meter.code);
+    const fullEngineer = meter.engineer || this.engineerLookup.get(key) || networkEngineer || '—';
     const areaDisplay = meter.label || meter.code;
-    const compositeDisplay = engineerDisplay && engineerDisplay !== '—' ? `${engineerDisplay} (${areaDisplay})` : areaDisplay;
-    const networkEngineerValue = engineerDisplay !== '—' ? engineerDisplay : networkEngineer;
+    const compositeDisplay = fullEngineer && fullEngineer !== '—' ? `${fullEngineer} (${areaDisplay})` : areaDisplay;
+    const networkEngineerValue = fullEngineer !== '—' ? fullEngineer : networkEngineer;
     this.selectedDetails = {
       region: regionName,
       province,
@@ -476,8 +500,39 @@ export class DashboardComponent implements OnInit, OnDestroy {
     console.log('✅ Modal details set:', this.selectedDetails);
   }
 
+  splitEngineerName(engineer: string): { code: string; name: string } {
+    if (!engineer || engineer === '—') {
+      return { code: '—', name: '' };
+    }
+    const parenIndex = engineer.indexOf('(');
+    if (parenIndex !== -1) {
+      const code = engineer.substring(0, parenIndex).trim();
+      let name = engineer.substring(parenIndex + 1);
+      const closeParenIndex = name.indexOf(')');
+      if (closeParenIndex !== -1) {
+        name = name.substring(0, closeParenIndex);
+      }
+      return { code, name: name.trim() };
+    }
+    return { code: engineer, name: '' };
+  }
+
   closeDetails(): void {
     this.selectedDetails = null;
     this.selectedRegionTitle = '';
+  }
+
+  getKpiRowClass(row: any): string {
+    const cat = (row.category ?? '').toLowerCase();
+    if (cat.includes('enterprise') || cat.includes('enteprise')) {
+      return 'category-enterprise';
+    } else if (cat.includes('other operator') || cat.includes('operator')) {
+      return 'category-other-operator';
+    } else if (cat.includes('assurance')) {
+      return 'category-assurance';
+    } else if (cat.includes('fulfillment') || cat.includes('fullfillment')) {
+      return 'category-fulfillment';
+    }
+    return '';
   }
 }

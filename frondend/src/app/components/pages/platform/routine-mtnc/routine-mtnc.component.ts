@@ -85,12 +85,11 @@ export class RoutineMtncComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  pageTitle = 'Routine MTNC';
-  heroSubtitle = 'Routine maintenance cadence across IPNW, INT & NT, and BB&ANW footprints.';
+  pageTitle = 'Routine Maintenance';
+  heroSubtitle = 'Monitor routine maintenance schedules, node-level compliance, and performance metrics across platforms.';
 
   readonly columns = PLATFORM_COLUMNS;
-  readonly efiberSourceColumn = 'NW/WPC-1';
-  readonly combinedTableStaticColumns = 8;
+  readonly combinedTableStaticColumns = 4;
 
   readonly platformConfigs: PlatformTableConfig[] = [
     { key: 'msan', title: 'MSAN Data Table', monthsLimit: 6 },
@@ -126,21 +125,21 @@ export class RoutineMtncComponent implements OnInit {
   private readonly now = new Date();
 
   selectedMonth: number = this.now.getMonth() + 1;   // 1-indexed (1 = January)
-  selectedYear: number  = this.now.getFullYear();
+  selectedYear: number = this.now.getFullYear();
 
   readonly monthOptions: { value: number; label: string }[] = [
-    { value:  1, label: 'January'   },
-    { value:  2, label: 'February'  },
-    { value:  3, label: 'March'     },
-    { value:  4, label: 'April'     },
-    { value:  5, label: 'May'       },
-    { value:  6, label: 'June'      },
-    { value:  7, label: 'July'      },
-    { value:  8, label: 'August'    },
-    { value:  9, label: 'September' },
-    { value: 10, label: 'October'   },
-    { value: 11, label: 'November'  },
-    { value: 12, label: 'December'  }
+    { value: 1, label: 'January' },
+    { value: 2, label: 'February' },
+    { value: 3, label: 'March' },
+    { value: 4, label: 'April' },
+    { value: 5, label: 'May' },
+    { value: 6, label: 'June' },
+    { value: 7, label: 'July' },
+    { value: 8, label: 'August' },
+    { value: 9, label: 'September' },
+    { value: 10, label: 'October' },
+    { value: 11, label: 'November' },
+    { value: 12, label: 'December' }
   ];
 
   yearOptions: number[] = [
@@ -159,7 +158,8 @@ export class RoutineMtncComponent implements OnInit {
 
   onMonthChange(month: number): void {
     this.selectedMonth = Number(month);
-    this.applyFiltersAndRecalculate();
+    // Request filtered data from backend for selected month and year
+    this.fetchData();
   }
 
   onYearChange(year: number): void {
@@ -181,14 +181,26 @@ export class RoutineMtncComponent implements OnInit {
   /* ================= GETTERS ================= */
 
   get maintenanceRows(): MaintenanceRow[] {
-    return this.routineData.map((routine, index) => ({
-      routine,
-      platformKey: this.platformConfigs[index]?.key ?? null
-    }));
+    return this.routineData.map(routine => {
+      const kpiLower = (routine.kpi ?? '').toLowerCase();
+      const platformLower = (routine.platform ?? '').toLowerCase();
+      const combined = `${kpiLower}|${platformLower}`.replace(/[\s&]/g, '');
+      let platformKey: PlatformKey | null = null;
+
+      if (combined.includes('slbn') || combined.includes('slb')) {
+        platformKey = 'slbn';
+      } else if (combined.includes('ipnw') || combined.includes('vpn')) {
+        platformKey = 'vpn';
+      } else if (combined.includes('msan') || combined.includes('olte')) {
+        platformKey = 'msan';
+      }
+
+      return { routine, platformKey };
+    });
   }
 
   get combinedTableColspan(): number {
-    return this.combinedTableStaticColumns + 1 + this.columns.length;
+    return this.combinedTableStaticColumns + this.columns.length;
   }
 
   /* ================= API ================= */
@@ -239,24 +251,19 @@ export class RoutineMtncComponent implements OnInit {
     const worksheet = workbook.addWorksheet('Routine Maintenance');
 
     const headers = [
-      'No', 'KPI', 'Target', 'Calculation', 'Platform',
-      'Responsible DGM', 'Defined OLA Details', 'Data Sources',
-      'E/Fiber', ...this.columns
+      'KPI', 'Target', 'Category',
+      'Responsible DGM',
+      ...this.columns
     ];
 
     worksheet.addRow(headers);
 
     this.maintenanceRows.forEach(row => {
       worksheet.addRow([
-        row.routine.no ?? '',
         row.routine.kpi ?? '',
         row.routine.target ?? '',
         row.routine.calculation ?? '',
-        row.routine.platform ?? '',
         row.routine.responsibleDGM ?? '',
-        row.routine.definedOLADetails ?? '',
-        row.routine.dataSources ?? '',
-        this.placeholderMap[row.platformKey!]?.[this.efiberSourceColumn] ?? '',
         ...this.columns.map(c => this.placeholderMap[row.platformKey!]?.[c] ?? '')
       ]);
     });
@@ -334,24 +341,32 @@ export class RoutineMtncComponent implements OnInit {
     const months = this.getTargetMonths(platform);
     if (!months.length) return result;
 
-    // Cumulative values are running totals — use the LAST available month in the
-    // window, not a sum across months (summing would double-count).
-    const lastMonthEntry = months
-      .slice()
-      .reverse()
-      .map(m => data.find(d => d.month === m))
-      .find(entry => entry !== undefined);
+    const selectedMonthLabel = this.monthOptions.find(m => m.value === this.selectedMonth)?.label ?? '';
+    const selectedMonthIndex = this.selectedMonth - 1;
 
-    if (!lastMonthEntry) return result;
+    // Prefer the exact selected month entry; otherwise fall back to the latest
+    // available month in the selected window that is on or before the selected month.
+    const exactEntry = data.find(d => d.month === selectedMonthLabel);
+    const targetEntry = exactEntry
+      || months
+        .filter(m => MONTH_NAMES.indexOf(m) <= selectedMonthIndex)
+        .reverse()
+        .map(m => data.find(d => d.month === m))
+        .find(entry => entry !== undefined);
 
+    if (!targetEntry) return result;
+
+    this.applyCumulativePercentage(result, targetEntry);
+    return result;
+  }
+
+  private applyCumulativePercentage(result: PlaceholderMap, entry: PlatformRecord): void {
     PLATFORM_COLUMNS.forEach(column => {
-      const detail = lastMonthEntry.data?.[column];
-      const cumSched   = Number(detail?.column2) || 0;   // CumulativeSched
-      const cumAchieved = Number(detail?.column3) || 0;  // CumulativeAchieved
+      const detail = entry.data?.[column];
+      const cumSched = Number(detail?.column2) || 0; // CumulativeSched
+      const cumAchieved = Number(detail?.column3) || 0; // CumulativeAchieved
       result[column] = cumSched ? ((cumAchieved / cumSched) * 100).toFixed(2) : '0.00';
     });
-
-    return result;
   }
 
   private calculateTowerSums(data: PlatformRecord[], limit: number): TowerSumRecord {
@@ -368,21 +383,20 @@ export class RoutineMtncComponent implements OnInit {
   }
 
   private getTargetMonths(platform: PlatformKey): string[] {
-    // Use numeric selectedMonth (1-indexed) to determine the period window
-    const monthLabel = this.monthOptions.find(m => m.value === this.selectedMonth)?.label ?? '';
-
     if (platform === 'msan') {
-      if (this.selectedMonth === 6)  return MONTH_NAMES.slice(0, 6);   // Jan–Jun
-      if (this.selectedMonth === 12) return MONTH_NAMES.slice(6);      // Jul–Dec
-      return [];
+      // Use the half-year that contains the selected month
+      if (this.selectedMonth >= 1 && this.selectedMonth <= 6) {
+        return MONTH_NAMES.slice(0, 6);   // Jan–Jun
+      }
+      return MONTH_NAMES.slice(6);      // Jul–Dec (7..12)
     }
 
-    // VPN and SLBN: bi-monthly cadence (even months)
-    const validMonths = [2, 4, 6, 8, 10, 12];
-    if (!validMonths.includes(this.selectedMonth)) return [];
+    // VPN and SLBN: two-month windows (Jan-Feb, Mar-Apr, ...)
+    const monthIndex = this.selectedMonth - 1;
+    if (monthIndex < 0 || monthIndex > 11) return [];
 
-    const idx = MONTH_NAMES.indexOf(monthLabel);
-    return [MONTH_NAMES[idx - 1], monthLabel];
+    const startIndex = monthIndex % 2 === 0 ? monthIndex : monthIndex - 1;
+    return [MONTH_NAMES[startIndex], MONTH_NAMES[startIndex + 1]];
   }
 
   private setError(msg: string): void {

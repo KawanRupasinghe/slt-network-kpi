@@ -10,16 +10,18 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { OtherOperatorKpiService, OtherOperatorKpiRecord, CreateOtherOperatorKpi } from '../../../../services/other-operator-kpi.service';
 
 @Component({
-  selector: 'app-tower-mtce-achievement',
+  selector: 'app-other-operator',
+
   standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule
   ],
-  templateUrl: './tower-mtce-achievement.component.html',
-  styleUrls: ['./tower-mtce-achievement.component.scss']
+  templateUrl: './other-operator.component.html',
+  styleUrls: ['./other-operator.component.scss']
 })
-export class TowerMtceAchievementComponent implements OnInit {
+export class OtherOperatorComponent implements OnInit {
+
   pageTitle = 'Other Operator';
   records: OtherOperatorKpiRecord[] = [];
 

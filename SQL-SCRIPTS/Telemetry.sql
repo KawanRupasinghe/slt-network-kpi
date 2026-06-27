@@ -17,6 +17,9 @@ CREATE TABLE [dbo].[Telemetry]
 );
 GO
 
+ALTER TABLE [dbo].[Telemetry]
+ADD [Node_Count] SMALLINT NULL;
+
 
 -- ==========================================
 -- POWER AND AC TABLE

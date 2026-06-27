@@ -59,6 +59,16 @@ namespace backend.Models
         [MaxLength(50)]
         public string? Category { get; set; } = string.Empty;
 
+        // Engineer responsible for the KPI
+        [Column("engineerResponsible")]
+        [MaxLength(100)]
+        public string? EngineerResponsible { get; set; } = string.Empty;
+
+        // Contact number for the KPI
+        [Column("contactNo")]
+        [MaxLength(20)]
+        public string? ContactNo { get; set; } = string.Empty;
+
         // Timestamp when the KPI definition was created
         [Column("createdAt")]
         public string? CreatedAt { get; set; }

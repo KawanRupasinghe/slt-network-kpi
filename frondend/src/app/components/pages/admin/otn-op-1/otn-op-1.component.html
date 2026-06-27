@@ -1,7 +1,6 @@
 <div class="page-container">
   <div class="page-header">
     <h1>{{ pageTitle }}</h1>
-    <p class="page-subtitle">Network engineer KPI tracking for INT &amp; NT OP_1.</p>
   </div>
 
   <div class="dashboard-container">
@@ -9,11 +8,19 @@
     <section class="form-section">
       <div class="form-container">
         <div class="form-header">
-          <h2>{{ editingId ? 'Update KPI' : 'Create KPI' }}</h2>
-          <p class="form-note">Create or update INT &amp; NT OP_1 KPI definitions</p>
+          <div>
+            <h2>{{ editingId ? 'Update KPI' : 'Create KPI' }}</h2>
+            <p class="form-note">Create or update OTN OP_01 KPI definitions</p>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-submit" form="otn-op-1-form" [disabled]="form.invalid || saving">{{
+              editingId ? 'Update' : 'Add' }}</button>
+            <button type="button" class="btn-cancel" *ngIf="editingId" (click)="onCancelEdit()"
+              [disabled]="saving">Cancel</button>
+          </div>
         </div>
 
-        <form class="kpi-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+        <form id="otn-op-1-form" class="kpi-form" [formGroup]="form" (ngSubmit)="onSubmit()">
           <div class="form-row">
             <div class="form-group">
               <label>Network Engineer KPI</label>
@@ -21,24 +28,19 @@
             </div>
 
             <div class="form-group">
-              <label>Division</label>
-              <input type="text" formControlName="division" placeholder="Division" />
+              <label>Category</label>
+              <input type="text" formControlName="division" placeholder="Category" />
             </div>
 
             <div class="form-group">
-              <label>Section</label>
-              <input type="text" formControlName="section" placeholder="Section" />
+              <label>Target</label>
+              <input type="text" formControlName="section" placeholder="Target" />
             </div>
 
             <div class="form-group">
-              <label>KPI (%)</label>
-              <input type="number" formControlName="kpiPercent" placeholder="KPI (%)" />
+              <label>Weightage (%)</label>
+              <input type="number" formControlName="kpiPercent" placeholder="Weightage (%)" />
             </div>
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" class="btn-submit" [disabled]="form.invalid || saving">{{ editingId ? 'Update' : 'Add' }}</button>
-            <button type="button" class="btn-cancel" *ngIf="editingId" (click)="onCancelEdit()" [disabled]="saving">Cancel</button>
           </div>
         </form>
       </div>
@@ -54,9 +56,9 @@
           <thead>
             <tr>
               <th>Network Engineers KPI</th>
-              <th>Division</th>
-              <th>Section</th>
-              <th>KPI (%)</th>
+              <th>Category</th>
+              <th>Target</th>
+              <th>Weightage (%)</th>
               <th class="actions-col">Actions</th>
             </tr>
           </thead>

@@ -40,11 +40,13 @@ import { AuthService } from './services/auth.service';
 })
 export class App implements OnInit {
   /* Application title */
-  protected readonly title = signal('Network Key Performance Indicator (KPI)');
+  protected readonly title = signal('Network KPI Portal');
   /* Currently open dropdown menu */
   protected readonly openMenu = signal<string | null>(null);
   /* Logged-in user name */
   protected readonly userName = signal<string>('Guest');
+  /* Logged-in user role */
+  protected readonly userRole = signal<string>('');
   /* Navigation options for Overall KPI section */
   protected readonly overallOptions = overallNavOptions;
   /* Navigation options for Platform KPI section */
@@ -77,8 +79,10 @@ export class App implements OnInit {
     this.authService.user$.subscribe(user => {
       if (user) {
         this.userName.set(user.name);
+        this.userRole.set(user.role);
       } else {
         this.userName.set('Guest');
+        this.userRole.set('');
       }
     });
   }
@@ -106,6 +110,17 @@ export class App implements OnInit {
 
   protected closeMenus(): void {
     this.openMenu.set(null);
+  }
+
+  protected navigateToDashboard(): void {
+    this.router.navigate(['/dashboard']);
+  }
+
+  protected navigateToUserManagement(): void {
+    const role = this.authService.getRole();
+    if (role === 'Admin' || role === 'SuperAdmin') {
+      this.router.navigate(['/admin/user-registration']);
+    }
   }
 
   @HostListener('document:click', ['$event'])

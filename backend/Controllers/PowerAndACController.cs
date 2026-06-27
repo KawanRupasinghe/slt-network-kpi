@@ -1,5 +1,5 @@
 using backend.Data;
-using backend.Models;
+using backend.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,21 +11,30 @@ namespace backend.Controllers
     {
         private readonly AppDbContext _db;
 
-        public PowerAndACController(AppDbContext db)
-        {
-            _db = db;
-        }
+        public PowerAndACController(AppDbContext db) => _db = db;
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] string? designation, [FromQuery] int? year, [FromQuery] int? month)
+        public async Task<IActionResult> GetAll([FromQuery] int? year, [FromQuery] int? month)
         {
-            var q = _db.PowerAndAC.AsQueryable();
-            if (!string.IsNullOrWhiteSpace(designation)) q = q.Where(x => x.Designation == designation);
+            var q = _db.PowerAndAC.AsNoTracking();
             if (year.HasValue) q = q.Where(x => x.Year == year.Value);
             if (month.HasValue) q = q.Where(x => x.Month == month.Value);
 
-            var list = await q.ToListAsync();
-            return Ok(list);
+            var list = await q.OrderBy(x => x.Month).ThenBy(x => x.Designation).ToListAsync();
+
+            var result = list.Select(p => new PowerAndACDto
+            {
+                Id = p.Id,
+                Designation = p.Designation,
+                Year = p.Year,
+                Month = p.Month,
+                Scheduled = p.Scheduled,
+                Attended = p.Attended,
+                Cumulative_Sched = p.Cumulative_Sched,
+                Cumulative_Achieved = p.Cumulative_Achieved
+            });
+
+            return Ok(result);
         }
 
         [HttpGet("{id}")]

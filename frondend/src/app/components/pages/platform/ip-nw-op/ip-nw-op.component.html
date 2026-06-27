@@ -150,7 +150,7 @@
         <div class="card-body p-0">
           <div class="card-header bg-primary text-white">
             <h5 class="mb-0">
-              <i class="bi bi-table me-2"></i>
+              <i class="bi bi-diagram-2-fill me-2"></i>
               KPI (NW Availability - IP Core NW / BSR NW / Service Edge NW)
             </h5>
           </div>
@@ -161,9 +161,9 @@
                 <tr>
                   <th>No</th>
                   <th>Network Engineer KPI</th>
-                  <th>Division</th>
-                  <th>Section</th>
-                  <th>KPI %</th>
+                  <th>Category</th>
+                  <th>Target</th>
+                  <th>Weightage</th>
                 </tr>
               </thead>
 
@@ -193,7 +193,7 @@
         <div class="card-body p-0">
           <div class="card-header bg-primary text-white d-flex flex-wrap align-items-center gap-3">
             <h5 class="mb-0 d-flex flex-wrap align-items-center gap-2">
-              <i class="bi bi-geo-alt-fill"></i>
+              <i class="bi bi-diagram-2-fill me-2"></i>
               KPI (NW Availability - IP Core NW / BSR NW / Service Edge NW)
               <span class="badge bg-light text-primary ms-auto">
                 {{ selectedAreaLabel || 'Selected Area' }}
@@ -213,10 +213,10 @@
                 <tr>
                   <th>No</th>
                   <th>Network Engineer KPI</th>
-                  <th>Division</th>
-                  <th>Section</th>
-                  <th>KPI %</th>
-                  <th>{{ selectedAreaLabel || 'Selected Area' }}</th>
+                  <th>Category</th>
+                  <th>Target</th>
+                  <th>Weightage</th>
+                  <th>{{ selectedAreaLabel || 'Selected Area' }} (Achievement %)</th>
                 </tr>
               </thead>
 
@@ -231,7 +231,7 @@
                       <td>{{ row.kpi_percent }}</td>
                       <td>{{ getAreaPercentage(row) }}</td>
                     </tr>
-                    <tr class="sub-row" *ngIf="!isAgedFailureKpi(row.network_engineer_kpi)">
+                    <tr class="sub-row">
                       <td></td>
                       <td colspan="4" class="sub-label">Unavailable Minutes</td>
                       <td class="metric-cell" [class.can-edit]="canEditMetrics">
@@ -261,7 +261,7 @@
                         </ng-template>
                       </td>
                     </tr>
-                    <tr class="sub-row" *ngIf="!isAgedFailureKpi(row.network_engineer_kpi)">
+                    <tr class="sub-row">
                       <td></td>
                       <td colspan="4" class="sub-label">Total Minutes</td>
                       <td class="metric-cell">
@@ -270,7 +270,7 @@
                         </div>
                       </td>
                     </tr>
-                    <tr class="sub-row" *ngIf="!isAgedFailureKpi(row.network_engineer_kpi)">
+                    <tr class="sub-row">
                       <td></td>
                       <td colspan="4" class="sub-label">Total Nodes</td>
                       <td class="metric-cell" [class.can-edit]="canEditMetrics">
@@ -300,32 +300,7 @@
                         </ng-template>
                       </td>
                     </tr>
-                    <!-- Has Unavailability row — only for Aged Network Failure KPIs -->
-                    <tr class="sub-row" *ngIf="isAgedFailureKpi(row.network_engineer_kpi)">
-                      <td></td>
-                      <td colspan="4" class="sub-label">Has Unavailability</td>
-                      <td class="metric-cell" [class.can-edit]="canEditMetrics">
-                        <ng-container *ngIf="canEditMetrics; else viewAgedFailureIp">
-                          <div class="d-flex align-items-center gap-2">
-                            <select class="form-select form-select-sm"
-                              [ngModel]="getAgedFailureValue(selectedKey)"
-                              (ngModelChange)="setAgedFailureValue(selectedKey, +$event)"
-                              [ngModelOptions]="{standalone: true}">
-                              <option [value]="0">No Unavailability</option>
-                              <option [value]="1">Has Unavailability</option>
-                            </select>
-                            <button type="button" class="table-button"
-                              (click)="saveAgedFailure(selectedKey)"
-                              [disabled]="agedFailureSaving">
-                              {{ agedFailureSaving ? 'Saving...' : 'Save' }}
-                            </button>
-                          </div>
-                        </ng-container>
-                        <ng-template #viewAgedFailureIp>
-                          {{ getAgedFailureValue(selectedKey) === 1 ? 'Has Unavailability' : 'No Unavailability' }}
-                        </ng-template>
-                      </td>
-                    </tr>
+
                   </ng-container>
                 </ng-container>
               </tbody>

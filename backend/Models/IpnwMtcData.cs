@@ -15,8 +15,8 @@ namespace backend.Models
         [Column("designation")]
         public string? Designation { get; set; }
 
-        [Column("year")]
-        public int? Year { get; set; }   // FIXED
+        [Column("year", TypeName = "varchar(10)")]
+        public string? Year { get; set; }   // FIXED
 
         [Column("month", TypeName = "varchar(10)")]
         public string? Month { get; set; }
