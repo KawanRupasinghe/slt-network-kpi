@@ -15,6 +15,8 @@
         <app-overall-kpi-dropdown [options]="overallOptions" (closeMenu)="closeMenus()"
                                   (selection)="handleSelection($event)"></app-overall-kpi-dropdown>
 
+        <app-analytics-button></app-analytics-button>
+
         <app-platform-kpi-dropdown [options]="platformOptions" [isOpen]="openMenu() === 'platform'"
                                    (toggleMenu)="toggleMenu('platform')" (closeMenu)="closeMenus()"
                                    (selection)="handleSelection($event)"></app-platform-kpi-dropdown>

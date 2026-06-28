@@ -55,6 +55,8 @@ export const routes: Routes = [
   /* Overall KPI Routes */
   { path: 'overall/current-month', component: CurrentMonthComponent, canActivate: [AuthGuard] },
   // Placeholder for future previous month route
+  /* Analytics Route */
+  { path: 'analytics', loadComponent: () => import('./components/pages/analytics/analytics.component').then(m => m.AnalyticsComponent), canActivate: [AuthGuard] },
   /* Platform KPI Routes */
   { path: 'platform/service-fulfilment', component: ServiceFulfilmentComponent, canActivate: [AuthGuard] },
   { path: 'platform/enterprise-kpi', component: EnterpriseKpiComponent, canActivate: [AuthGuard] },
