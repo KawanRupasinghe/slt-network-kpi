@@ -77,6 +77,7 @@ builder.Services.AddScoped<IIpnwMtcDataCumulativeService, IpnwMtcDataCumulativeS
 builder.Services.AddScoped<RoutineMaintenanceService>();
 builder.Services.AddScoped<TowerMaintenanceService>();
 builder.Services.AddScoped<PowerAndACService>();
+builder.Services.AddScoped<AnalyticsService>();
 
 var app = builder.Build();
 
