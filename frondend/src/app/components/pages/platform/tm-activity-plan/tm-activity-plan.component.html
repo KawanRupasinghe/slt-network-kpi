@@ -117,7 +117,17 @@
                   <td>{{ entry.month }}</td>
                   <ng-container *ngFor="let header of headers; trackBy: trackByHeader">
                     <td>{{ getDetailValue(entry, header, 'Column2') }}</td>
-                    <td>{{ getDetailValue(entry, header, 'Column3') }}</td>
+                    <td class="achievement-cell">
+                      {{ getDetailValue(entry, header, 'Column3') }}
+                      <div class="approval-icon" 
+                           *ngIf="getDetailId(entry, header)"
+                           [ngClass]="getIsVerified(entry, header) ? 'approved' : 'unapproved'"
+                           (click)="toggleVerified(entry, header)"
+                           title="Click to toggle approval">
+                        <i class="bi bi-check" *ngIf="getIsVerified(entry, header)"></i>
+                        <i class="bi bi-x" *ngIf="!getIsVerified(entry, header)"></i>
+                      </div>
+                    </td>
                   </ng-container>
                 </tr>
               </tbody>

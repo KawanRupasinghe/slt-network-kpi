@@ -12,6 +12,7 @@ export interface PowerAndACRecord {
   attended: number;
   cumulative_Sched: number;
   cumulative_Achieved: number;
+  isVerified: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -23,5 +24,9 @@ export class PowerAndACService {
   getByYear(year: number): Observable<PowerAndACRecord[]> {
     const params = new HttpParams().set('year', year);
     return this.http.get<PowerAndACRecord[]>(this.base, { params });
+  }
+
+  toggleVerified(id: number): Observable<{ id: number; isVerified: boolean }> {
+    return this.http.patch<{ id: number; isVerified: boolean }>(`${this.base}/${id}/toggle-verified`, {});
   }
 }

@@ -26,6 +26,8 @@ type PlatformDetail = {
   column2?: number | string;
   column3?: number | string;
   Column4?: number | string;
+  id?: number;
+  isVerified?: boolean;
 };
 
 type PlatformRecord = {
@@ -74,6 +76,8 @@ type ApiResponse = {
   routine: RoutineRecord[];
 };
 
+import { AuthService } from '../../../../services/auth.service';
+
 @Component({
   selector: 'app-routine-mtnc',
   standalone: true,
@@ -84,6 +88,11 @@ type ApiResponse = {
 export class RoutineMtncComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly authService = inject(AuthService);
+
+  get canEditMetrics(): boolean {
+    return this.authService.canEditPage('ROUTINE MTNC');
+  }
 
   pageTitle = 'Routine Maintenance';
   heroSubtitle = 'Monitor routine maintenance schedules, node-level compliance, and performance metrics across platforms.';
@@ -316,6 +325,50 @@ export class RoutineMtncComponent implements OnInit {
     const val = detail?.[field];
     return val === undefined || val === null || val === '' ? 'No data' : String(val);
   }*/
+
+  getIsVerified(record: PlatformRecord, column: string): boolean {
+    if (!record || !record.data) return false;
+    const key = Object.keys(record.data).find(
+      k => k.trim().toLowerCase() === column.trim().toLowerCase()
+    );
+    return key ? (record.data[key]?.isVerified ?? false) : false;
+  }
+
+  getDetailId(record: PlatformRecord, column: string): number | undefined {
+    if (!record || !record.data) return undefined;
+    const key = Object.keys(record.data).find(
+      k => k.trim().toLowerCase() === column.trim().toLowerCase()
+    );
+    return key ? record.data[key]?.id : undefined;
+  }
+
+  toggleVerified(platformKey: PlatformKey, record: PlatformRecord, column: string): void {
+    const id = this.getDetailId(record, column);
+    if (id) {
+      // Determine the correct endpoint based on platformKey
+      let endpoint = '';
+      if (platformKey === 'msan') endpoint = 'msan-mtc-data';
+      else if (platformKey === 'vpn') endpoint = 'ipnw-mtc-data';
+      else if (platformKey === 'slbn') endpoint = 'slbn-mtc-data';
+      
+      if (endpoint) {
+        this.http.patch<{ id: number; isVerified: boolean }>(`${environment.apiUrl}/${endpoint}/${id}/toggle-verified`, {}).subscribe({
+          next: (res) => {
+            const key = Object.keys(record.data).find(
+              k => k.trim().toLowerCase() === column.trim().toLowerCase()
+            );
+            if (key && record.data[key]) {
+              record.data[key].isVerified = res.isVerified;
+            }
+            this.cdr.detectChanges();
+          },
+          error: (err) => {
+            console.error('Toggle verified failed', err);
+          }
+        });
+      }
+    }
+  }
 
   getTowerSum(key: PlatformKey, column: string): number {
     return this.towerSumsMap[key]?.[column] ?? 0;

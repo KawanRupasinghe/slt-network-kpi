@@ -117,7 +117,17 @@
                 <td>{{ record.month }}</td>
                 <ng-container *ngFor="let column of columns; trackBy: trackByColumn">
                   <td>{{ getDetailValue(record, column, 'column2') }}</td>
-                  <td>{{ getDetailValue(record, column, 'column3') }}</td>
+                  <td class="achievement-cell">
+                    {{ getDetailValue(record, column, 'column3') }}
+                    <div class="approval-icon" 
+                         *ngIf="getDetailId(record, column)"
+                         [ngClass]="getIsVerified(record, column) ? 'approved' : 'unapproved'"
+                         (click)="toggleVerified(config.key, record, column)"
+                         title="Click to toggle approval">
+                      <i class="bi bi-check" *ngIf="getIsVerified(record, column)"></i>
+                      <i class="bi bi-x" *ngIf="!getIsVerified(record, column)"></i>
+                    </div>
+                  </td>
                 </ng-container>
               </tr>
               <tr *ngIf="!getPlatformRecords(config.key).length">

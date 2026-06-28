@@ -744,6 +744,7 @@ namespace backend.Data
                         entity.Property(x => x.Attended).HasColumnName("Attended");
                         entity.Property(x => x.Cumulative_Sched).HasColumnName("Cumulative_Sched");
                         entity.Property(x => x.Cumulative_Achieved).HasColumnName("Cumulative_Achieved");
+                        entity.Property(x => x.IsVerified).HasColumnName("is_verified").HasDefaultValue(false);
 
                         entity.HasIndex(x => new { x.Designation, x.Year, x.Month })
                                 .IsUnique()

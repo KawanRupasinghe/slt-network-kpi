@@ -13,6 +13,8 @@ type ProcessedDetail = {
   Column2: number | string;
   Column3: number | string;
   Column4?: number | string;
+  id?: number;
+  isVerified?: boolean;
 };
 
 type ProcessedRecord = {
@@ -234,6 +236,16 @@ export class TmActivityPlanComponent implements OnInit {
     return raw === '' ? '-' : String(raw);
   }
 
+  getIsVerified(entry: ProcessedRecord, header: string): boolean {
+    const detail = entry.details.find(item => item.Column1 === header);
+    return detail?.isVerified ?? false;
+  }
+
+  getDetailId(entry: ProcessedRecord, header: string): number | undefined {
+    const detail = entry.details.find(item => item.Column1 === header);
+    return detail?.id;
+  }
+
   trackByHeader = (_: number, header: string) => header;
   trackByMonth = (_: number, record: ProcessedRecord) => record.month;
 
@@ -257,7 +269,9 @@ export class TmActivityPlanComponent implements OnInit {
         Column1: key,
         Column2: item.data[key]?.column2 ?? '-',
         Column3: item.data[key]?.column3 ?? '-',
-        Column4: item.data[key]?.column4 ?? ''
+        Column4: item.data[key]?.column4 ?? '',
+        id: item.data[key]?.id,
+        isVerified: item.data[key]?.isVerified
       }))
     }));
   }
@@ -321,5 +335,20 @@ export class TmActivityPlanComponent implements OnInit {
 
   private setError(message: string): void {
     if (!this.errorMessage) this.errorMessage = message;
+  }
+
+  toggleVerified(entry: ProcessedRecord, header: string): void {
+    const detail = entry.details.find(item => item.Column1 === header);
+    if (detail && detail.id) {
+      this.http.patch<{ id: number; isVerified: boolean }>(`${environment.apiUrl}/tower-mtc-data/${detail.id}/toggle-verified`, {}).subscribe({
+        next: (res) => {
+          detail.isVerified = res.isVerified;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Toggle verified failed', err);
+        }
+      });
+    }
   }
 }

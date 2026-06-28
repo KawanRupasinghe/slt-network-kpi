@@ -1,4 +1,4 @@
-﻿namespace backend.DTOs
+namespace backend.DTOs
 {
     public class PlatformDetailDto
     {
@@ -8,6 +8,8 @@
 
         public object? Column2 { get; set; }
         public object? Column3 { get; set; }
+        public int Id { get; set; }
+        public bool IsVerified { get; set; }
 
     }
 }

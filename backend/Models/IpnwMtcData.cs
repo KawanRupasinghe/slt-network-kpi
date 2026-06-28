@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 
@@ -32,5 +32,8 @@ namespace backend.Models
 
         [Column("Cumulative_Achieved")]
         public int CumulativeAchieved { get; set; }
+
+        [Column("is_verified")]
+        public bool IsVerified { get; set; } = false;
     }
 }

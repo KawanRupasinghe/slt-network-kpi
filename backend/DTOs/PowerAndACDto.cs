@@ -10,5 +10,6 @@ namespace backend.DTOs
         public int Attended { get; set; }
         public int Cumulative_Sched { get; set; }
         public int Cumulative_Achieved { get; set; }
+        public bool IsVerified { get; set; }
     }
 }

@@ -1,5 +1,7 @@
 using backend.Data;
 using backend.DTOs;
+using backend.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,8 +12,15 @@ namespace backend.Controllers
     public class PowerAndACController : ControllerBase
     {
         private readonly AppDbContext _db;
+        private readonly IAuthorizationService _authorizationService;
+        private const int PageId = 10; // OTHER_KPI (see Program.cs seeds)
 
-        public PowerAndACController(AppDbContext db) => _db = db;
+        public PowerAndACController(AppDbContext db, IAuthorizationService authorizationService)
+        {
+            _db = db;
+            _authorizationService = authorizationService;
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] int? year, [FromQuery] int? month)
@@ -31,7 +40,8 @@ namespace backend.Controllers
                 Scheduled = p.Scheduled,
                 Attended = p.Attended,
                 Cumulative_Sched = p.Cumulative_Sched,
-                Cumulative_Achieved = p.Cumulative_Achieved
+                Cumulative_Achieved = p.Cumulative_Achieved,
+                IsVerified = p.IsVerified
             });
 
             return Ok(result);
@@ -44,5 +54,20 @@ namespace backend.Controllers
             if (item == null) return NotFound();
             return Ok(item);
         }
+
+        [HttpPatch("{id:int}/toggle-verified")]
+        public async Task<IActionResult> ToggleVerified(int id)
+        {
+            var auth = await _authorizationService.AuthorizeAsync(User, PageId, "EditPlatformKpiPolicy");
+            if (!auth.Succeeded) return Forbid();
+
+            var entity = await _db.PowerAndAC.FirstOrDefaultAsync(x => x.Id == id);
+            if (entity == null) return NotFound();
+
+            entity.IsVerified = !entity.IsVerified;
+            await _db.SaveChangesAsync();
+            return Ok(new { id = entity.Id, isVerified = entity.IsVerified });
+        }
+
     }
 }

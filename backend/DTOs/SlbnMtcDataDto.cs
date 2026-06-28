@@ -12,6 +12,7 @@ namespace backend.DTOs
         public int Attended { get; set; }
         public int CumulativeSched { get; set; }
         public int CumulativeAchieved { get; set; }
+        public bool IsVerified { get; set; }
     }
 
     public class UpsertSlbnMtcDataDto

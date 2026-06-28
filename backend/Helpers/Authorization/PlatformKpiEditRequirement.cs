@@ -79,12 +79,20 @@ namespace backend.Helpers.Authorization
                 var assignedPages = user.FindAll("assignedKpiPages").Select(c => c.Value).ToList();
                 var allowedPages = user.FindAll("allowedPages").Select(c => c.Value).ToList();
 
-                // User can edit if page is either assigned for KPI or in allowed pages
+                // User can edit if page is either assigned for KPI or in allowed pages.
+                // NOTE: Some claims may be emitted as strings; keep comparison exact.
                 if (assignedPages.Contains(pageId.ToString()) || allowedPages.Contains(pageId.ToString()))
                 {
                     context.Succeed(requirement);
                 }
             }
+            else
+            {
+                // If we cannot resolve a page id from route/query/resource,
+                // fall back to denying (safer default).
+                // context.Succeed is NOT called.
+            }
+
 
             return Task.CompletedTask;
         }

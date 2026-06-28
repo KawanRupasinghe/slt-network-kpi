@@ -177,6 +177,20 @@ namespace backend.Controllers
             return await _authorizationService.AuthorizeAsync(User, PageId, "EditPlatformKpiPolicy");
         }
 
+        [HttpPatch("{id:int}/toggle-verified")]
+        public async Task<IActionResult> ToggleVerified(int id)
+        {
+            var authResult = await _authorizationService.AuthorizeAsync(User, PageId, "EditPlatformKpiPolicy");
+            if (!authResult.Succeeded) return Forbid();
+
+            var entity = await _db.TowerMtcData.FirstOrDefaultAsync(x => x.Id == id);
+            if (entity == null) return NotFound();
+
+            entity.IsVerified = !entity.IsVerified;
+            await _db.SaveChangesAsync();
+            return Ok(new { id = entity.Id, isVerified = entity.IsVerified });
+        }
+
         private static TowerMtcDataDto ToDto(TowerMtcData entity) => new()
         {
             Id = entity.Id,
@@ -186,7 +200,8 @@ namespace backend.Controllers
             Scheduled = entity.Scheduled ?? 0,
             Attended = entity.Attended ?? 0,
             CumulativeSched = entity.CumulativeScheduled,
-            CumulativeAchieved = entity.CumulativeAttended
+            CumulativeAchieved = entity.CumulativeAttended,
+            IsVerified = entity.IsVerified
         };
 
         private static NormalizedTowerMtcRequest NormalizeRequest(UpsertTowerMtcDataDto dto)

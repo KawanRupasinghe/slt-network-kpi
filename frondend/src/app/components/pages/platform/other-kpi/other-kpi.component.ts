@@ -244,10 +244,29 @@ export class OtherKpiComponent implements OnInit {
     return Array.from(new Set(this.pacRows.map(r => r.designation))).sort();
   }
 
+  getPacRecord(designation: string, month: number): PowerAndACRecord | undefined {
+    return this.pacRows.find(r => r.designation === designation && r.month === month);
+  }
+
   getPacValue(designation: string, month: number, type: 'sched' | 'achieved'): string {
-    const record = this.pacRows.find(r => r.designation === designation && r.month === month);
+    const record = this.getPacRecord(designation, month);
     if (!record) return '—';
     return type === 'sched' ? String(record.cumulative_Sched) : String(record.cumulative_Achieved);
+  }
+
+  togglePacVerified(designation: string, month: number): void {
+    const record = this.getPacRecord(designation, month);
+    if (record && record.id) {
+      this.pacService.toggleVerified(record.id).subscribe({
+        next: (res) => {
+          record.isVerified = res.isVerified;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Failed to toggle verified state for PowerAndAC', err);
+        }
+      });
+    }
   }
 
   getMonthLabel(month: number): string {
