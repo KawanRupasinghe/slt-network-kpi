@@ -23,7 +23,7 @@ namespace backend.Services
                 {
                     KpiDefinitionId = g.Key.KpiDefinitionId,
                     AreaCode = g.Key.AreaCode,
-                    KpiName = g.First().KpiName,
+                    KpiName = g.Max(x => x.KpiName),
                     Year = year,
                     AchievedKpi = g.Average(x => x.AchievedKpi),
                     MaximumPointsPerKpi = g.Average(x => x.MaximumPointsPerKpi),
