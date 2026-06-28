@@ -16,6 +16,7 @@ import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { Subscription } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { AnalyticsResultApi, AnalyticsService } from '../../../services/analytics.service';
 import { Region as RegionApi, RegionService } from '../../../services/region.service';
 
 type Region = {
@@ -106,7 +107,12 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly rowChangesSub = new Subscription();
   private pendingFrame: number | null = null;
 
-  constructor(private http: HttpClient, private regionService: RegionService, private cdr: ChangeDetectorRef) {
+  constructor(
+    private http: HttpClient,
+    private regionService: RegionService,
+    private analyticsService: AnalyticsService,
+    private cdr: ChangeDetectorRef
+  ) {
     const now = new Date();
     this.selectedYear = now.getFullYear();
     this.selectedStartMonth = 1;
@@ -162,17 +168,73 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onYearChange(year: number): void {
     this.selectedYear = Number(year);
-    this.loadLeftTableFromApi();
   }
 
   onStartMonthChange(month: number): void {
     this.selectedStartMonth = Number(month);
-    this.loadLeftTableFromApi();
   }
 
   onEndMonthChange(month: number): void {
     this.selectedEndMonth = Number(month);
-    this.loadLeftTableFromApi();
+  }
+
+  calculate(): void {
+    this.fetchAnalyticsResults();
+  }
+
+  private fetchAnalyticsResults(): void {
+    this.loading = true;
+    this.error = null;
+    this.noOverallResults = false;
+
+    this.analyticsService.getCumulativeAnalytics(this.selectedYear, this.selectedStartMonth, this.selectedEndMonth)
+      .subscribe({
+        next: (results) => {
+          // Reset existing metrics to 0 first
+          this.kpiRows.forEach(row => {
+            row.metrics.forEach(m => {
+              m.achieved = 0;
+              m.maximumPoints = 0;
+              m.pointsAchieved = 0;
+            });
+          });
+
+          if (!results || results.length === 0) {
+            this.noOverallResults = true;
+          } else {
+            // We need a quick way to find the engineer index by area code (lea)
+            const leaToIndex = new Map<string, number>();
+            this.engineersFlat.forEach((eng, idx) => {
+               leaToIndex.set(eng.lea, idx);
+            });
+
+            results.forEach(apiResult => {
+               const row = this.kpiRows.find(r => r.id === apiResult.kpiDefinitionId);
+               if (row) {
+                  const idx = leaToIndex.get(apiResult.areaCode);
+                  if (idx !== undefined) {
+                     row.metrics[idx].achieved = apiResult.achievedKpi;
+                     row.metrics[idx].maximumPoints = apiResult.maximumPointsPerKpi;
+                     row.metrics[idx].pointsAchieved = apiResult.pointsAchieved;
+                     // OverallKpiValuePercent remains as returned by the backend (currently 0)
+                  }
+               }
+            });
+          }
+
+          this.computeTotals();
+          this.scheduleRowSync();
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Failed loading analytics results:', err);
+          this.error = 'Unable to load analytics results from backend.';
+          this.noOverallResults = true;
+          this.loading = false;
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   private loadRegions(): void {
@@ -204,7 +266,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
         });
 
         this.buildRegionGrouping();
-        this.loadLeftTableFromApi();
+        this.loadKpiDefinitions();
       },
       error: (err) => {
         console.error('Failed loading regions:', err);
@@ -255,7 +317,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
-  private loadLeftTableFromApi(): void {
+  private loadKpiDefinitions(): void {
     this.loading = true;
     this.error = null;
     this.noDefinitions = false;
@@ -306,7 +368,6 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.computeTotals();
         this.scheduleRowSync();
 
-        // Skip actual overall KPI results calculation (dummy metrics are 0)
         this.noOverallResults = false;
         this.loading = false;
         this.cdr.detectChanges();
