@@ -30,6 +30,8 @@ namespace backend.Services
                     PointsAchieved = g.Average(x => x.PointsAchieved),
                     OverallKpiValuePercent = 0m
                 })
+                .OrderBy(x => x.KpiDefinitionId)
+                .ThenBy(x => x.AreaCode)
                 .ToListAsync();
 
             return results;
