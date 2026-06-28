@@ -23,6 +23,12 @@ namespace backend.Controllers
             [FromQuery] byte startMonth,
             [FromQuery] byte endMonth)
         {
+            if (startMonth < 1 || startMonth > 12 ||
+                endMonth < 1 || endMonth > 12)
+            {
+                return BadRequest("Months must be between 1 and 12.");
+            }
+
             if (startMonth > endMonth)
             {
                 return BadRequest("Start month must be less than or equal to end month.");
