@@ -455,10 +455,6 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  calculate(): void {
-    console.log('Calculate button clicked - analytics scaffold');
-  }
-
   exportToExcel(): void {
     console.log('Export button clicked - analytics scaffold');
   }
