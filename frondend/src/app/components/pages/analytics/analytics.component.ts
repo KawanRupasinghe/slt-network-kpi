@@ -179,10 +179,10 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   calculate(): void {
-    this.fetchAnalyticsResults();
+    this.loadAnalyticsResults();
   }
 
-  private fetchAnalyticsResults(): void {
+  private loadAnalyticsResults(): void {
     this.loading = true;
     this.error = null;
     this.noOverallResults = false;
@@ -203,15 +203,16 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
             this.noOverallResults = true;
           } else {
             // We need a quick way to find the engineer index by area code (lea)
+            const normalizeArea = (value: string) => (value ?? '').replace(/[^A-Za-z0-9]/g, '').toLowerCase();
             const leaToIndex = new Map<string, number>();
             this.engineersFlat.forEach((eng, idx) => {
-               leaToIndex.set(eng.lea, idx);
+               leaToIndex.set(normalizeArea(eng.lea), idx);
             });
 
             results.forEach(apiResult => {
                const row = this.kpiRows.find(r => r.id === apiResult.kpiDefinitionId);
                if (row) {
-                  const idx = leaToIndex.get(apiResult.areaCode);
+                  const idx = leaToIndex.get(normalizeArea(apiResult.areaCode));
                   if (idx !== undefined) {
                      row.metrics[idx].achieved = apiResult.achievedKpi;
                      row.metrics[idx].maximumPoints = apiResult.maximumPointsPerKpi;
