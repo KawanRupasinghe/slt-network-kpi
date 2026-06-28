@@ -192,3 +192,42 @@ html, body {
   transform: translateY(-1px) !important;
 }
 
+/* ---------- Verified Badge (global) ---------- */
+.verified-cell {
+  position: relative;
+
+  .verified-badge {
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 1;
+    transition: opacity 0.15s, transform 0.15s;
+    opacity: 0.75;
+    user-select: none;
+
+    &.verified {
+      background: rgba(22, 163, 74, 0.25);
+      color: #15803d;
+      border: 1px solid rgba(22, 163, 74, 0.4);
+    }
+
+    &.unverified {
+      background: rgba(220, 38, 38, 0.2);
+      color: #b91c1c;
+      border: 1px solid rgba(220, 38, 38, 0.35);
+    }
+
+    &:hover {
+      opacity: 1;
+      transform: scale(1.15);
+    }
+  }
+}

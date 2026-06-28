@@ -21,5 +21,7 @@ namespace backend.Models
         public int Cumulative_Sched { get; set; }
 
         public int Cumulative_Achieved { get; set; }
+
+        public bool IsVerified { get; set; } = false;
     }
 }

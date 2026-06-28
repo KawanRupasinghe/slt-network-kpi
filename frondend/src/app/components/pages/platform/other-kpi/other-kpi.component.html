@@ -186,7 +186,17 @@
                 <td class="text-center fw-bold">{{ m.label }}</td>
                 <ng-container *ngFor="let desig of pacDesignations">
                   <td class="text-center">{{ getPacValue(desig, m.value, 'sched') }}</td>
-                  <td class="text-center">{{ getPacValue(desig, m.value, 'achieved') }}</td>
+                  <td class="text-center achievement-cell">
+                    {{ getPacValue(desig, m.value, 'achieved') }}
+                    <div class="approval-icon" 
+                         *ngIf="getPacRecord(desig, m.value)?.id"
+                         [ngClass]="getPacRecord(desig, m.value)?.isVerified ? 'approved' : 'unapproved'"
+                         (click)="togglePacVerified(desig, m.value)"
+                         title="Click to toggle approval">
+                      <i class="bi bi-check" *ngIf="getPacRecord(desig, m.value)?.isVerified"></i>
+                      <i class="bi bi-x" *ngIf="!getPacRecord(desig, m.value)?.isVerified"></i>
+                    </div>
+                  </td>
                 </ng-container>
               </tr>
               <tr *ngIf="!pacDesignations.length">
