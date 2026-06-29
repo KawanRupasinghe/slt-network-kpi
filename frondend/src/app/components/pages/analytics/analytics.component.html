@@ -1,0 +1,214 @@
+<div class="final-tables-container">
+  <header class="current-month-header">
+    <div class="header-left">
+      <h1>Analytics</h1>
+      <p class="subtitle">
+        Analytical view of KPI performance across a selected time period for operational areas.
+      </p>
+    </div>
+
+    <div class="header-filters">
+      <div class="filter-group">
+        <label for="year-select">Year:</label>
+        <select id="year-select" class="filter-select" [(ngModel)]="selectedYear" (ngModelChange)="onYearChange($event)">
+          <option *ngFor="let year of yearOptions" [ngValue]="year">
+            {{ year }}
+          </option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="start-month-select">Start Month:</label>
+        <select id="start-month-select" class="filter-select" [(ngModel)]="selectedStartMonth" (ngModelChange)="onStartMonthChange($event)">
+          <option *ngFor="let month of monthOptions" [ngValue]="month.value">
+            {{ month.label }}
+          </option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="end-month-select">End Month:</label>
+        <select id="end-month-select" class="filter-select" [(ngModel)]="selectedEndMonth" (ngModelChange)="onEndMonthChange($event)">
+          <option *ngFor="let month of monthOptions" [ngValue]="month.value">
+            {{ month.label }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <span class="count-pill">{{ engineersFlat.length }} NEs</span>
+      <button class="primary-btn calculate-btn" type="button" (click)="calculate()" [disabled]="loading">
+        {{ loading ? 'Calculating...' : 'Calculate' }}
+      </button>
+      <button class="export-btn" type="button" (click)="exportToExcel()">
+        Export to Excel
+      </button>
+    </div>
+  </header>
+
+  <div class="no-data-banner" *ngIf="!loading && (noDefinitions || noOverallResults)">
+    No data for the selected period.
+  </div>
+
+  <div class="legend-container" *ngIf="!loading && !(noDefinitions || noOverallResults)">
+    <div class="legend-item">
+      <span class="legend-dot assurance-dot"></span>
+      <span class="legend-text">Service Assurance</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot fulfillment-dot"></span>
+      <span class="legend-text">Service Fulfillment</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot enterprise-dot"></span>
+      <span class="legend-text">Enterprise</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot other-operator-dot"></span>
+      <span class="legend-text">Other Operator</span>
+    </div>
+  </div>
+
+  <div class="side-by-side-tables">
+    <div class="kpi-table-container sticky-left">
+      <table class="kpi-table">
+        <thead>
+          <tr class="colSpan-header">
+            <th colspan="6">R-GM</th>
+          </tr>
+          <tr class="colSpan-header">
+            <th colspan="6">P-DGM</th>
+          </tr>
+          <tr class="colSpan-header">
+            <th colspan="6">NW EE/RTOM AREA</th>
+          </tr>
+          <tr>
+            <th class="col-kra">Category</th>
+            <th class="col-kpi">KPI</th>
+            <th class="col-target">Target</th>
+            <th class="col-weight">Weight</th>
+            <th class="col-points">Points</th>
+            <th class="col-total-pct">Total KPI %</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let row of kpiRows; let idx = index"
+              [ngClass]="getKpiRowClass(row)"
+              [class.row-hovered]="hoveredRowIndex === idx"
+              (mouseenter)="setHoveredRowIndex(idx)"
+              (mouseleave)="setHoveredRowIndex(null)"
+              #leftRowRef>
+            <td class="col-kra">{{ row.category }}</td>
+            <td class="kpi-name-cell col-kpi"><b>{{ row.kpi }}</b></td>
+            <td class="col-target">{{ row.target }}</td>
+            <td class="col-weight">{{ getComputedWeightage(row) }}</td>
+            <td class="col-points">{{ row.pointsApplicable | number }}</td>
+            <td class="col-total-pct font-semibold text-center">{{ getTotalKpiPercentage(row) | number : '1.2-2' }}%</td>
+          </tr>
+
+          <tr class="total-marks-row">
+            <td colspan="4" class="text-right"><b>Total Marks</b></td>
+            <td class="text-center total-points"><b>{{ totalPointsApplicable | number }}</b></td>
+            <td></td>
+          </tr>
+
+          <tr class="kpi-label-row">
+            <td colspan="4" class="text-right"><b>KPI</b></td>
+            <td class="kpi-label"></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="final-table-container scrollable-right">
+      <table class="final-distribution-table">
+        <thead>
+          <tr class="region-row">
+            <ng-container *ngFor="let region of regionGroups">
+              <th [attr.colspan]="region.totalEngineers * 3" class="region-header">
+                {{ formatHeaderLabel(region.region) }}
+              </th>
+            </ng-container>
+          </tr>
+
+          <tr class="province-row">
+            <ng-container *ngFor="let region of regionGroups">
+              <th *ngFor="let province of region.provinces" 
+                  [attr.colspan]="province.engineers.length * 3" 
+                  class="province-header group-margin"
+                  [ngClass]="{
+                    'metro-1-header': province.province?.toLowerCase() === 'metro 1',
+                    'metro-2-header': province.province?.toLowerCase() === 'metro 2'
+                  }">
+                {{ formatHeaderLabel(province.province) }}
+              </th>
+            </ng-container>
+          </tr>
+
+          <tr class="engineer-row">
+            <ng-container *ngFor="let region of regionGroups">
+              <ng-container *ngFor="let province of region.provinces">
+                <th *ngFor="let eng of province.engineers" colspan="3" class="ee-area-header group-margin">
+                  <div class="nw-engineer">{{ eng.networkEngineer }}</div>
+                  <div class="rtom-area">({{ eng.lea }})</div>
+                </th>
+              </ng-container>
+            </ng-container>
+          </tr>
+
+          <tr class="metrics-labels-row">
+            <ng-container *ngFor="let _ of engineersFlat">
+              <th class="achieved-header">Achieved<br>KPI</th>
+              <th class="maximum-points-header">Points<br>Applicable</th>
+              <th class="points-achieved-header group-margin">Points<br>Achieved</th>
+            </ng-container>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let row of kpiRows; let idx = index"
+              [ngClass]="getKpiRowClass(row)"
+              [class.row-hovered]="hoveredRowIndex === idx"
+              (mouseenter)="setHoveredRowIndex(idx)"
+              (mouseleave)="setHoveredRowIndex(null)"
+              #rightRowRef>
+            <ng-container *ngFor="let metric of row.metrics">
+              <td class="text-center achieved-cell" [ngClass]="getAchievedCellClass(metric)">
+                {{ metric.achieved | number : '1.2-2' }}%
+              </td>
+              <td class="text-center maximum-points-cell">
+                {{ metric.maximumPoints | number : '1.4-4' }}
+              </td>
+              <td class="text-center points-achieved-cell group-margin">
+                {{ metric.pointsAchieved | number : '1.4-4' }}
+              </td>
+            </ng-container>
+          </tr>
+
+          <tr class="summary-row">
+            <ng-container *ngFor="let total of totalPointsAchievedByRegion; let idx = index">
+              <td></td>
+              <td class="text-center maximum-points-cell">
+                <b>{{ totalMaximumPointsByRegion[idx] | number : '1.4-4' }}</b>
+              </td>
+              <td class="text-center points-achieved-cell group-margin">
+                <b>{{ total | number : '1.4-4' }}</b>
+              </td>
+            </ng-container>
+          </tr>
+
+          <tr class="summary-row total-row">
+            <ng-container *ngFor="let norm of totalPointsNormalized">
+              <td></td>
+              <td></td>
+              <td class="text-center points-achieved-cell group-margin">
+                <b>{{ norm | number : '1.2-2' }}%</b>
+              </td>
+            </ng-container>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
