@@ -37,8 +37,10 @@ import { OtnOp2Component } from './components/pages/admin/otn-op-2/otn-op-2.comp
 import { RegionManagementComponent } from './components/pages/admin/region-management/region-management.component';
 import { AdminRoutineMtncComponent } from './components/pages/admin/routine-mtnc/routine-mtnc.component';
 import { AdminServiceFulfilmentComponent } from './components/pages/admin/service-fulfilment/service-fulfilment.component';
-import { AdminTmActivityPlanComponent } from './components/pages/admin/tm-activity-plan/tm-activity-plan.component';
-import { TowerMtceAchievementComponent as AdminTowerMtceAchievementComponent } from './components/pages/admin/tower-mtce-achievement/tower-mtce-achievement.component';
+import { TowerMtncComponent } from './components/pages/admin/tower-mtnc/tower-mtnc.component';
+
+import { OtherOperatorComponent as AdminOtherOperatorComponent } from './components/pages/admin/other-operator/other-operator.component';
+
 import { UserRegistrationComponent } from './components/pages/admin/user-registration/user-registration.component';
 
 /* ========== ROUTE DEFINITIONS ========== */
@@ -76,11 +78,13 @@ export const routes: Routes = [
   { path: 'admin/bb-anw', component: AdminBbAnwComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
   { path: 'admin/otn-op-1', component: OtnOp1Component, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
   { path: 'admin/otn-op-2', component: OtnOp2Component, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
-  { path: 'admin/tower-mtce-achievement', component: AdminTowerMtceAchievementComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
-  { path: 'admin/tm-activity-plan', component: AdminTmActivityPlanComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
+  { path: 'admin/tower-mtce-achievement', component: AdminOtherOperatorComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
+
+  { path: 'admin/tm-activity-plan', component: TowerMtncComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
+
   { path: 'admin/routine-mtnc', component: AdminRoutineMtncComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
   { path: 'admin/email-service', component: EmailServiceComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
-  { path: 'admin/final-table', component: FinalTableComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
+  { path: 'admin/final-table', component: FinalTableComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin', 'PlatformAdmin', 'User'] } },
   { path: 'admin/enterprise-kpi', component: AdminEnterpriseKpiComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
   { path: 'admin/other-kpi', component: AdminOtherKpiComponent, canActivate: [AuthGuard], data: { roles: ['Admin', 'SuperAdmin'] } },
   { path: '**', redirectTo: 'dashboard' },

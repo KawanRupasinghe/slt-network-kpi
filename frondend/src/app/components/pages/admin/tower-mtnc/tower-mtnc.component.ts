@@ -27,13 +27,16 @@ type ActivityRecord = {
 };
 
 @Component({
-  selector: 'app-admin-tm-activity-plan',
+selector: 'app-tower-mtnc',
+
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, HttpClientModule],
-  templateUrl: './tm-activity-plan.component.html',
-  styleUrls: ['./tm-activity-plan.component.scss']
+  templateUrl: './tower-mtnc.component.html',
+  styleUrls: ['./tower-mtnc.component.scss']
+
 })
-export class AdminTmActivityPlanComponent implements OnInit {
+export class TowerMtncComponent implements OnInit {
+
   private readonly http = inject(HttpClient);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -50,9 +53,9 @@ export class AdminTmActivityPlanComponent implements OnInit {
     target: ['', Validators.required],
     calculation: ['', Validators.required],
     platform: ['', Validators.required],
-    responsibleDGM: ['', Validators.required],
-    definedOLADetails: ['', Validators.required],
-    dataSources: ['', Validators.required]
+    responsibleDGM: [''],
+    definedOLADetails: [''],
+    dataSources: ['']
   });
 
   ngOnInit(): void {
@@ -85,7 +88,16 @@ export class AdminTmActivityPlanComponent implements OnInit {
       return;
     }
 
-    const payload = this.form.getRawValue();
+    const rawForm = this.form.getRawValue();
+    const payload = {
+      kpi: (rawForm.kpi ?? '').trim(),
+      target: (rawForm.target ?? '').trim(),
+      calculation: (rawForm.calculation ?? '').trim(),
+      platform: (rawForm.platform ?? '').trim(),
+      responsibleDGM: '-',
+      definedOLADetails: '-',
+      dataSources: '-'
+    };
     const request$ = this.editingId
       ? this.http.put(`${environment.apiUrl}/TmActivityPlans/${this.editingId}`, { id: this.editingId, ...payload })
       : this.http.post(`${environment.apiUrl}/TmActivityPlans`, payload);

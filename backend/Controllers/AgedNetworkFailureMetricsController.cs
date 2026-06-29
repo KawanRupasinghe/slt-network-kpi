@@ -44,12 +44,10 @@ namespace backend.Controllers
         // POST: upsert by business key (area_code + month + year)
         [HttpPost]
         public async Task<IActionResult> Upsert([FromBody] UpsertAgedNetworkFailureMetricDto dto)
-
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var areaCode = dto.AreaCode.Trim().ToLower();
-            var now = DateTime.UtcNow;
 
             var existingId = await _db.AgedNetworkFailureMetrics
                 .AsNoTracking()
@@ -63,43 +61,42 @@ namespace backend.Controllers
                 {
                     Id = existingId.Value,
                     AreaCode = areaCode,
-                    HasUnavailability = dto.HasUnavailability == 1,
+                    Percentage = dto.Percentage,
+                    Remarks = dto.Remarks ?? string.Empty,
                     Month = dto.Month,
-                    Year = dto.Year,
-                    UpdatedAt = now
+                    Year = dto.Year
                 };
 
                 _db.AgedNetworkFailureMetrics.Attach(toUpdate);
-                _db.Entry(toUpdate).Property(x => x.HasUnavailability).IsModified = true;
-                _db.Entry(toUpdate).Property(x => x.UpdatedAt).IsModified = true;
+                _db.Entry(toUpdate).Property(x => x.Percentage).IsModified = true;
+                _db.Entry(toUpdate).Property(x => x.Remarks).IsModified = true;
 
                 await _db.SaveChangesAsync();
 
                 _logger.LogInformation(
-                    "Updated AgedNetworkFailureMetric id={Id} area={Area} month={Month} year={Year} value={Value}",
-                    existingId.Value, areaCode, dto.Month, dto.Year, dto.HasUnavailability);
+                    "Updated AgedNetworkFailureMetric id={Id} area={Area} month={Month} year={Year} percentage={Pct} remarks={Remarks}",
+                    existingId.Value, areaCode, dto.Month, dto.Year, dto.Percentage, dto.Remarks);
 
-                return Ok(new { message = "Updated successfully", id = existingId.Value, hasUnavailability = dto.HasUnavailability });
+                return Ok(new { message = "Updated successfully", id = existingId.Value, percentage = dto.Percentage, remarks = dto.Remarks });
             }
 
             var entity = new AgedNetworkFailureMetric
             {
                 AreaCode = areaCode,
-                HasUnavailability = dto.HasUnavailability == 1,
+                Percentage = dto.Percentage,
+                Remarks = dto.Remarks ?? string.Empty,
                 Month = dto.Month,
-                Year = dto.Year,
-                CreatedAt = now,
-                UpdatedAt = now
+                Year = dto.Year
             };
 
             _db.AgedNetworkFailureMetrics.Add(entity);
             await _db.SaveChangesAsync();
 
             _logger.LogInformation(
-                "Created AgedNetworkFailureMetric id={Id} area={Area} month={Month} year={Year} value={Value}",
-                entity.Id, areaCode, dto.Month, dto.Year, dto.HasUnavailability);
+                "Created AgedNetworkFailureMetric id={Id} area={Area} month={Month} year={Year} percentage={Pct} remarks={Remarks}",
+                entity.Id, areaCode, dto.Month, dto.Year, dto.Percentage, dto.Remarks);
 
-            return Ok(new { message = "Saved successfully", id = entity.Id, hasUnavailability = dto.HasUnavailability });
+            return Ok(new { message = "Saved successfully", id = entity.Id, percentage = dto.Percentage, remarks = dto.Remarks });
         }
 
         // PUT: update by id
@@ -111,13 +108,13 @@ namespace backend.Controllers
             var rows = await _db.AgedNetworkFailureMetrics
                 .Where(x => x.Id == id)
                 .ExecuteUpdateAsync(s => s
-                    .SetProperty(x => x.HasUnavailability, dto.HasUnavailability == 1)
-                    .SetProperty(x => x.UpdatedAt, DateTime.UtcNow));
+                    .SetProperty(x => x.Percentage, dto.Percentage)
+                    .SetProperty(x => x.Remarks, dto.Remarks ?? string.Empty));
 
             if (rows == 0) return NotFound();
 
-            _logger.LogInformation("Updated AgedNetworkFailureMetric id={Id} value={Value}", id, dto.HasUnavailability);
-            return Ok(new { message = "Updated successfully", id, hasUnavailability = dto.HasUnavailability });
+            _logger.LogInformation("Updated AgedNetworkFailureMetric id={Id} percentage={Pct} remarks={Remarks}", id, dto.Percentage, dto.Remarks);
+            return Ok(new { message = "Updated successfully", id, percentage = dto.Percentage, remarks = dto.Remarks });
         }
 
         // DELETE
@@ -136,7 +133,8 @@ namespace backend.Controllers
         {
             Id = x.Id,
             AreaCode = x.AreaCode,
-            HasUnavailability = x.HasUnavailability ? 1 : 0,
+            Percentage = x.Percentage,
+            Remarks = x.Remarks ?? string.Empty,
             Month = (byte)x.Month,
             Year = (short)x.Year
         };

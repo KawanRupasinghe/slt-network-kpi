@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 
@@ -15,8 +15,8 @@ namespace backend.Models
         [Column("designation")]
         public string? Designation { get; set; }
 
-        [Column("year")]
-        public int? Year { get; set; }   // FIXED
+        [Column("year", TypeName = "varchar(10)")]
+        public string? Year { get; set; }   // FIXED
 
         [Column("month", TypeName = "varchar(10)")]
         public string? Month { get; set; }
@@ -32,5 +32,8 @@ namespace backend.Models
 
         [Column("Cumulative_Achieved")]
         public int CumulativeAchieved { get; set; }
+
+        [Column("is_verified")]
+        public bool IsVerified { get; set; } = false;
     }
 }

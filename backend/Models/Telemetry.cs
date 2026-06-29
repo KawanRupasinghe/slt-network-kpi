@@ -15,5 +15,7 @@ namespace backend.Models
         public int Month { get; set; }
 
         public decimal Percentage { get; set; }
+
+        public short? Node_Count { get; set; }
     }
 }

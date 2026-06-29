@@ -5,10 +5,11 @@
  Features: Groups options by admin/platform/other themes, handles navigation
 */
 
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NavOption } from '../../page-config';
+import { AuthService } from '../../services/auth.service';
 
 /* ========== DATA INTERFACES ========== */
 
@@ -48,8 +49,8 @@ export class AdminDropdownComponent implements OnChanges {
 
   /* Labels for admin-related navigation options */
   private readonly adminSet = new Set([
-    'Admin Registration',
-    'User Registration',
+    'Admin Management',
+    'User Management',
     'Region Management',
     'E-mail Service',
     'KPI Management'
@@ -66,6 +67,8 @@ export class AdminDropdownComponent implements OnChanges {
     'Other KPI'
   ]);
 
+  private readonly authService = inject(AuthService);
+
   constructor(private router: Router) {}
 
   /* Rebuild sections when options input changes */
@@ -77,11 +80,17 @@ export class AdminDropdownComponent implements OnChanges {
 
   /* Group navigation options into themed sections */
   private buildSections(): void {
+    const role = this.authService.getRole();
     const admin: NavOption[] = [];
     const platform: NavOption[] = [];
     const others: NavOption[] = [];
 
     for (const option of this.options) {
+      // If role is PlatformAdmin or User, only expose KPI Management
+      if ((role === 'PlatformAdmin' || role === 'User') && option.label !== 'KPI Management') {
+        continue;
+      }
+
       if (this.adminSet.has(option.label)) {
         admin.push(option);
       } else if (this.platformSet.has(option.label)) {
@@ -102,7 +111,14 @@ export class AdminDropdownComponent implements OnChanges {
 
   /* Toggle dropdown menu visibility */
   onToggleMenu(): void {
-    this.toggleMenu.emit();
+    const role = this.authService.getRole();
+    if (role === 'PlatformAdmin' || role === 'User') {
+      this.router.navigate(['admin/final-table']).then(() => {
+        this.closeMenu.emit();
+      });
+    } else {
+      this.toggleMenu.emit();
+    }
   }
 
   /* Navigate to selected page and close menu */
@@ -114,6 +130,19 @@ export class AdminDropdownComponent implements OnChanges {
       console.error('Navigation error:', error);
       this.closeMenu.emit();
     });
+  }
+
+  get dropdownLabel(): string {
+    const role = this.authService.getRole();
+    if (role === 'PlatformAdmin' || role === 'User') {
+      return 'KPI Management';
+    }
+    return 'Admin';
+  }
+
+  get isDropdown(): boolean {
+    const role = this.authService.getRole();
+    return role !== 'PlatformAdmin' && role !== 'User';
   }
 }
 

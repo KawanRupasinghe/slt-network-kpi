@@ -11,6 +11,7 @@ import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
+import { AuthService } from '../../../../services/auth.service';
 
 /* ========== DATA TYPES ========== */
 
@@ -31,6 +32,9 @@ export type KpiDefinition = {
   pointsApplicable: number;
   totalPoints?: number;
 
+  engineerResponsible?: string;
+  contactNo?: string;
+
   month?: number;
   year?: number;
 };
@@ -46,6 +50,8 @@ export type UpsertKpiDefinitionRequest = {
   pointsApplicable: number;
   totalPoints: number;
   category?: string;
+  engineerResponsible?: string;
+  contactNo?: string;
   weightage: number;
 
   month: number;
@@ -63,6 +69,7 @@ export class FinalTableComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly authService = inject(AuthService);
   private readonly totalPointsStorageKey = 'kpi.final-table.totalPoints';
 
   pageTitle = 'Strategic KPI Management';
@@ -73,6 +80,7 @@ export class FinalTableComponent implements OnInit {
   loading = false;
   saving = false;
   errorMessage = '';
+  isAdmin = false;
 
   private readonly apiBase = `${environment.apiUrl}/kpi-definitions`;
 
@@ -85,6 +93,12 @@ export class FinalTableComponent implements OnInit {
     unit: ['', [Validators.required]],
     descriptionOfKPI: ['', [Validators.required]],
 
+    // ✅ engineer responsible
+    engineerResponsible: ['', []],
+
+    // ✅ contact number
+    contactNo: ['', []],
+
     // ✅ calculated field (readonly)
     weightage: this.fb.nonNullable.control({ value: 0, disabled: true }),
 
@@ -94,6 +108,8 @@ export class FinalTableComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    const role = this.authService.getRole();
+    this.isAdmin = role === 'Admin' || role === 'SuperAdmin';
     this.form.patchValue({ totalPoints: this.getPersistedTotalPoints() });
     this.form.patchValue({ category: '' });
     this.fetchData();
@@ -167,6 +183,8 @@ export class FinalTableComponent implements OnInit {
       keyPerformanceIndicators: record.keyPerformanceIndicators ?? '',
       unit: record.unit ?? '',
       descriptionOfKPI: record.descriptionOfKPI ?? '',
+      engineerResponsible: record.engineerResponsible ?? '',
+      contactNo: record.contactNo ?? '',
       pointsApplicable: record.pointsApplicable ?? 0,
       totalPoints: record.totalPoints ?? 36000,
     });
@@ -230,6 +248,10 @@ export class FinalTableComponent implements OnInit {
       unit: raw.unit.trim(),
       descriptionOfKPI: raw.descriptionOfKPI.trim(),
 
+      // ✅ engineer responsible and contact
+      engineerResponsible: (raw.engineerResponsible ?? '').trim(),
+      contactNo: (raw.contactNo ?? '').trim(),
+
       // ✅ only input needed
       pointsApplicable: Number(raw.pointsApplicable),
       totalPoints: Number(raw.totalPoints),
@@ -248,6 +270,8 @@ export class FinalTableComponent implements OnInit {
       keyPerformanceIndicators: '',
       unit: '',
       descriptionOfKPI: '',
+      engineerResponsible: '',
+      contactNo: '',
       pointsApplicable: 0,
       totalPoints: this.getPersistedTotalPoints(),
       weightage: 0, // will be set by backend after save
@@ -298,6 +322,7 @@ export class FinalTableComponent implements OnInit {
       keyPerformanceIndicators: raw?.keyPerformanceIndicators ?? raw?.KeyPerformanceIndicators ?? '',
       unit: raw?.unit ?? raw?.Unit ?? '',
       descriptionOfKPI: raw?.descriptionOfKPI ?? raw?.DescriptionOfKPI ?? '',
+      engineerResponsible: raw?.engineerResponsible ?? raw?.EngineerResponsible ?? '',
       weightage: Number(raw?.weightage ?? raw?.Weightage ?? 0),
       pointsApplicable: Number(raw?.pointsApplicable ?? raw?.PointsApplicable ?? 0),
       totalPoints: Number(raw?.totalPoints ?? raw?.TotalPoints ?? 36000),

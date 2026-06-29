@@ -29,13 +29,8 @@ export class AdminServiceFulfilmentComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   // Header
-  pageTitle = 'Service Fulfilment KPIs';
+  pageTitle = 'Service Fulfillment';
 
-  // Dashboard stats
-  activeKpis = 0;
-  targetsMet = 0;
-  avgWeightage = 0;
-  dgmCount = 0;
 
   // Form
   kpiForm!: FormGroup;
@@ -53,18 +48,18 @@ export class AdminServiceFulfilmentComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private serviceFulfilmentKpiService: ServiceFulfilmentKpiService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.kpiForm = this.fb.group({
       kpi: ['', Validators.required],
       target: ['', Validators.required],
       calculation: ['', Validators.required],
-      platform: ['', Validators.required],
-      responsibleDgm: ['', Validators.required],
-      definedOla: ['', Validators.required],
-      weightage: [0],
-      dataSources: ['', Validators.required],
+      platform: [''],
+      responsibleDgm: [''],
+      definedOla: [''],
+      weightage: [0, Validators.required],
+      dataSources: [''],
       month: [this.defaultMonth, Validators.required],
       year: [this.defaultYear, Validators.required]
     });
@@ -82,10 +77,6 @@ export class AdminServiceFulfilmentComponent implements OnInit {
           ...kpi,
           displayOrder: kpi.displayOrder ?? index + 1
         }));
-        this.activeKpis = data.length;
-        const totalWeight = data.reduce((sum, k) => sum + (k.weightage ?? 0), 0);
-        this.avgWeightage = data.length ? Number((totalWeight / data.length).toFixed(1)) : 0;
-        this.dgmCount = new Set(data.map(k => k.responsibleDgm)).size;
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -118,14 +109,15 @@ export class AdminServiceFulfilmentComponent implements OnInit {
     const definedOlaValue = (formValue.definedOla ?? '').toString().trim();
 
     const payload: ServiceFulfilmentKpiDto = {
+      id: this.isEditing && this.editingId ? this.editingId : undefined,
       kpi: formValue.kpi,
       target: formValue.target,
       calculation: formValue.calculation,
-      platform: formValue.platform,
-      responsibleDgm: formValue.responsibleDgm,
-      defineDoladetails: definedOlaValue,
-      definedoladetails: definedOlaValue,
-      dataSources: formValue.dataSources,
+      platform: formValue.platform || '-',
+      responsibleDgm: formValue.responsibleDgm || '-',
+      defineDoladetails: formValue.definedOla || '-',
+      definedoladetails: formValue.definedOla || '-',
+      dataSources: formValue.dataSources || '-',
       weightage: Number(formValue.weightage),
       month: Number(formValue.month),
       year: Number(formValue.year)
@@ -162,16 +154,16 @@ export class AdminServiceFulfilmentComponent implements OnInit {
     const definedOlaValue = this.resolveDefinedOlaValue(kpi);
 
     this.kpiForm.patchValue({
-      kpi: kpi.kpi,
-      target: kpi.target,
-      calculation: kpi.calculation,
-      platform: kpi.platform,
-      responsibleDgm: kpi.responsibleDgm,
-      definedOla: definedOlaValue,
-      weightage: kpi.weightage,
-      dataSources: kpi.dataSources,
-      month: kpi.month,
-      year: kpi.year
+      kpi: kpi.kpi ?? '',
+      target: kpi.target ?? '',
+      calculation: kpi.calculation ?? '',
+      platform: kpi.platform ?? '',
+      responsibleDgm: kpi.responsibleDgm ?? '',
+      definedOla: definedOlaValue ?? '',
+      weightage: kpi.weightage ?? 0,
+      dataSources: kpi.dataSources ?? '',
+      month: kpi.month ?? this.defaultMonth,
+      year: kpi.year ?? this.defaultYear
     });
     this.showForm = true;
     this.scrollFormIntoView();

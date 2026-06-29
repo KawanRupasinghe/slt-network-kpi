@@ -25,7 +25,7 @@ export class OtnOp2Component implements OnInit {
   private readonly otnOp2Service = inject(OtnOp2Service);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  pageTitle = 'INT & NT OP_02';
+  pageTitle = 'OTN OP - 02';
 
   records: OtnOpKpi[] = [];
   editingId: number | null = null;

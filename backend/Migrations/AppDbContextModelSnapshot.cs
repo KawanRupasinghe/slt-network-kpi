@@ -37,35 +37,27 @@ namespace backend.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("area_code");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("created_at");
-
-                    b.Property<int>("HasUnavailability")
+                    b.Property<int>("Month")
                         .HasColumnType("int")
-                        .HasColumnName("has_unavailability");
-
-                    b.Property<byte>("Month")
-                        .HasColumnType("tinyint")
                         .HasColumnName("month");
 
-                    b.Property<string>("PlatformType")
+                    b.Property<decimal>("Percentage")
+                        .HasColumnType("decimal(5,2)")
+                        .HasColumnName("percentage");
+
+                    b.Property<string>("Remarks")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasColumnName("platform_type");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("remarks");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("updated_at");
-
-                    b.Property<short>("Year")
-                        .HasColumnType("smallint")
+                    b.Property<int>("Year")
+                        .HasColumnType("int")
                         .HasColumnName("year");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AreaCode", "PlatformType", "Month", "Year")
+                    b.HasIndex("AreaCode", "Month", "Year")
                         .IsUnique()
                         .HasDatabaseName("UQ_AgedNetworkFailureMetrics_Row");
 
@@ -233,9 +225,9 @@ namespace backend.Migrations
                         .HasColumnType("decimal(18,4)")
                         .HasColumnName("KpiValue");
 
-                    b.Property<byte>("Month")
-                        .HasColumnType("tinyint")
-                        .HasColumnName("Month");
+                    b.Property<int>("Month")
+                        .HasColumnType("int")
+                        .HasColumnName("month");
 
                     b.Property<string>("Site")
                         .IsRequired()
@@ -247,9 +239,9 @@ namespace backend.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("UpdatedAt");
 
-                    b.Property<short>("Year")
-                        .HasColumnType("smallint")
-                        .HasColumnName("Year");
+                    b.Property<int>("Year")
+                        .HasColumnType("int")
+                        .HasColumnName("year");
 
                     b.HasKey("Id");
 
@@ -358,9 +350,13 @@ namespace backend.Migrations
                         .HasColumnType("int")
                         .HasColumnName("attended");
 
-                    b.Property<int?>("CumulativeCount")
+                    b.Property<int>("CumulativeAchieved")
                         .HasColumnType("int")
-                        .HasColumnName("cumulative_count");
+                        .HasColumnName("Cumulative_Achieved");
+
+                    b.Property<int>("CumulativeSched")
+                        .HasColumnType("int")
+                        .HasColumnName("Cumulative_Sched");
 
                     b.Property<string>("Designation")
                         .HasColumnType("nvarchar(max)")
@@ -374,8 +370,8 @@ namespace backend.Migrations
                         .HasColumnType("int")
                         .HasColumnName("scheduled");
 
-                    b.Property<int?>("Year")
-                        .HasColumnType("int")
+                    b.Property<string>("Year")
+                        .HasColumnType("varchar(10)")
                         .HasColumnName("year");
 
                     b.HasKey("Id");
@@ -612,23 +608,23 @@ namespace backend.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2")
-                        .HasColumnName("CreatedAt");
+                        .HasColumnName("createdAt");
 
                     b.Property<decimal?>("KpiValue")
                         .HasColumnType("decimal(18,4)")
                         .HasColumnName("KpiValue");
 
-                    b.Property<byte>("Month")
-                        .HasColumnType("tinyint")
-                        .HasColumnName("Month");
+                    b.Property<int>("Month")
+                        .HasColumnType("int")
+                        .HasColumnName("month");
 
                     b.Property<int>("OtherKpiId")
                         .HasColumnType("int")
                         .HasColumnName("OtherKpiId");
 
-                    b.Property<short>("Year")
-                        .HasColumnType("smallint")
-                        .HasColumnName("Year");
+                    b.Property<int>("Year")
+                        .HasColumnType("int")
+                        .HasColumnName("year");
 
                     b.HasKey("Id");
 
@@ -998,6 +994,54 @@ namespace backend.Migrations
                     b.ToTable("PlatformKpiAssignment", "dbo");
                 });
 
+            modelBuilder.Entity("backend.Models.PowerAndAC", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Attended")
+                        .HasColumnType("int")
+                        .HasColumnName("Attended");
+
+                    b.Property<int>("Cumulative_Achieved")
+                        .HasColumnType("int")
+                        .HasColumnName("Cumulative_Achieved");
+
+                    b.Property<int>("Cumulative_Sched")
+                        .HasColumnType("int")
+                        .HasColumnName("Cumulative_Sched");
+
+                    b.Property<string>("Designation")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("Designation");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("int")
+                        .HasColumnName("Month");
+
+                    b.Property<int>("Scheduled")
+                        .HasColumnType("int")
+                        .HasColumnName("Scheduled");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int")
+                        .HasColumnName("Year");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Designation", "Year", "Month")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_PowerAndAC_Designation_Year_Month");
+
+                    b.ToTable("PowerAndAC", "dbo");
+                });
+
             modelBuilder.Entity("backend.Models.RegionData", b =>
                 {
                     b.Property<int>("Id")
@@ -1220,6 +1264,46 @@ namespace backend.Migrations
                     b.ToTable("slbnmtcdata", "dbo");
                 });
 
+            modelBuilder.Entity("backend.Models.Telemetry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Designation")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("Designation");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("int")
+                        .HasColumnName("Month");
+
+                    b.Property<short?>("Node_Count")
+                        .HasColumnType("smallint")
+                        .HasColumnName("Node_Count");
+
+                    b.Property<decimal>("Percentage")
+                        .HasColumnType("decimal(5,2)")
+                        .HasColumnName("Percentage");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int")
+                        .HasColumnName("Year");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Designation", "Year", "Month")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_Telemetry_Designation_Year_Month");
+
+                    b.ToTable("Telemetry", "dbo");
+                });
+
             modelBuilder.Entity("backend.Models.TmActivity1", b =>
                 {
                     b.Property<int>("Id")
@@ -1259,68 +1343,6 @@ namespace backend.Migrations
                     b.ToTable("tmtable1", "dbo");
                 });
 
-            modelBuilder.Entity("backend.Models.TowerKpi", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CreatedAt")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("createdAt");
-
-                    b.Property<string>("Frequency")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasColumnName("frequency");
-
-                    b.Property<string>("Kpi")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasColumnName("kpi");
-
-                    b.Property<byte?>("Month")
-                        .HasColumnType("tinyint")
-                        .HasColumnName("month");
-
-                    b.Property<byte>("No")
-                        .HasColumnType("tinyint")
-                        .HasColumnName("no");
-
-                    b.Property<string>("Responsibility")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("responsibility");
-
-                    b.Property<string>("UpdatedAt")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("updatedAt");
-
-                    b.Property<byte>("V")
-                        .HasColumnType("tinyint")
-                        .HasColumnName("v");
-
-                    b.Property<string>("Weightage")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasColumnName("weightage");
-
-                    b.Property<short?>("Year")
-                        .HasColumnType("smallint")
-                        .HasColumnName("year");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("kpitowertable", "dbo");
-                });
-
             modelBuilder.Entity("backend.Models.TowerMtcData", b =>
                 {
                     b.Property<int>("Id")
@@ -1334,9 +1356,13 @@ namespace backend.Migrations
                         .HasColumnType("int")
                         .HasColumnName("attended");
 
-                    b.Property<int?>("CumulativeCount")
+                    b.Property<int>("CumulativeAttended")
                         .HasColumnType("int")
-                        .HasColumnName("cumulative_count");
+                        .HasColumnName("Cumulative_Achieved");
+
+                    b.Property<int>("CumulativeScheduled")
+                        .HasColumnType("int")
+                        .HasColumnName("Cumulative_Scheduled");
 
                     b.Property<string>("Designation")
                         .HasColumnType("nvarchar(max)")
@@ -1350,8 +1376,8 @@ namespace backend.Migrations
                         .HasColumnType("int")
                         .HasColumnName("scheduled");
 
-                    b.Property<short?>("Year")
-                        .HasColumnType("smallint")
+                    b.Property<int?>("Year")
+                        .HasColumnType("int")
                         .HasColumnName("year");
 
                     b.HasKey("Id");

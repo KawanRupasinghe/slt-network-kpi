@@ -45,7 +45,6 @@ $border-radius-meter: 999px;
   background-repeat: no-repeat;
   background-attachment: fixed;
   position: relative;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   padding-bottom: 0;
   box-sizing: border-box;
@@ -82,48 +81,97 @@ $border-radius-meter: 999px;
 .dashboard-header {
   width: 100%;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.8rem;
   flex-shrink: 0;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.header-left h1 {
+  color: #0057a6;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+}
+
+.header-left .subtitle {
+  color: #64748b;
+  font-size: 13px;
+  margin: 4px 0 0 0;
 }
 
 .header-filters {
   display: flex;
-  gap: 20px;
-  background: #f8fafc;
-  padding: 12px 20px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 8px 18px;
+  border-radius: 30px;
+  border: 1.5px solid rgba($slt-blue, 0.15);
+  box-shadow: 0 4px 15px rgba($slt-blue, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  align-items: center;
+
+  &:hover {
+    border-color: rgba($slt-blue, 0.3);
+    box-shadow: 0 6px 20px rgba($slt-blue, 0.08);
+  }
 }
 
 .filter-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .filter-group label {
-  font-weight: 600;
-  color: #475569;
-  font-size: 14px;
+  font-weight: 700;
+  color: $slt-blue;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .filter-select {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
+  padding: 6px 32px 6px 12px;
+  border-radius: 20px;
+  border: 1.5px solid $gray-200;
   background-color: white;
-  color: #1e293b;
-  font-weight: 500;
+  color: $slt-slate;
+  font-weight: 600;
+  font-size: 13px;
   outline: none;
   cursor: pointer;
-  transition: border-color 0.2s;
-}
+  transition: all 0.2s ease-in-out;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230057a6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 
-.filter-select:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+  &:hover {
+    border-color: $slt-blue;
+    background-color: #f0f7ff;
+  }
+
+  &:focus {
+    border-color: $slt-blue;
+    box-shadow: 0 0 0 3px rgba($slt-blue, 0.15);
+  }
 }
 
 .percentage-note {
@@ -256,51 +304,27 @@ $border-radius-meter: 999px;
   overflow: hidden;
   box-sizing: border-box;
 
-  // Different light background colors for each region
-  &:nth-child(1) {
-    background: rgba(255, 240, 220, 0.9); // Light coral/apricot
+  // Alternating between SLT's two corporate brand colors (SLT Blue and SLT Green/Teal)
+  &:nth-child(odd) {
+    background: rgba(235, 244, 255, 0.9); // Soft SLT blue tint
 
     .region-title {
-      border-left-color: #e65c2e; // Darker coral
+      border-left-color: $slt-blue;
 
       h3 {
-        color: #e65c2e;
+        color: $slt-blue;
       }
     }
   }
 
-  &:nth-child(2) {
-    background: rgba(220, 240, 255, 0.9); // Darker blue
+  &:nth-child(even) {
+    background: rgba(232, 247, 239, 0.9); // Soft SLT green/teal tint
 
     .region-title {
-      border-left-color: #2270cc; // Darker blue
+      border-left-color: $slt-teal;
 
       h3 {
-        color: #2270cc;
-      }
-    }
-  }
-
-  &:nth-child(3) {
-    background: rgba(220, 245, 235, 0.9); // Darker mint
-
-    .region-title {
-      border-left-color: #018a69; // Darker teal/mint
-
-      h3 {
-        color: #018a69;
-      }
-    }
-  }
-
-  &:nth-child(4) {
-    background: rgba(235, 230, 255, 0.9); // Darker lavender
-
-    .region-title {
-      border-left-color: #7550b8; // Darker lavender
-
-      h3 {
-        color: #7550b8;
+        color: $slt-teal;
       }
     }
   }
@@ -646,6 +670,18 @@ $border-radius-meter: 999px;
     font-weight: 700;
     color: $slt-blue;
     line-height: 1.2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+  .summary-value .engineer-code {
+    font-weight: 700;
+    color: $slt-blue;
+  }
+  .summary-value .engineer-name {
+    font-size: 0.9rem;
+    color: $slt-teal;
   }
 }
 
@@ -674,11 +710,12 @@ $border-radius-meter: 999px;
 .kpi-table-row {
   display: grid;
   grid-template-columns: 1.5fr 0.7fr 0.9fr 0.9fr;
-  padding: 0.9rem 1.5rem;
+  padding: 0.9rem 1.5rem 0.9rem 2.8rem;
   background: white;
   border-bottom: 1px solid $gray-200;
   font-size: 0.95rem;
   align-items: center;
+  position: relative;
 
   &:last-child {
     border-bottom: none;
@@ -686,6 +723,33 @@ $border-radius-meter: 999px;
 
   &:nth-child(even) {
     background: rgba($pastel-blue, 0.3);
+  }
+}
+
+.row-indicator {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.indicator-badge {
+  font-size: 13.5px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  
+  &.enterprise {
+    color: #6b21a8; /* Dark purple */
+  }
+  
+  &.other {
+    color: #c2410c; /* Dark orange */
   }
 }
 
@@ -802,4 +866,66 @@ $border-radius-meter: 999px;
       color: $slt-blue;
     }
   }
+}
+
+/* Category Legend Styling (Modal) */
+.legend-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding-left: 6px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.assurance-dot {
+  background-color: #e6efff;
+  border: 1.5px solid #0057a6;
+}
+
+.fulfillment-dot {
+  background-color: #cffafe;
+  border: 1.5px solid #0891b2;
+}
+
+.enterprise-dot {
+  background-color: #f8f0ff;
+  border: 1.5px solid #8b5cf6;
+}
+
+.other-operator-dot {
+  background-color: #fff4e5;
+  border: 1.5px solid #f97316;
+}
+
+/* Category Specific Background Colors inside Modal Table */
+.kpi-table-row.category-assurance {
+  background-color: #e6efff !important;
+  &:hover { background-color: #d5e4ff !important; }
+}
+.kpi-table-row.category-fulfillment {
+  background-color: #ecfeff !important;
+  &:hover { background-color: #cffafe !important; }
+}
+.kpi-table-row.category-enterprise {
+  background-color: #f8f0ff !important;
+  &:hover { background-color: #ebd9ff !important; }
+}
+.kpi-table-row.category-other-operator {
+  background-color: #fff4e5 !important;
+  &:hover { background-color: #ffe5c7 !important; }
 }

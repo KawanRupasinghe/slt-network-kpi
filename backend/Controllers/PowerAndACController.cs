@@ -1,5 +1,7 @@
 using backend.Data;
+using backend.DTOs;
 using backend.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,22 +12,39 @@ namespace backend.Controllers
     public class PowerAndACController : ControllerBase
     {
         private readonly AppDbContext _db;
+        private readonly IAuthorizationService _authorizationService;
+        private const int PageId = 10; // OTHER_KPI (see Program.cs seeds)
 
-        public PowerAndACController(AppDbContext db)
+        public PowerAndACController(AppDbContext db, IAuthorizationService authorizationService)
         {
             _db = db;
+            _authorizationService = authorizationService;
         }
 
+
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] string? designation, [FromQuery] int? year, [FromQuery] int? month)
+        public async Task<IActionResult> GetAll([FromQuery] int? year, [FromQuery] int? month)
         {
-            var q = _db.PowerAndAC.AsQueryable();
-            if (!string.IsNullOrWhiteSpace(designation)) q = q.Where(x => x.Designation == designation);
+            var q = _db.PowerAndAC.AsNoTracking();
             if (year.HasValue) q = q.Where(x => x.Year == year.Value);
             if (month.HasValue) q = q.Where(x => x.Month == month.Value);
 
-            var list = await q.ToListAsync();
-            return Ok(list);
+            var list = await q.OrderBy(x => x.Month).ThenBy(x => x.Designation).ToListAsync();
+
+            var result = list.Select(p => new PowerAndACDto
+            {
+                Id = p.Id,
+                Designation = p.Designation,
+                Year = p.Year,
+                Month = p.Month,
+                Scheduled = p.Scheduled,
+                Attended = p.Attended,
+                Cumulative_Sched = p.Cumulative_Sched,
+                Cumulative_Achieved = p.Cumulative_Achieved,
+                IsVerified = p.IsVerified
+            });
+
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
@@ -35,5 +54,20 @@ namespace backend.Controllers
             if (item == null) return NotFound();
             return Ok(item);
         }
+
+        [HttpPatch("{id:int}/toggle-verified")]
+        public async Task<IActionResult> ToggleVerified(int id)
+        {
+            var auth = await _authorizationService.AuthorizeAsync(User, PageId, "EditPlatformKpiPolicy");
+            if (!auth.Succeeded) return Forbid();
+
+            var entity = await _db.PowerAndAC.FirstOrDefaultAsync(x => x.Id == id);
+            if (entity == null) return NotFound();
+
+            entity.IsVerified = !entity.IsVerified;
+            await _db.SaveChangesAsync();
+            return Ok(new { id = entity.Id, isVerified = entity.IsVerified });
+        }
+
     }
 }

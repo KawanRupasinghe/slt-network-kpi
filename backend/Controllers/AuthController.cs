@@ -158,7 +158,7 @@ namespace backend.Controllers
                 issuer: jwtSettings["Issuer"] ?? "KPI_Backend",
                 audience: jwtSettings["Audience"] ?? "KPI_Frontend",
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(8),
+                expires: DateTime.UtcNow.AddHours(5),
                 signingCredentials: creds
             );
 

@@ -5,6 +5,8 @@
  * Tower uses raw Scheduled/Attended.
  */
 
+using System;
+using System.Linq;
 using backend.Data;
 using backend.DTOs;
 using Microsoft.EntityFrameworkCore;
@@ -24,12 +26,14 @@ namespace backend.Services
             _context = context;
         }
 
-        public async Task<List<PlatformRecordDto>> FetchMsanDataAsync(int? year = null)
+        public async Task<List<PlatformRecordDto>> FetchMsanDataAsync(int? year = null, int? month = null)
         {
             var rows = await _context.MsanMtcData
                 .Where(x => year == null || x.Year == year)
                 .Select(x => new CumulativeRow
                 {
+                    Id = x.Id,
+                    IsVerified = x.IsVerified,
                     Designation = x.Designation,
                     Month = x.Month,
                     CumulativeSched = x.CumulativeSched,
@@ -39,27 +43,47 @@ namespace backend.Services
             return GroupToPlatformRecords(rows);
         }
 
-        public async Task<List<PlatformRecordDto>> FetchVpnDataAsync(int? year = null)
+        public async Task<List<PlatformRecordDto>> FetchVpnDataAsync(int? year = null, int? month = null)
         {
+            // Avoid selecting IsVerified from ipnwmtcdata because DB schema currently doesn't have is_verified column.
+            // We fetch required fields and (optionally) filter by year on the client side.
             var rows = await _context.IpnwMtcData
-                .Where(x => year == null || x.Year == year)
                 .Select(x => new CumulativeRow
                 {
+                    Id = x.Id,
+                    IsVerified = false, // default (red) until DB/schema includes is_verified for VPN
                     Designation = x.Designation,
                     Month = x.Month,
                     CumulativeSched = x.CumulativeSched,
-                    CumulativeAchieved = x.CumulativeAchieved
-                }).ToListAsync();
+                    CumulativeAchieved = x.CumulativeAchieved,
+                    Year = x.Year
+                })
+                .ToListAsync();
 
-            return GroupToPlatformRecords(rows);
+            // Client-side filter to avoid DB schema issues (ipnwmtcdata.is_verified may not exist yet).
+            var filtered = rows
+                .Where(x =>
+                    year == null ||
+                    (
+                        !string.IsNullOrWhiteSpace(x.Year) &&
+                        x.Year == year.Value.ToString()
+                    ))
+                .ToList();
+
+            return GroupToPlatformRecords(filtered);
         }
 
-        public async Task<List<PlatformRecordDto>> FetchSlbnDataAsync(int? year = null)
+
+
+
+        public async Task<List<PlatformRecordDto>> FetchSlbnDataAsync(int? year = null, int? month = null)
         {
             var rows = await _context.SlbnMtcData
                 .Where(x => year == null || x.Year == year)
                 .Select(x => new CumulativeRow
                 {
+                    Id = x.Id,
+                    IsVerified = x.IsVerified,
                     Designation = x.Designation,
                     Month = x.Month,
                     CumulativeSched = x.CumulativeSched,
@@ -69,12 +93,14 @@ namespace backend.Services
             return GroupToPlatformRecords(rows);
         }
 
-        public async Task<List<PlatformRecordDto>> FetchTowerDataAsync(int? year = null)
+        public async Task<List<PlatformRecordDto>> FetchTowerDataAsync(int? year = null, int? month = null)
         {
             var rows = await _context.TowerMtcData
                 .Where(x => year == null || x.Year == (short)year)
                 .Select(x => new CumulativeRow
                 {
+                    Id = x.Id,
+                    IsVerified = x.IsVerified,
                     Designation = x.Designation,
                     Month = x.Month,
                     CumulativeSched = x.CumulativeScheduled,
@@ -102,6 +128,8 @@ namespace backend.Services
                             x => x.Designation!.Trim(),
                             x => new PlatformDetailDto
                             {
+                                Id = x.Id,
+                                IsVerified = x.IsVerified,
                                 Column2 = x.CumulativeSched.ToString(),
                                 Column3 = x.CumulativeAchieved.ToString()
                             })
@@ -133,11 +161,18 @@ namespace backend.Services
         // -------------------------------------------------------
         private class CumulativeRow
         {
+            public int Id { get; set; }
+            public bool IsVerified { get; set; }
             public string? Designation { get; set; }
             public string? Month { get; set; }
+
+            // Used only for client-side year filtering (IpnwMtcData.Year is varchar)
+            public string? Year { get; set; }
+
             public int CumulativeSched { get; set; }
             public int CumulativeAchieved { get; set; }
         }
+
 
         private class RawRow
         {

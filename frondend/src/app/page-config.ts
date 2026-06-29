@@ -65,9 +65,9 @@ export const platformNavOptions: NavOption[] = [
     title: 'Platform KPI — Tower Maintenance'
   },
   {
-    label: 'Routine MTNC',
+    label: 'Routine Maintenance',
     path: 'platform/routine-mtnc',
-    title: 'Platform KPI — Routine MTNC'
+    title: 'Platform KPI — Routine Maintenance'
   },
   {
     label: 'Other Operator',
@@ -75,9 +75,9 @@ export const platformNavOptions: NavOption[] = [
     title: 'Platform KPI — Other Operator'
   },
   {
-    label: 'Node Failures',
+    label: 'Aged Network Failures',
     path: 'platform/node-failures',
-    title: 'Platform KPI — Node Failures'
+    title: 'Platform KPI — Aged Network Failures'
   }
 ];
 
@@ -85,14 +85,14 @@ export const platformNavOptions: NavOption[] = [
 
 export const adminNavOptions: NavOption[] = [
   {
-    label: 'Admin Registration',
+    label: 'Admin Management',
     path: 'admin/admin-registration',
-    title: 'Admin — Admin Registration'
+    title: 'Admin — Admin Management'
   },
   {
-    label: 'User Registration',
+    label: 'User Management',
     path: 'admin/user-registration',
-    title: 'Admin — User Registration'
+    title: 'Admin — User Management'
   },
   {
     label: 'Service Fulfilment',
@@ -135,9 +135,9 @@ export const adminNavOptions: NavOption[] = [
     title: 'Admin — Tower Maintenance'
   },
   {
-    label: 'Routine MTNC',
+    label: 'Routine Maintenance',
     path: 'admin/routine-mtnc',
-    title: 'Admin — Routine MTNC'
+    title: 'Admin — Routine Maintenance'
   },
   {
     label: 'E-mail Service',

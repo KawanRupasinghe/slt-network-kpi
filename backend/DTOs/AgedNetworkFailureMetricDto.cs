@@ -6,8 +6,8 @@ namespace backend.DTOs
     {
         public int Id { get; set; }
         public string AreaCode { get; set; } = string.Empty;
-        public int HasUnavailability { get; set; }
-
+        public decimal Percentage { get; set; }
+        public string Remarks { get; set; } = string.Empty;
         public byte Month { get; set; }
         public short Year { get; set; }
     }
@@ -17,10 +17,11 @@ namespace backend.DTOs
         [Required, MaxLength(50)]
         public string AreaCode { get; set; } = string.Empty;
 
+        [Range(0.00, 100.00)]
+        public decimal Percentage { get; set; }
 
-
-        [Range(0, 1)]
-        public int HasUnavailability { get; set; }
+        [MaxLength(500)]
+        public string Remarks { get; set; } = string.Empty;
 
         [Range(1, 12)]
         public byte Month { get; set; }

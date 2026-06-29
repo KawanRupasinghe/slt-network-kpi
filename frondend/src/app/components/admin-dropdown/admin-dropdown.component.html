@@ -4,12 +4,12 @@
   Displays categorized navigation options for admin and platform pages
 -->
 
-<div class="dropdown" [class.open]="isOpen">
+<div class="dropdown" [class.open]="isOpen && isDropdown">
   <button class="nav-btn ghost" type="button" (click)="onToggleMenu()">
-    Admin
-    <span class="chevron">▾</span>
+    {{ dropdownLabel }}
+    <span class="chevron" *ngIf="isDropdown">▾</span>
   </button>
-  <ul class="dropdown-menu" [class.visible]="isOpen">
+  <ul class="dropdown-menu" [class.visible]="isOpen" *ngIf="isDropdown">
     <ng-container *ngFor="let section of sections; let isLast = last">
       <li class="section-header" [ngClass]="section.theme">
         <span>{{ section.title }}</span>

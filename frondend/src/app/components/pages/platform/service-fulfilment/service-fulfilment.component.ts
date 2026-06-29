@@ -79,13 +79,11 @@ export class ServiceFulfilmentComponent implements OnInit {
   
   // Constants
   nonEditableColumns = [
-    'no', 'kpi', 'target', 'calculation', 'platform', 'responsibledgm',
-    'definedoladetails', 'weightage', 'datasources'
+    'no', 'kpi', 'target', 'calculation', 'weightage'
   ];
 
   baseColumns = [
-    'no', 'kpi', 'target', 'calculation', 'platform', 'responsibledgm',
-    'definedoladetails', 'weightage', 'datasources'
+    'no', 'kpi', 'target', 'calculation', 'weightage'
   ];
 
   headerMapping: { [key: string]: string } = {

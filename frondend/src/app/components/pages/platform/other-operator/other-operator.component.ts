@@ -73,10 +73,10 @@ export class OtherOperatorComponent implements OnInit {
   headerMapping: { [key: string]: string } = {
     no: 'No',
     networkEngineerKpi: 'Network Engineer KPI',
-    division: 'Division',
-    section: 'Section',
-    kpiPercent: 'KPI %',
-    kpiValue: 'KPI Value'
+    division: 'Category',
+    section: 'Target',
+    kpiPercent: 'Weightage',
+    kpiValue: 'Achievement (%)'
   };
 
   optionMapping: { [key: string]: string } = {

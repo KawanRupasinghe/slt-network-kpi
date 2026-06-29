@@ -6,14 +6,16 @@ import { environment } from '../../environments/environment';
 export interface AgedNetworkFailureMetric {
   id: number;
   areaCode: string;
-  hasUnavailability: number; // 0 or 1
+  percentage: number;
+  remarks: string;
   month: number;
   year: number;
 }
 
 export interface UpsertAgedNetworkFailureMetric {
   areaCode: string;
-  hasUnavailability: number;
+  percentage: number;
+  remarks: string;
   month: number;
   year: number;
 }

@@ -4,7 +4,7 @@
 
 /* ---------- Local Space Grotesk Fonts ---------- */
 @font-face {
-  font-family: 'Space Grotesk';
+  font-family: Arial, sans-serif;
   src: url('/assets/fonts/SpaceGrotesk/SpaceGrotesk-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
@@ -12,7 +12,7 @@
 }
 
 @font-face {
-  font-family: 'Space Grotesk';
+  font-family: Arial, sans-serif;
   src: url('/assets/fonts/SpaceGrotesk/SpaceGrotesk-Medium.ttf') format('truetype');
   font-weight: 500;
   font-style: normal;
@@ -20,7 +20,7 @@
 }
 
 @font-face {
-  font-family: 'Space Grotesk';
+  font-family: Arial, sans-serif;
   src: url('/assets/fonts/SpaceGrotesk/SpaceGrotesk-SemiBold.ttf') format('truetype');
   font-weight: 600;
   font-style: normal;
@@ -76,12 +76,12 @@
 }
 
 .page-title {
-  color: #0057a6;
-  font-size: clamp(2rem, 4vw, 2.8rem);
-  font-weight: 700;
+  color: #0057A6;
+  font-size: 2.1rem;
+  font-weight: 600;
   margin: 0.5rem 0;
   text-align: left;
-  font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+  font-family: Arial, sans-serif;
   letter-spacing: 0.3px;
 }
 
@@ -93,7 +93,7 @@
   font-weight: 500;
   line-height: 1.5;
   max-width: 600px;
-  font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+  font-family: Arial, sans-serif;
 }
 
 

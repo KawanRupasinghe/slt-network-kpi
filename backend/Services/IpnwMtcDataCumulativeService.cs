@@ -27,11 +27,11 @@ namespace backend.Services
             var recordsUpdated = 0;
 
             var groups = records
-                .Where(x => !string.IsNullOrWhiteSpace(x.Designation) && x.Year.HasValue)
+                .Where(x => !string.IsNullOrWhiteSpace(x.Designation) && !string.IsNullOrWhiteSpace(x.Year))
                 .GroupBy(x => new
                 {
                     Designation = x.Designation!.Trim(),
-                    Year = x.Year!.Value
+                    Year = x.Year!.Trim()
                 });
 
             foreach (var group in groups)
@@ -57,7 +57,7 @@ namespace backend.Services
                 .Where(x =>
                     x.Designation != null &&
                     x.Designation.Trim() == normalizedDesignation &&
-                    x.Year == year)
+                    x.Year == year.ToString())
                 .ToListAsync();
 
             var recordsUpdated = RecalculateGroup(records);
