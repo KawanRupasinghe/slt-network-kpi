@@ -836,7 +836,7 @@ namespace backend.Controllers
             if (overlap == 0) return 0m;
 
             var ratio = (decimal)(2 * overlap) / (targetTokens.Count + candidateTokens.Count);
-            return ratio * 100m;
+            return ratio * 80m;
         }
 
         // =========================================================
@@ -978,7 +978,7 @@ namespace backend.Controllers
         {
             var raw = Regex.Replace(normalized ?? string.Empty, "([a-z])([A-Z])", "$1 $2");
             return Regex.Split(raw, @"[^A-Za-z0-9]+")
-                .Where(x => x.Trim().Length >= 2)
+                .Where(x => x.Trim().Length >= 2 || (x.Trim().Length == 1 && char.IsDigit(x.Trim()[0])))
                 .Select(x => x.Trim().ToLowerInvariant())
                 .Distinct()
                 .ToList();
