@@ -70,8 +70,15 @@
                 <td>{{ formatRoutineValue(row.routine.target) }}</td>
                 <td>{{ formatRoutineValue(row.routine.calculation) }}</td>
                 <td>{{ formatRoutineValue(row.routine.responsibleDGM) }}</td>
-                <td *ngFor="let column of columns; trackBy: trackByColumn">
+                <td *ngFor="let column of columns; trackBy: trackByColumn" class="achievement-cell">
                   {{ formatPlaceholderValue(row.platformKey, column) }}
+                  <div class="approval-icon" 
+                       *ngIf="hasDetailForMainTable(row.platformKey, column)"
+                       [ngClass]="isVerifiedForMainTable(row.platformKey, column) ? 'approved' : 'unapproved'"
+                       title="Verification status">
+                    <i class="bi bi-check" *ngIf="isVerifiedForMainTable(row.platformKey, column)"></i>
+                    <i class="bi bi-x" *ngIf="!isVerifiedForMainTable(row.platformKey, column)"></i>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -126,6 +133,7 @@
                          title="Click to toggle approval">
                       <i class="bi bi-check" *ngIf="getIsVerified(record, column)"></i>
                       <i class="bi bi-x" *ngIf="!getIsVerified(record, column)"></i>
+
                     </div>
                   </td>
                 </ng-container>
