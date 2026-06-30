@@ -320,6 +320,7 @@ export class RoutineMtncComponent implements OnInit {
   }
 
 
+
   /*getDetailValue(record: PlatformRecord, column: string, field: 'Column2' | 'Column3'): string {
     const detail = record.details?.find(d => d.Column1 === column);
     const val = detail?.[field];
@@ -341,6 +342,9 @@ export class RoutineMtncComponent implements OnInit {
     );
     return key ? record.data[key]?.id : undefined;
   }
+
+
+
 
   toggleVerified(platformKey: PlatformKey, record: PlatformRecord, column: string): void {
     const id = this.getDetailId(record, column);
@@ -411,6 +415,36 @@ export class RoutineMtncComponent implements OnInit {
 
     this.applyCumulativePercentage(result, targetEntry);
     return result;
+  }
+
+  private getTargetEntryForMainTable(platformKey: PlatformKey | null): PlatformRecord | undefined {
+    if (!platformKey) return undefined;
+    const data = this.platformDataMap[platformKey];
+    if (!data || !data.length) return undefined;
+
+    const months = this.getTargetMonths(platformKey);
+    if (!months.length) return undefined;
+
+    const selectedMonthLabel = this.monthOptions.find(m => m.value === this.selectedMonth)?.label ?? '';
+    const selectedMonthIndex = this.selectedMonth - 1;
+
+    const exactEntry = data.find(d => d.month === selectedMonthLabel);
+    return exactEntry
+      || months
+        .filter(m => MONTH_NAMES.indexOf(m) <= selectedMonthIndex)
+        .reverse()
+        .map(m => data.find(d => d.month === m))
+        .find(entry => entry !== undefined);
+  }
+
+  hasDetailForMainTable(platformKey: PlatformKey | null, column: string): boolean {
+    const entry = this.getTargetEntryForMainTable(platformKey);
+    return entry ? !!this.getDetailId(entry, column) : false;
+  }
+
+  isVerifiedForMainTable(platformKey: PlatformKey | null, column: string): boolean {
+    const entry = this.getTargetEntryForMainTable(platformKey);
+    return entry ? this.getIsVerified(entry, column) : false;
   }
 
   private applyCumulativePercentage(result: PlaceholderMap, entry: PlatformRecord): void {
