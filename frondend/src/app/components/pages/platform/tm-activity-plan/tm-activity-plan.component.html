@@ -60,12 +60,19 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let row of hardcodedTableData">
+                <tr *ngFor="let row of hardcodedTableData; let rowIndex = index">
                   <td>{{ row.kpi || '-' }}</td>
                   <td>{{ row.target || '-' }}</td>
                   <td>{{ row.calculation || '-' }}</td>
-                  <td *ngFor="let value of calculatedValues">
+                  <td *ngFor="let value of calculatedValues; let colIndex = index" class="achievement-cell">
                     {{ value || '0.00' }}%
+                    <div class="approval-icon"
+                         *ngIf="getMainTableDetailId(rowIndex, colIndex) !== undefined"
+                         [ngClass]="getMainTableIsVerified(rowIndex, colIndex) ? 'approved' : 'unapproved'"
+                         title="Verification status">
+                      <i class="bi bi-check" *ngIf="getMainTableIsVerified(rowIndex, colIndex)"></i>
+                      <i class="bi bi-x" *ngIf="!getMainTableIsVerified(rowIndex, colIndex)"></i>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -119,7 +126,7 @@
                     <td>{{ getDetailValue(entry, header, 'Column2') }}</td>
                     <td class="achievement-cell">
                       {{ getDetailValue(entry, header, 'Column3') }}
-                      <div class="approval-icon" 
+                      <div class="approval-icon"
                            *ngIf="getDetailId(entry, header)"
                            [ngClass]="getIsVerified(entry, header) ? 'approved' : 'unapproved'"
                            (click)="toggleVerified(entry, header)"
