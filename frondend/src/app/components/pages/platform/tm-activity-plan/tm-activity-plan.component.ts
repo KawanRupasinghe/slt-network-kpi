@@ -246,6 +246,40 @@ export class TmActivityPlanComponent implements OnInit {
     return detail?.id;
   }
 
+  /**
+   * Returns the detail id for the Strategic KPI Overview main table cell.
+   * The main table mirrors the selected month; colIndex maps to this.headers[colIndex].
+   */
+  getMainTableDetailId(rowIndex: number, colIndex: number): number | undefined {
+    const detail = this.getMainTableDetail(rowIndex, colIndex);
+    return detail?.id;
+  }
+
+  /**
+   * Returns the isVerified flag for the Strategic KPI Overview main table cell.
+   * The main table mirrors the selected month; colIndex maps to this.headers[colIndex].
+   */
+  getMainTableIsVerified(rowIndex: number, colIndex: number): boolean {
+    const detail = this.getMainTableDetail(rowIndex, colIndex);
+    return detail?.isVerified ?? false;
+  }
+
+  /**
+   * Shared lookup for the main table cell detail based on the selected month
+   * (and the corresponding header). rowIndex is accepted for symmetry with the
+   * template's iteration but is not used because the main table shows a single
+   * percentage per header for the selected month.
+   */
+  private getMainTableDetail(rowIndex: number, colIndex: number): ProcessedDetail | undefined {
+    if (!this.tableData.length || !this.headers.length) return undefined;
+    const header = this.headers[colIndex];
+    if (!header) return undefined;
+    const selectedMonthName = MONTH_ORDER[this.selectedMonth - 1];
+    const entry = this.tableData.find(d => d.month === selectedMonthName);
+    if (!entry) return undefined;
+    return entry.details.find(item => item.Column1 === header);
+  }
+
   trackByHeader = (_: number, header: string) => header;
   trackByMonth = (_: number, record: ProcessedRecord) => record.month;
 
