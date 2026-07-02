@@ -9,6 +9,7 @@ namespace backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class PowerAndACController : ControllerBase
     {
         private readonly AppDbContext _db;
@@ -61,12 +62,21 @@ namespace backend.Controllers
             var auth = await _authorizationService.AuthorizeAsync(User, PageId, "EditPlatformKpiPolicy");
             if (!auth.Succeeded) return Forbid();
 
-            var entity = await _db.PowerAndAC.FirstOrDefaultAsync(x => x.Id == id);
+            var entity = await _db.PowerAndAC.AsNoTracking()
+                .Where(x => x.Id == id)
+                .Select(x => new { x.Id, x.IsVerified })
+                .FirstOrDefaultAsync();
+
             if (entity == null) return NotFound();
 
-            entity.IsVerified = !entity.IsVerified;
-            await _db.SaveChangesAsync();
-            return Ok(new { id = entity.Id, isVerified = entity.IsVerified });
+            var newValue = !entity.IsVerified;
+
+            await _db.Database.ExecuteSqlRawAsync(
+                "UPDATE dbo.PowerAndAC SET [is_verified] = @p0 WHERE Id = @p1",
+                newValue,
+                id);
+
+            return Ok(new { id = entity.Id, isVerified = newValue });
         }
 
     }

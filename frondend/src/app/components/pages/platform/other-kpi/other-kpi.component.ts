@@ -255,6 +255,10 @@ export class OtherKpiComponent implements OnInit {
   }
 
   togglePacVerified(designation: string, month: number): void {
+    if (!this.isEditingAllowed) {
+      return;
+    }
+
     const record = this.getPacRecord(designation, month);
     if (record && record.id) {
       this.pacService.toggleVerified(record.id).subscribe({
