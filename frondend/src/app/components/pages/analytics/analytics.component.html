@@ -222,10 +222,49 @@
     </div>
   </ng-container>
 
-  <div class="dashboard-placeholder" *ngIf="activeView === 'dashboard'">
-    <div class="dashboard-placeholder-card">
-      <h3>Dashboard View</h3>
-      <p>This dashboard view is currently under development. The existing analytics table is available in the Table View tab.</p>
+  <div class="analytics-dashboard-view" *ngIf="activeView === 'dashboard'">
+    <div class="analytics-dashboard-summary">
+      <h3>Performance Dashboard</h3>
+      <p>Percent values are calculated from the same KPI mapping used in the table view for the selected month range.</p>
+    </div>
+
+    <div class="dashboard-view-empty" *ngIf="!dashboardGroups.length">
+      No dashboard data for the selected period.
+    </div>
+
+    <div class="dashboard-region-list" *ngIf="dashboardGroups.length">
+      <div class="dashboard-region-card" *ngFor="let regionGroup of dashboardGroups">
+        <div class="dashboard-region-title">{{ regionGroup.region }}</div>
+
+        <div class="dashboard-province-list">
+          <div class="dashboard-province-card" *ngFor="let provinceGroup of regionGroup.provinces">
+            <div class="dashboard-province-title">{{ provinceGroup.province }}</div>
+
+            <div class="dashboard-engineer-grid">
+              <div class="dashboard-engineer-card" *ngFor="let item of provinceGroup.engineers">
+                <div class="dashboard-engineer-header">
+                  <div>
+                    <div class="dashboard-engineer-name">{{ item.engineer.networkEngineer }}</div>
+                    <div class="dashboard-engineer-area">({{ item.engineer.lea }})</div>
+                  </div>
+                  <div class="dashboard-percent-badge" [style.color]="getDashboardColor(item.overallPercent)">
+                    {{ item.overallPercent | number:'1.1-1' }}%
+                  </div>
+                </div>
+
+                <div class="dashboard-progress-bar">
+                  <div class="dashboard-progress-fill" [style.width.%]="getDashboardProgressPercent(item.overallPercent)" [style.background-color]="getDashboardColor(item.overallPercent)"></div>
+                </div>
+
+                <div class="dashboard-metrics">
+                  <span>Achieved: {{ item.achievedPoints | number:'1.2-2' }}</span>
+                  <span>Max: {{ item.maxPoints | number:'1.2-2' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
