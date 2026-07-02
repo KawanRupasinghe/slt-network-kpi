@@ -31,6 +31,166 @@
   margin: 4px 0 0 0;
 }
 
+.view-toggle-bar {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.view-toggle-btn {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-toggle-btn:hover {
+  border-color: #0057a6;
+  color: #0057a6;
+}
+
+.view-toggle-btn.active {
+  background: #0057a6;
+  border-color: #0057a6;
+  color: #ffffff;
+}
+
+.analytics-dashboard-view {
+  width: 100%;
+  padding: 8px 0 24px;
+}
+
+.analytics-dashboard-summary {
+  margin-bottom: 16px;
+}
+
+.analytics-dashboard-summary h3 {
+  margin: 0 0 6px;
+  color: #0f172a;
+}
+
+.analytics-dashboard-summary p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.dashboard-view-empty {
+  padding: 24px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #64748b;
+  text-align: center;
+}
+
+.dashboard-region-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.dashboard-region-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.dashboard-region-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0057a6;
+  margin-bottom: 12px;
+}
+
+.dashboard-province-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-province-card {
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  padding: 12px;
+  background: #f8fbff;
+}
+
+.dashboard-province-title {
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.dashboard-engineer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.dashboard-engineer-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dashboard-engineer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.dashboard-engineer-name {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dashboard-engineer-area {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.dashboard-percent-badge {
+  font-weight: 800;
+  font-size: 18px;
+  white-space: nowrap;
+}
+
+.dashboard-progress-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.dashboard-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.2s ease;
+}
+
+.dashboard-metrics {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: #475569;
+}
+
 /* Center Section: Filters */
 .header-filters {
   display: flex;

@@ -46,6 +46,23 @@ interface KpiRow {
   metrics: KpiMetric[];
 }
 
+interface DashboardEngineerSummary {
+  engineer: Region;
+  overallPercent: number;
+  maxPoints: number;
+  achievedPoints: number;
+}
+
+interface DashboardProvinceGroup {
+  province: string;
+  engineers: DashboardEngineerSummary[];
+}
+
+interface DashboardRegionGroup {
+  region: string;
+  provinces: DashboardProvinceGroup[];
+}
+
 type KpiDefinition = {
   id: number;
   perspectives: string;
@@ -71,6 +88,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedYear: number;
   selectedStartMonth: number;
   selectedEndMonth: number;
+  activeView: 'table' | 'dashboard' = 'table';
 
   monthOptions: { value: number; label: string }[] = [];
   yearOptions: number[] = [];
@@ -95,6 +113,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   totalPointsAchievedByRegion: number[] = [];
   totalMaximumPointsByRegion: number[] = [];
   totalPointsNormalized: number[] = [];
+  dashboardGroups: DashboardRegionGroup[] = [];
 
   private readonly apiBase = `${environment.apiUrl}/kpi-definitions`;
 
@@ -178,6 +197,10 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedEndMonth = Number(month);
   }
 
+  setActiveView(view: 'table' | 'dashboard'): void {
+    this.activeView = view;
+  }
+
   calculate(): void {
     this.loadAnalyticsResults();
   }
@@ -224,6 +247,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
           }
 
           this.computeTotals();
+          this.buildDashboardGroups();
           this.scheduleRowSync();
           this.loading = false;
           this.cdr.detectChanges();
@@ -277,6 +301,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.engineersFlat = [];
         this.loading = false;
         this.kpiRows = [];
+        this.dashboardGroups = [];
         this.computeTotals();
         this.scheduleRowSync();
       },
@@ -336,6 +361,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.noDefinitions = list.length === 0;
         if (this.noDefinitions) {
           this.kpiRows = [];
+          this.dashboardGroups = [];
           this.computeTotals();
           this.scheduleRowSync();
           this.noOverallResults = true;
@@ -367,6 +393,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
         });
 
         this.computeTotals();
+        this.buildDashboardGroups();
         this.scheduleRowSync();
 
         this.noOverallResults = false;
@@ -379,6 +406,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.noDefinitions = true;
         this.noOverallResults = true;
         this.kpiRows = [];
+        this.dashboardGroups = [];
         this.computeTotals();
         this.scheduleRowSync();
         this.loading = false;
@@ -417,6 +445,58 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
         ? +((total / this.totalMaximumPointsByRegion[colIndex]) * 100).toFixed(2)
         : 0
     );
+  }
+
+  private buildDashboardGroups(): void {
+    const regionMap = new Map<string, Map<string, DashboardEngineerSummary[]>>();
+
+    this.engineersFlat.forEach((engineer, index) => {
+      const metrics = this.kpiRows
+        .map((row) => row.metrics[index])
+        .filter((metric): metric is KpiMetric => Boolean(metric));
+
+      const maxPoints = metrics.reduce((sum, metric) => sum + (metric.maximumPoints ?? 0), 0);
+      const achievedPoints = metrics.reduce((sum, metric) => sum + (metric.pointsAchieved ?? 0), 0);
+      const overallPercent = maxPoints > 0 ? +((achievedPoints / maxPoints) * 100).toFixed(1) : 0;
+
+      const region = engineer.region || 'Unknown';
+      const province = engineer.province || 'Unknown';
+
+      if (!regionMap.has(region)) {
+        regionMap.set(region, new Map<string, DashboardEngineerSummary[]>());
+      }
+
+      const provinceMap = regionMap.get(region)!;
+      const engineersForProvince = provinceMap.get(province) ?? [];
+      engineersForProvince.push({
+        engineer,
+        overallPercent,
+        maxPoints,
+        achievedPoints,
+      });
+      provinceMap.set(province, engineersForProvince);
+    });
+
+    this.dashboardGroups = Array.from(regionMap.entries()).map(([region, provinceMap]) => ({
+      region,
+      provinces: Array.from(provinceMap.entries())
+        .map(([province, engineers]) => ({
+          province,
+          engineers: engineers.sort((a, b) => a.engineer.networkEngineer.localeCompare(b.engineer.networkEngineer)),
+        }))
+        .sort((a, b) => a.province.localeCompare(b.province)),
+    }));
+  }
+
+  getDashboardColor(percent: number): string {
+    if (percent >= 90) return '#10b981';
+    if (percent >= 75) return '#3b82f6';
+    if (percent >= 50) return '#f59e0b';
+    return '#ef4444';
+  }
+
+  getDashboardProgressPercent(percent: number): number {
+    return Math.min(100, percent);
   }
 
   private scheduleRowSync(): void {
