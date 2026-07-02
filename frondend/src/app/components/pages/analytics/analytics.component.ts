@@ -71,6 +71,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedYear: number;
   selectedStartMonth: number;
   selectedEndMonth: number;
+  activeView: 'table' | 'dashboard' = 'table';
 
   monthOptions: { value: number; label: string }[] = [];
   yearOptions: number[] = [];
@@ -176,6 +177,10 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onEndMonthChange(month: number): void {
     this.selectedEndMonth = Number(month);
+  }
+
+  setActiveView(view: 'table' | 'dashboard'): void {
+    this.activeView = view;
   }
 
   calculate(): void {
