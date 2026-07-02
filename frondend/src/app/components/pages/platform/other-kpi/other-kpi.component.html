@@ -188,8 +188,8 @@
                   <td class="text-center">{{ getPacValue(desig, m.value, 'sched') }}</td>
                   <td class="text-center achievement-cell">
                     {{ getPacValue(desig, m.value, 'achieved') }}
-                    <div class="approval-icon" 
-                         *ngIf="getPacRecord(desig, m.value)?.id"
+                    <div class="approval-icon"
+                         *ngIf="isEditingAllowed && getPacRecord(desig, m.value)?.id"
                          [ngClass]="getPacRecord(desig, m.value)?.isVerified ? 'approved' : 'unapproved'"
                          (click)="togglePacVerified(desig, m.value)"
                          title="Click to toggle approval">
