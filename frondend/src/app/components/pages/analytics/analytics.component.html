@@ -82,13 +82,13 @@
         <table class="kpi-table">
           <thead>
             <tr class="colSpan-header">
-              <th colspan="6">R-GM</th>
+              <th colspan="5">R-GM</th>
             </tr>
             <tr class="colSpan-header">
-              <th colspan="6">P-DGM</th>
+              <th colspan="5">P-DGM</th>
             </tr>
             <tr class="colSpan-header">
-              <th colspan="6">NW EE/RTOM AREA</th>
+              <th colspan="5">NW EE/RTOM AREA</th>
             </tr>
             <tr>
               <th class="col-kra">Category</th>
@@ -96,7 +96,6 @@
               <th class="col-target">Target</th>
               <th class="col-weight">Weight</th>
               <th class="col-points">Points</th>
-              <th class="col-total-pct">Total KPI %</th>
             </tr>
           </thead>
 
@@ -112,19 +111,16 @@
               <td class="col-target">{{ row.target }}</td>
               <td class="col-weight">{{ getComputedWeightage(row) }}</td>
               <td class="col-points">{{ row.pointsApplicable | number }}</td>
-              <td class="col-total-pct font-semibold text-center">{{ getTotalKpiPercentage(row) | number : '1.2-2' }}%</td>
             </tr>
 
             <tr class="total-marks-row">
               <td colspan="4" class="text-right"><b>Total Marks</b></td>
               <td class="text-center total-points"><b>{{ totalPointsApplicable | number }}</b></td>
-              <td></td>
             </tr>
 
             <tr class="kpi-label-row">
               <td colspan="4" class="text-right"><b>KPI</b></td>
               <td class="kpi-label"></td>
-              <td></td>
             </tr>
           </tbody>
         </table>
