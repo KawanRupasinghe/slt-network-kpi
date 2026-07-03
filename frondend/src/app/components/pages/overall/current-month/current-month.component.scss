@@ -320,9 +320,11 @@
   flex-direction: column;
   align-items: center;
   margin: 0;
-  padding: 5px;
+  /* Adds space on the left/right around the analytics dashboard content */
+  padding: 5px 24px;
   width: 100%;
 }
+
 
 /* Side-by-side Table Layout */
 .side-by-side-tables {
