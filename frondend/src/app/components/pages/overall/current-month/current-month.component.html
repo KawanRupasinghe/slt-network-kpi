@@ -41,7 +41,7 @@
     No data for the selected month and year.
   </div>
 
-  <div class="legend-container" *ngIf="!loading && !(noDefinitions || noOverallResults)">
+  <div class="legend-container" *ngIf="!loading && !isExcelView && !(noDefinitions || noOverallResults)">
     <div class="legend-item">
       <span class="legend-dot fulfillment-dot"></span>
       <span class="legend-text">Service Fulfillment</span>
@@ -56,7 +56,11 @@
     </div>
   </div>
 
-  <div class="side-by-side-tables">
+  <div class="excel-view-container" *ngIf="!loading && isExcelView">
+    <div class="excel-table-wrapper" [innerHTML]="excelHtmlContent"></div>
+  </div>
+
+  <div class="side-by-side-tables" *ngIf="!loading && !isExcelView && !(noDefinitions || noOverallResults)">
     <div class="kpi-table-container sticky-left">
       <table class="kpi-table">
         <thead>
