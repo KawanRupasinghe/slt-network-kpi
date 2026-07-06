@@ -170,7 +170,22 @@ export class OtherOperatorComponent implements OnInit {
     this.otherOperatorKpiService.getAll().subscribe({
       next: (kpis) => {
         const rows = Array.isArray(kpis) ? this.decorateAdminRows(kpis) : [];
-        this.adminKpiRows = rows;
+
+        // Presentation-only order: calculations use KPI Id/FK mappings, not UI index/order.
+        const preferredOrder = new Map<number, number>([
+          [2, 1], // Repeated Fault Index
+          [1, 2], // Fault Clearance Rate < 4 hrs
+          [4, 3], // Fault Clearance Rate < 8 hrs
+          [3, 4]  // Fault Rate
+        ]);
+
+        this.adminKpiRows = [...rows].sort((a, b) => {
+          const ra = preferredOrder.get(Number((a as any).id)) ?? Number.MAX_SAFE_INTEGER;
+          const rb = preferredOrder.get(Number((b as any).id)) ?? Number.MAX_SAFE_INTEGER;
+          if (ra !== rb) return ra - rb;
+          return Number((a as any).id) - Number((b as any).id);
+        });
+
         this.syncSelectedPeriodFromData(rows);
         this.rebuildKpiMatrix();
         this.loading = false;
