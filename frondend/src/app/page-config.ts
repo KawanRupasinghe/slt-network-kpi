@@ -50,9 +50,9 @@ export const platformNavOptions: NavOption[] = [
     title: 'Platform KPI — IP NW OP'
   },
   {
-    label: 'BB ANW',
+    label: 'Wireline Access NW',
     path: 'platform/bb-anw',
-    title: 'Platform KPI — BB ANW'
+    title: 'Platform KPI — Wireline Access NW'
   },
   {
     label: 'OTN OP',
@@ -111,9 +111,9 @@ export const adminNavOptions: NavOption[] = [
     title: 'Admin — IP NW OP'
   },
   {
-    label: 'BB ANW',
+    label: 'Wireline Access NW',
     path: 'admin/bb-anw',
-    title: 'Admin — BB ANW'
+    title: 'Admin — Wireline Access NW'
   },
   {
     label: 'OTN OP 1',

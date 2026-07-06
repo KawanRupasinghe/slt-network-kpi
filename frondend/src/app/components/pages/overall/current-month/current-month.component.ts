@@ -432,7 +432,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
           }
 
           // Parse merges
-          const merges = worksheet.model.merges || [];
+const merges = (worksheet.model as any)?.merges || [];
           const mergeMap = new Map<string, { rowspan: number; colspan: number }>();
           const hiddenCells = new Set<string>();
 
@@ -453,7 +453,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
             };
           };
 
-          merges.forEach(rangeStr => {
+merges.forEach((rangeStr: string) => {
             const parts = rangeStr.split(':');
             if (parts.length === 2) {
               const start = parseCellRef(parts[0]);

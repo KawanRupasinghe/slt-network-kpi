@@ -21,7 +21,7 @@ import { BbAnwService, BbAnwHeaderDto } from '../../../../services/bb-anw.servic
 })
 export class BbAnwComponent implements OnInit {
   /* Page display title */
-  pageTitle = 'BB & ANW';
+  pageTitle = 'Wireline Access NW';
   /* BB ANW KPI data table */
   data: BbAnwHeaderDto[] = [];
 

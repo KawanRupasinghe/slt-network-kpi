@@ -83,7 +83,7 @@ const LOCAL_REGION_TABLE: RegionRow[] = [
 })
 export class BbAnwComponent implements OnInit, OnDestroy {
 
-	pageTitle = 'BB & ANW';
+	pageTitle = 'Wireline Access NW';
 
 	data: BbAnwEntry[] = [];
 	private allEntries: BbAnwEntry[] = [];
