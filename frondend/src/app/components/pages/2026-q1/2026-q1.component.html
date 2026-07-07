@@ -10,7 +10,8 @@
     <div class="header-filters">
       <div class="filter-group">
         <label for="month-select">Month:</label>
-        <select id="month-select" class="filter-select" [(ngModel)]="selectedMonth" (ngModelChange)="onMonthChange($event)">
+        <select id="month-select" class="filter-select" [(ngModel)]="selectedMonth"
+          (ngModelChange)="onMonthChange($event)">
           <option *ngFor="let month of monthOptions" [ngValue]="month.value">
             {{ month.label }}
           </option>
@@ -18,7 +19,8 @@
       </div>
       <div class="filter-group">
         <label for="year-select">Year:</label>
-        <select id="year-select" class="filter-select" [(ngModel)]="selectedYear" (ngModelChange)="onYearChange($event)">
+        <select id="year-select" class="filter-select" [(ngModel)]="selectedYear"
+          (ngModelChange)="onYearChange($event)">
           <option *ngFor="let year of yearOptions" [ngValue]="year">
             {{ year }}
           </option>
@@ -33,4 +35,12 @@
       </button>
     </div>
   </header>
+
+  <div class="no-data-banner" *ngIf="!loading && noOverallResults">
+    No data for the selected month and year.
+  </div>
+
+  <div class="excel-view-container" *ngIf="!loading && isExcelView">
+    <div class="excel-table-wrapper" [innerHTML]="excelHtmlContent"></div>
+  </div>
 </div>
