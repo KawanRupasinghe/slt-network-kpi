@@ -360,4 +360,15 @@ export class Q1Component implements OnInit {
       }
     });
   }
+
+  exportToExcel(): void {
+    const monthStr = this.selectedMonth < 10 ? `0${this.selectedMonth}` : `${this.selectedMonth}`;
+    const url = `assets/kpi-sheets/overall_kpi_2026_${monthStr}.xlsx`;
+    const fileName = `overall_kpi_2026_${monthStr}.xlsx`;
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
+  }
 }
