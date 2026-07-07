@@ -8,8 +8,8 @@ import { RegionService } from '../../../services/region.service';
   selector: 'app-q1',
   standalone: true,
   imports: [CommonModule, FormsModule, HttpClientModule],
-  templateUrl: './q1.component.html',
-  styleUrls: ['./q1.component.scss']
+  templateUrl: './2026-q1.component.html',
+  styleUrls: ['./2026-q1.component.scss']
 })
 export class Q1Component implements OnInit {
   currentMonth: string;

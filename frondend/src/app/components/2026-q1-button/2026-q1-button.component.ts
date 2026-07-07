@@ -5,7 +5,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   selector: 'app-q1-button',
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
-  templateUrl: './q1-button.component.html',
-  styleUrls: ['./q1-button.component.scss']
+  templateUrl: './2026-q1-button.component.html',
+  styleUrls: ['./2026-q1-button.component.scss']
 })
 export class Q1ButtonComponent {}

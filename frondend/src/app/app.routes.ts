@@ -6,7 +6,7 @@
 
 import { Routes } from '@angular/router';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
-import { Q1Component } from './components/pages/q1/q1.component';
+import { Q1Component } from './components/pages/2026-q1/2026-q1.component';
 import { AuthGuard } from './guards/auth.guard';
 
 /* ========== ROUTE COMPONENT IMPORTS ========== */
