@@ -31,6 +31,11 @@ namespace backend.Models
         [Column("network_engineer")]
         public string NetworkEngineer { get; set; }
 
+        // Engineer Name
+        [Column("EngName")]
+        public string EngName { get; set; }
+
+
         // LEA (Link, Equipment, Access) code
         [Column("lea_code")]
         public string LeaCode { get; set; }

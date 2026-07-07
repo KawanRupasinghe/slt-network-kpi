@@ -57,7 +57,22 @@ export class OtherOperatorComponent implements OnInit {
 
     this.service.getAll().subscribe({
       next: (data: OtherOperatorKpiRecord[]) => {
-        this.records = data;
+        // IMPORTANT: calculations rely on KPI Id, not on list order.
+        // This client-side sort only changes presentation.
+        const preferredOrder = new Map<number, number>([
+          [2, 1], // Repeated Fault Index
+          [1, 2], // Fault Clearance Rate < 4 hrs
+          [4, 3], // Fault Clearance Rate < 8 hrs
+          [3, 4]  // Fault Rate
+        ]);
+
+        this.records = [...data].sort((a, b) => {
+          const ra = preferredOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+          const rb = preferredOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+          if (ra !== rb) return ra - rb;
+          return a.id - b.id;
+        });
+
         this.loading = false;
         this.cdr.detectChanges();
       },

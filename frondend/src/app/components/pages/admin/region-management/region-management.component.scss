@@ -137,9 +137,24 @@
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
   padding-top: 1.5rem;
   border-top: 1px solid #f1f5f9;
+}
+
+.form-actions-inline {
+  display: flex;
+  justify-content: flex-end;
+  align-items: end;
+  padding-top: 1.75rem; /* aligns buttons with input row */
+  grid-column: 3 / span 2; /* right-side corner on the last grid row */
+}
+
+.form-actions-right {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
+  align-items: center;
 }
 
 .btn-cancel, .btn-close-form {
@@ -310,4 +325,10 @@
 
 @media (max-width: 768px) {
   .form-row { grid-template-columns: 1fr; }
+
+  .form-actions-inline {
+    grid-column: 1 / -1;
+    padding-top: 0.75rem;
+    align-items: flex-start;
+  }
 }

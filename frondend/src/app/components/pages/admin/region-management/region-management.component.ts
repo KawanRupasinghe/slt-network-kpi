@@ -18,10 +18,12 @@ export interface Region {
   region: string;
   province: string;
   networkengineer: string;
+  engname: string;
   leacode: string;
 }
 
-type RegionKey = 'region' | 'province' | 'networkengineer' | 'leacode';
+type RegionKey = 'region' | 'province' | 'networkengineer' | 'engname' | 'leacode';
+
 
 @Component({
   selector: 'app-region-management',
@@ -47,6 +49,7 @@ export class RegionManagementComponent {
     region: '',
     province: '',
     networkengineer: '',
+    engname: '',
     leacode: '',
   };
   
@@ -78,6 +81,7 @@ export class RegionManagementComponent {
             networkengineer: item.networkengineer || item.networkEngineer || 
                            item.NetworkEngineer || item.NETWORKENGINEER || 
                            item.ne || item.NE || '',
+            engname: item.engname || item.EngName || item.engName || item.ENGNAME || item['Eng-Name'] || item['eng-name'] || '',
             leacode: item.leacode || item.leaCode || item.lea || 
                     item.LEA || item.Lea || item.LEACODE || ''
           };
@@ -114,6 +118,7 @@ export class RegionManagementComponent {
       region: '',
       province: '',
       networkengineer: '',
+      engname: '',
       leacode: '',
     };
 
@@ -125,6 +130,7 @@ export class RegionManagementComponent {
   /* ================= ADD REGION (SUBMIT) ================= */
 
   onSubmit(form: NgForm): void {
+
     this.error = '';
     this.success = '';
 
@@ -138,6 +144,7 @@ export class RegionManagementComponent {
       region: this.formData.region.trim(),
       province: this.formData.province.trim(),
       networkengineer: this.formData.networkengineer.trim(),
+      engname: this.formData.engname.trim(),
       leacode: this.formData.leacode.trim(),
     };
 
@@ -145,6 +152,7 @@ export class RegionManagementComponent {
       !trimmed.region ||
       !trimmed.province ||
       !trimmed.networkengineer ||
+      !trimmed.engname ||
       !trimmed.leacode
     ) {
       this.error = 'All fields are required.';
@@ -157,21 +165,30 @@ export class RegionManagementComponent {
       region: trimmed.region,
       province: trimmed.province,
       networkengineer: trimmed.networkengineer,
+      engname: trimmed.engname,
       leacode: trimmed.leacode
-    }).subscribe({
+    } as any).subscribe({
       next: (created: any) => {
         console.log('Created region:', created); // Debug log
-        
+
         // Map the response to match our Region interface
         const newRegion: Region = {
           id: created.id || created.ID || this.regions.length + 1,
           region: created.region || created.Region || '',
           province: created.province || created.Province || '',
-          networkengineer: created.networkengineer || created.networkEngineer || 
-                         created.NetworkEngineer || '',
+          networkengineer:
+            created.networkengineer || created.networkEngineer || created.NetworkEngineer || '',
+          engname:
+            created.engname ||
+            created.EngName ||
+            created.engName ||
+            created.ENGNAME ||
+            created['Eng-Name'] ||
+            created['eng-name'] ||
+            '',
           leacode: created.leacode || created.leaCode || created.lea || ''
         };
-        
+
         this.regions = [newRegion, ...this.regions];
         this.success = 'Region added successfully.';
         this.isSubmitting = false;
@@ -256,6 +273,7 @@ export class RegionManagementComponent {
       region: field === 'region' ? value : row.region,
       province: field === 'province' ? value : row.province,
       networkengineer: field === 'networkengineer' ? value : row.networkengineer,
+      engname: field === 'engname' ? value : row.engname,
       leacode: field === 'leacode' ? value : row.leacode
     };
 
@@ -268,6 +286,7 @@ export class RegionManagementComponent {
           province: res.province || res.Province || row.province,
           networkengineer: res.networkengineer || res.networkEngineer || 
                          res.NetworkEngineer || row.networkengineer,
+          engname: res.engname || res.EngName || res.engName || res.ENGNAME || res['Eng-Name'] || res['eng-name'] || row.engname,
           leacode: res.leacode || res.leaCode || res.lea || row.leacode
         });
         this.cancelCellEdit();

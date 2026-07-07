@@ -59,7 +59,8 @@ export class AdminDropdownComponent implements OnChanges {
   /* Labels for platform-related navigation options */
   private readonly platformSet = new Set([
     'Service Fulfilment',
-    'BB ANW',
+    'Wireline Access NW',
+
     'IP NW OP',
     'OTN OP 1',
     'OTN OP 2',
