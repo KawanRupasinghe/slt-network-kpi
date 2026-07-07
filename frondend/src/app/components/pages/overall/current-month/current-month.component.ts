@@ -1,15 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import {
-    AfterViewInit,
-    ChangeDetectorRef,
-    Component,
-    ElementRef,
-    HostListener,
-    OnDestroy,
-    OnInit,
-    QueryList,
-    ViewChildren,
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  QueryList,
+  ViewChildren,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import * as ExcelJS from 'exceljs';
@@ -19,6 +19,7 @@ import { environment } from '../../../../../environments/environment';
 import { Region as RegionApi, RegionService } from '../../../../services/region.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import * as XLSX from 'xlsx';
+import { ToastrService } from 'ngx-toastr';
 
 type Region = {
   id: number;
@@ -149,7 +150,8 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     private http: HttpClient,
     private regionService: RegionService,
     private cdr: ChangeDetectorRef,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private toastr: ToastrService
   ) {
     const now = new Date();
     this.currentYear = now.getFullYear();
@@ -621,6 +623,14 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async exportToExcel(): Promise<void> {
+    if (this.shouldShowQ1Redirect()) {
+      this.toastr.info(
+        'No KPI data is available for download for the selected month. Please use the 2026 Q1 page to view this data.',
+        'No Data Available'
+      );
+      return;
+    }
+
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Current Month KPI');
 
