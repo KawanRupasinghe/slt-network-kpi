@@ -59,6 +59,7 @@ export class RegionManagementComponent {
   editingRowId: number | null = null;
   editingField: RegionKey | null = null;
   editingValue = '';
+  rowEdits: Partial<Region> = {};
 
   ngOnInit(): void {
     this.loadRegions();
@@ -237,59 +238,42 @@ export class RegionManagementComponent {
     });
   }
 
-  /* ================= INLINE CELL EDITING ================= */
+  /* ================= INLINE ROW EDITING ================= */
 
-  isEditingCell(row: Region, field: RegionKey): boolean {
-    return this.editingRowId === row.id && this.editingField === field;
+  isEditingRow(row: Region): boolean {
+    return this.editingRowId === row.id;
   }
 
-  startCellEdit(row: Region, field: RegionKey): void {
+  startRowEdit(row: Region): void {
     this.editingRowId = row.id;
-    this.editingField = field;
-    this.editingValue = (row[field] ?? '').toString();
+    this.rowEdits = { ...row };
   }
 
-  onCellKeydown(
-    event: KeyboardEvent,
-    row: Region,
-    field: RegionKey
-  ): void {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      this.saveCell(row, field);
-    } else if (event.key === 'Escape') {
-      event.preventDefault();
-      this.cancelCellEdit();
-    }
+  cancelRowEdit(): void {
+    this.editingRowId = null;
+    this.rowEdits = {};
   }
 
-  saveCell(row: Region, field: RegionKey): void {
-    const value = this.editingValue.trim();
-    if (!value) return;
-
-    // Create update payload
+  saveRow(row: Region): void {
     const updateData = {
       id: row.id,
-      region: field === 'region' ? value : row.region,
-      province: field === 'province' ? value : row.province,
-      networkengineer: field === 'networkengineer' ? value : row.networkengineer,
-      engname: field === 'engname' ? value : row.engname,
-      leacode: field === 'leacode' ? value : row.leacode
+      region: (this.rowEdits['region'] ?? row.region).toString().trim(),
+      province: (this.rowEdits['province'] ?? row.province).toString().trim(),
+      networkengineer: (this.rowEdits['networkengineer'] ?? row.networkengineer).toString().trim(),
+      engname: (this.rowEdits['engname'] ?? row.engname).toString().trim(),
+      leacode: (this.rowEdits['leacode'] ?? row.leacode).toString().trim()
     };
 
     this.regionService.update(row.id, updateData).subscribe({
       next: (res: any) => {
-        // Update the row with the response
         Object.assign(row, {
-          id: res.id || row.id,
-          region: res.region || res.Region || row.region,
-          province: res.province || res.Province || row.province,
-          networkengineer: res.networkengineer || res.networkEngineer || 
-                         res.NetworkEngineer || row.networkengineer,
-          engname: res.engname || res.EngName || res.engName || res.ENGNAME || res['Eng-Name'] || res['eng-name'] || row.engname,
-          leacode: res.leacode || res.leaCode || res.lea || row.leacode
+          region: res.region || res.Region || updateData.region,
+          province: res.province || res.Province || updateData.province,
+          networkengineer: res.networkengineer || res.networkEngineer || res.NetworkEngineer || updateData.networkengineer,
+          engname: res.engname || res.EngName || res.engName || updateData.engname,
+          leacode: res.leacode || res.leaCode || updateData.leacode
         });
-        this.cancelCellEdit();
+        this.cancelRowEdit();
         this.cdr.detectChanges();
       },
       error: (err: unknown) => {
@@ -298,12 +282,6 @@ export class RegionManagementComponent {
         this.cdr.detectChanges();
       }
     });
-  }
-
-  cancelCellEdit(): void {
-    this.editingRowId = null;
-    this.editingField = null;
-    this.editingValue = '';
   }
 
   /* ================= DELETE ROW ================= */
