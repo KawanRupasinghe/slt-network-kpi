@@ -28,30 +28,17 @@ export class Q1Component implements OnInit {
     this.currentYear = 2026; // Hardcode to 2026 as per example? No, the example says "Detailed KPI metrics for {Selected Month Name} 2026". I'll use 2026 or current year. Let's use 2026 for default year to match example, or just use current year.
     this.currentMonth = now.toLocaleString('en-US', { month: 'long' });
 
-    this.selectedMonth = now.getMonth() + 1;
+    const currentMonthIndex = now.getMonth() + 1;
+    this.selectedMonth = currentMonthIndex <= 3 ? currentMonthIndex : 1;
     this.selectedYear = 2026;
 
     this.monthOptions = [
       { value: 1, label: 'January' },
       { value: 2, label: 'February' },
-      { value: 3, label: 'March' },
-      { value: 4, label: 'April' },
-      { value: 5, label: 'May' },
-      { value: 6, label: 'June' },
-      { value: 7, label: 'July' },
-      { value: 8, label: 'August' },
-      { value: 9, label: 'September' },
-      { value: 10, label: 'October' },
-      { value: 11, label: 'November' },
-      { value: 12, label: 'December' }
+      { value: 3, label: 'March' }
     ];
 
-    const actualYear = now.getFullYear();
-    this.yearOptions = [actualYear + 1, actualYear, actualYear - 1, actualYear - 2];
-    if (!this.yearOptions.includes(2026)) {
-        this.yearOptions.push(2026);
-        this.yearOptions.sort((a,b) => b - a);
-    }
+    this.yearOptions = [2026];
 
     this.syncDisplayedPeriod();
   }
