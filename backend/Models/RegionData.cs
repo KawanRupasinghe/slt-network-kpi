@@ -33,7 +33,7 @@ namespace backend.Models
 
         // Engineer Name
         [Column("EngName")]
-        public string EngName { get; set; }
+        public string? EngName { get; set; }
 
 
         // LEA (Link, Equipment, Access) code

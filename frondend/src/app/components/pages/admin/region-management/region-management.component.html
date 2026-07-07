@@ -77,204 +77,74 @@
 
         <tbody>
           <tr *ngIf="sortedRegions.length === 0">
-            <td colspan="5" class="no-data">No region data available</td>
+            <td colspan="6" class="no-data">No region data available</td>
           </tr>
 
           <tr *ngFor="let r of sortedRegions">
             <!-- Region -->
             <td>
-              <ng-container *ngIf="isEditingCell(r, 'region'); else regionView">
-                <input
-                  class="edit-input"
-                  type="text"
-                  [(ngModel)]="editingValue"
-                  [ngModelOptions]="{ standalone: true }"
-                  (keydown)="onCellKeydown($event, r, 'region')"
-                  (blur)="saveCell(r, 'region')"
-                  placeholder="Region value"
-                  aria-label="Edit region value"
-                  title="Edit region value"
-                  autofocus
-                />
-              </ng-container>
-
-              <ng-template #regionView>
-                <div
-                  class="editable-cell"
-                  (click)="startCellEdit(r, 'region')"
-                  title="Click to edit"
-                >
-                  <span>{{ r.region || "—" }}</span>
-
-                  <button
-                    type="button"
-                    class="icon-btn edit-btn"
-                    (click)="$event.stopPropagation(); startCellEdit(r, 'region')"
-                    aria-label="Edit region"
-                  >
-                    <span class="material-symbols-outlined">edit_square</span>
-                  </button>
-                </div>
-              </ng-template>
+              <input *ngIf="isEditingRow(r); else regionView"
+                class="edit-input" type="text"
+                [(ngModel)]="rowEdits['region']"
+                [ngModelOptions]="{ standalone: true }" />
+              <ng-template #regionView>{{ r.region || '—' }}</ng-template>
             </td>
 
             <!-- Province -->
             <td>
-              <ng-container
-                *ngIf="isEditingCell(r, 'province'); else provinceView"
-              >
-                <input
-                  class="edit-input"
-                  type="text"
-                  [(ngModel)]="editingValue"
-                  [ngModelOptions]="{ standalone: true }"
-                  (keydown)="onCellKeydown($event, r, 'province')"
-                  (blur)="saveCell(r, 'province')"
-                  placeholder="Province value"
-                  aria-label="Edit province value"
-                  title="Edit province value"
-                  autofocus
-                />
-              </ng-container>
-
-              <ng-template #provinceView>
-                <div
-                  class="editable-cell"
-                  (click)="startCellEdit(r, 'province')"
-                  title="Click to edit"
-                >
-                  <span>{{ r.province || "—" }}</span>
-
-                  <button
-                    type="button"
-                    class="icon-btn edit-btn"
-                    (click)="$event.stopPropagation(); startCellEdit(r, 'province')"
-                    aria-label="Edit province"
-                  >
-                    <span class="material-symbols-outlined">edit_square</span>
-                  </button>
-                </div>
-              </ng-template>
+              <input *ngIf="isEditingRow(r); else provinceView"
+                class="edit-input" type="text"
+                [(ngModel)]="rowEdits['province']"
+                [ngModelOptions]="{ standalone: true }" />
+              <ng-template #provinceView>{{ r.province || '—' }}</ng-template>
             </td>
 
             <!-- Network Engineer -->
             <td>
-              <ng-container
-                *ngIf="isEditingCell(r, 'networkengineer'); else neView"
-              >
-                <input
-                  class="edit-input"
-                  type="text"
-                  [(ngModel)]="editingValue"
-                  [ngModelOptions]="{ standalone: true }"
-                  (keydown)="onCellKeydown($event, r, 'networkengineer')"
-                  (blur)="saveCell(r, 'networkengineer')"
-                  placeholder="Network engineer value"
-                  aria-label="Edit network engineer value"
-                  title="Edit network engineer value"
-                  autofocus
-                />
-              </ng-container>
-
-              <ng-template #neView>
-                <div
-                  class="editable-cell"
-                  (click)="startCellEdit(r, 'networkengineer')"
-                  title="Click to edit"
-                >
-                  <span>{{ r.networkengineer || "—" }}</span>
-
-                  <button
-                    type="button"
-                    class="icon-btn edit-btn"
-                    (click)="$event.stopPropagation(); startCellEdit(r, 'networkengineer')"
-                    aria-label="Edit network engineer"
-                  >
-                    <span class="material-symbols-outlined">edit_square</span>
-                  </button>
-                </div>
-              </ng-template>
+              <input *ngIf="isEditingRow(r); else neView"
+                class="edit-input" type="text"
+                [(ngModel)]="rowEdits['networkengineer']"
+                [ngModelOptions]="{ standalone: true }" />
+              <ng-template #neView>{{ r.networkengineer || '—' }}</ng-template>
             </td>
 
             <!-- LEA -->
             <td>
-              <ng-container *ngIf="isEditingCell(r, 'leacode'); else leaView">
-                <input
-                  class="edit-input"
-                  type="text"
-                  [(ngModel)]="editingValue"
-                  [ngModelOptions]="{ standalone: true }"
-                  (keydown)="onCellKeydown($event, r, 'leacode')"
-                  (blur)="saveCell(r, 'leacode')"
-                  placeholder="LEA value"
-                  aria-label="Edit LEA value"
-                  title="Edit LEA value"
-                  autofocus
-                />
-              </ng-container>
-
-              <ng-template #leaView>
-                <div
-                  class="editable-cell"
-                  (click)="startCellEdit(r, 'leacode')"
-                  title="Click to edit"
-                >
-                  <span>{{ r.leacode || "—" }}</span>
-
-                  <button
-                    type="button"
-                    class="icon-btn edit-btn"
-                    (click)="$event.stopPropagation(); startCellEdit(r, 'leacode')"
-                    aria-label="Edit LEA"
-                  >
-                    <span class="material-symbols-outlined">edit_square</span>
-                  </button>
-                </div>
-              </ng-template>
+              <input *ngIf="isEditingRow(r); else leaView"
+                class="edit-input" type="text"
+                [(ngModel)]="rowEdits['leacode']"
+                [ngModelOptions]="{ standalone: true }" />
+              <ng-template #leaView>{{ r.leacode || '—' }}</ng-template>
             </td>
 
             <!-- Engineer Name -->
             <td>
-              <ng-container *ngIf="isEditingCell(r, 'engname'); else engNameView">
-                <input
-                  class="edit-input"
-                  type="text"
-                  [(ngModel)]="editingValue"
-                  [ngModelOptions]="{ standalone: true }"
-                  (keydown)="onCellKeydown($event, r, 'engname')"
-                  (blur)="saveCell(r, 'engname')"
-                  placeholder="Engineer Name value"
-                  aria-label="Edit Engineer Name value"
-                  title="Edit Engineer Name value"
-                  autofocus
-                />
-              </ng-container>
-
-              <ng-template #engNameView>
-                <div
-                  class="editable-cell"
-                  (click)="startCellEdit(r, 'engname')"
-                  title="Click to edit"
-                >
-                  <span>{{ r.engname || "—" }}</span>
-
-                  <button
-                    type="button"
-                    class="icon-btn edit-btn"
-                    (click)="$event.stopPropagation(); startCellEdit(r, 'engname')"
-                    aria-label="Edit Engineer Name"
-                  >
-                    <span class="material-symbols-outlined">edit_square</span>
-                  </button>
-                </div>
-              </ng-template>
+              <input *ngIf="isEditingRow(r); else engNameView"
+                class="edit-input" type="text"
+                [(ngModel)]="rowEdits['engname']"
+                [ngModelOptions]="{ standalone: true }" />
+              <ng-template #engNameView>{{ r.engname || '—' }}</ng-template>
             </td>
 
-            <!-- Actions (ONLY DELETE button now) -->
+            <!-- Actions -->
             <td class="actions-col">
-
               <div class="action-buttons">
-                <button type="button" class="btn-delete" (click)="handleDelete(r.id)">Delete</button>
+                <ng-container *ngIf="isEditingRow(r); else editActions">
+                  <button type="button" class="icon-btn save-btn" (click)="saveRow(r)" title="Save">
+                    <span class="material-symbols-outlined">save</span>
+                  </button>
+                  <button type="button" class="icon-btn cancel-btn" (click)="cancelRowEdit()" title="Cancel">
+                    <span class="material-symbols-outlined">close</span>
+                  </button>
+                </ng-container>
+                <ng-template #editActions>
+                  <button type="button" class="icon-btn edit-row-btn" (click)="startRowEdit(r)" title="Edit">
+                    <span class="material-symbols-outlined">edit</span>
+                  </button>
+                  <button type="button" class="icon-btn delete-btn" (click)="handleDelete(r.id)" title="Delete">
+                    <span class="material-symbols-outlined">delete</span>
+                  </button>
+                </ng-template>
               </div>
             </td>
           </tr>

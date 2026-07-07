@@ -52,7 +52,7 @@ namespace backend.Controllers
                     Province = x.Province,
                     NetworkEngineer = x.NetworkEngineer,
                     LeaCode = x.LeaCode,
-                    EngName = string.Empty
+                    EngName = x.EngName ?? string.Empty
                 })
                 .ToListAsync();
 
@@ -78,10 +78,8 @@ namespace backend.Controllers
                     Province = x.Province,
                     NetworkEngineer = x.NetworkEngineer,
                     LeaCode = x.LeaCode,
-                    EngName = string.Empty
-
+                    EngName = x.EngName ?? string.Empty
                 })
-
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (data == null)
@@ -121,7 +119,7 @@ namespace backend.Controllers
                 Region = entity.Region,
                 Province = entity.Province,
                 NetworkEngineer = entity.NetworkEngineer,
-                EngName = entity.EngName,
+                EngName = entity.EngName ?? string.Empty,
                 LeaCode = entity.LeaCode
             };
 
@@ -160,7 +158,7 @@ namespace backend.Controllers
                 Region = entity.Region,
                 Province = entity.Province,
                 NetworkEngineer = entity.NetworkEngineer,
-                EngName = entity.EngName,
+                EngName = entity.EngName ?? string.Empty,
                 LeaCode = entity.LeaCode
             };
 
