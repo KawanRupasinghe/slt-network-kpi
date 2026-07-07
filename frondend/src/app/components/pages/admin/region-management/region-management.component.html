@@ -28,15 +28,22 @@
           </div>
 
           <div class="form-group">
+            <label for="engName">Engineer Name</label>
+            <input id="engName" name="engName" type="text" [(ngModel)]="formData.engname" required placeholder="Engineer Name" />
+          </div>
+
+          <div class="form-group">
             <label for="lea">LEA</label>
             <input id="lea" name="lea" type="text" [(ngModel)]="formData.leacode" required placeholder="LEA" />
           </div>
-        </div>
 
-        <div class="form-actions">
-          <button class="btn-cancel" type="button" (click)="resetForm()">Reset</button>
-          <button class="btn-close-form" type="button" (click)="closeForm()">Close</button>
-          <button class="btn-submit" type="submit" [disabled]="isSubmitting">{{ isSubmitting ? 'Processing...' : 'Add' }}</button>
+          <div class="form-actions-inline">
+            <div class="form-actions-right">
+              <button class="btn-cancel" type="button" (click)="resetForm()">Reset</button>
+              <button class="btn-close-form" type="button" (click)="closeForm()">Close</button>
+              <button class="btn-submit" type="submit" [disabled]="isSubmitting">{{ isSubmitting ? 'Processing...' : 'Add' }}</button>
+            </div>
+          </div>
         </div>
       </form>
 
@@ -60,7 +67,11 @@
             <th (click)="requestSort('leacode')">
               LEA {{ getSortIndicator("leacode") }}
             </th>
+            <th (click)="requestSort('engname')">
+              Engineer Name {{ getSortIndicator("engname") }}
+            </th>
             <th class="actions-col">Actions</th>
+
           </tr>
         </thead>
 
@@ -222,8 +233,46 @@
               </ng-template>
             </td>
 
+            <!-- Engineer Name -->
+            <td>
+              <ng-container *ngIf="isEditingCell(r, 'engname'); else engNameView">
+                <input
+                  class="edit-input"
+                  type="text"
+                  [(ngModel)]="editingValue"
+                  [ngModelOptions]="{ standalone: true }"
+                  (keydown)="onCellKeydown($event, r, 'engname')"
+                  (blur)="saveCell(r, 'engname')"
+                  placeholder="Engineer Name value"
+                  aria-label="Edit Engineer Name value"
+                  title="Edit Engineer Name value"
+                  autofocus
+                />
+              </ng-container>
+
+              <ng-template #engNameView>
+                <div
+                  class="editable-cell"
+                  (click)="startCellEdit(r, 'engname')"
+                  title="Click to edit"
+                >
+                  <span>{{ r.engname || "—" }}</span>
+
+                  <button
+                    type="button"
+                    class="icon-btn edit-btn"
+                    (click)="$event.stopPropagation(); startCellEdit(r, 'engname')"
+                    aria-label="Edit Engineer Name"
+                  >
+                    <span class="material-symbols-outlined">edit_square</span>
+                  </button>
+                </div>
+              </ng-template>
+            </td>
+
             <!-- Actions (ONLY DELETE button now) -->
             <td class="actions-col">
+
               <div class="action-buttons">
                 <button type="button" class="btn-delete" (click)="handleDelete(r.id)">Delete</button>
               </div>

@@ -8,7 +8,9 @@ using backend.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.Models;
+using backend.DTOs;
 using Microsoft.AspNetCore.Authorization;
+
 
 namespace backend.Controllers
 {
@@ -37,8 +39,28 @@ namespace backend.Controllers
         public async Task<IActionResult> GetAll()
         {
             // Retrieve all region records
-            return Ok(await _context.RegionData.ToListAsync());
+            // Important: only select columns that exist in the DB schema.
+            // Some environments may not yet have the Eng-Name column.
+            // Avoid selecting EngName entirely because not all DBs have the Eng-Name column yet.
+            // Returning RegionDto with EngName = "" keeps frontend compatible without breaking other pages.
+            var items = await _context.RegionData
+                .AsNoTracking()
+                .Select(x => new RegionDto
+                {
+                    Id = x.Id,
+                    Region = x.Region,
+                    Province = x.Province,
+                    NetworkEngineer = x.NetworkEngineer,
+                    LeaCode = x.LeaCode,
+                    EngName = string.Empty
+                })
+                .ToListAsync();
+
+
+            return Ok(items);
+
         }
+
 
         // =========================================================
         // GET REGION DATA BY ID
@@ -47,7 +69,20 @@ namespace backend.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             // Find region record by primary key
-            var data = await _context.RegionData.FindAsync(id);
+            var data = await _context.RegionData
+                .AsNoTracking()
+                .Select(x => new RegionDto
+                {
+                    Id = x.Id,
+                    Region = x.Region,
+                    Province = x.Province,
+                    NetworkEngineer = x.NetworkEngineer,
+                    LeaCode = x.LeaCode,
+                    EngName = string.Empty
+
+                })
+
+                .FirstOrDefaultAsync(x => x.Id == id);
 
             if (data == null)
                 return NotFound();
@@ -55,21 +90,44 @@ namespace backend.Controllers
             return Ok(data);
         }
 
+
         // =========================================================
         // CREATE NEW REGION RECORD
         // Admin-only endpoint
         // =========================================================
         [HttpPost]
         [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> Create(RegionData model)
+        public async Task<IActionResult> Create(RegionDto model)
         {
             // Insert new region record
-            _context.RegionData.Add(model);
+            var entity = new RegionData
+            {
+                Region = model.Region,
+                Province = model.Province,
+                NetworkEngineer = model.NetworkEngineer,
+                // EngName is only available in some DB versions.
+                // If column doesn't exist, this action will fail; GetAll/GetById remain safe.
+                EngName = model.EngName,
+                LeaCode = model.LeaCode
+            };
 
+            _context.RegionData.Add(entity);
             await _context.SaveChangesAsync();
 
-            return Ok(model);
+            // Return created DTO (including generated Id)
+            var created = new RegionDto
+            {
+                Id = entity.Id,
+                Region = entity.Region,
+                Province = entity.Province,
+                NetworkEngineer = entity.NetworkEngineer,
+                EngName = entity.EngName,
+                LeaCode = entity.LeaCode
+            };
+
+            return Ok(created);
         }
+
 
         // =========================================================
         // UPDATE EXISTING REGION RECORD
@@ -77,19 +135,38 @@ namespace backend.Controllers
         // =========================================================
         [HttpPut("{id}")]
         [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> Update(int id, RegionData model)
+        public async Task<IActionResult> Update(int id, RegionDto model)
         {
             // Validate route id matches model id
             if (id != model.Id)
                 return BadRequest();
 
-            // Mark entity as modified
-            _context.Entry(model).State = EntityState.Modified;
+            var entity = await _context.RegionData.FindAsync(id);
+            if (entity == null)
+                return NotFound();
+
+            entity.Region = model.Region;
+            entity.Province = model.Province;
+            entity.NetworkEngineer = model.NetworkEngineer;
+            // EngName is only available in some DB versions.
+            entity.EngName = model.EngName;
+            entity.LeaCode = model.LeaCode;
 
             await _context.SaveChangesAsync();
 
-            return Ok(model);
+            var updated = new RegionDto
+            {
+                Id = entity.Id,
+                Region = entity.Region,
+                Province = entity.Province,
+                NetworkEngineer = entity.NetworkEngineer,
+                EngName = entity.EngName,
+                LeaCode = entity.LeaCode
+            };
+
+            return Ok(updated);
         }
+
 
         // =========================================================
         // DELETE REGION RECORD
