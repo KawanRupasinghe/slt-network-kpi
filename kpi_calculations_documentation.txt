@@ -1,0 +1,183 @@
+OVERALL KPI CALCULATIONS DOCUMENTATION
+
+This document outlines the logic, formulas, and data sources for all KPI calculations implemented in the codebase (specifically within the OverallKpiResultsController).
+
+======================================================================
+1. CORE CONCEPTS
+======================================================================
+
+a) Maximum Points Allocation (Max Points Per Area)
+   - Node-Based Weighting: Used when node counts are available.
+     Formula: Max Points = PointsApplicable * (Nodes in Area / Total Nodes)
+   - Equal-Share Weighting: Used when node counts are not applicable.
+     Formula: Max Points = PointsApplicable / Total Number of Areas
+   - Fibre Failures Restoration Weighting: 
+     Formula: Max Points = PointsApplicable / Total Number of Network Engineers
+
+b) Points Achieved Calculation
+   - Linear Scaling (No Target Defined):
+     Formula: Points Achieved = Max Points * (Achieved Percentage / 100)
+   - Target-Based Scaling:
+     If Achieved Percentage >= Target: 
+         Points Achieved = Max Points
+     Else:
+         Points Achieved = Max Points * (Achieved Percentage / Target)
+
+======================================================================
+2. KPI CATEGORIES & FORMULAS
+======================================================================
+
+A) Network Availability (IP NW, BB & ANW, OTN OP 1)
+   - Formula: Availability (%) = ((TotalMinutes - UnavailableMinutes) / (24 * 60 * DaysInMonth * TotalNodes)) * 100
+   - Note for IP metrics: If TotalNodes is missing, the system dynamically calculates the "Node Weight" as: TotalMinutes / (24 * 60 * DaysInMonth).
+   - Points Allocation: Node-Based Weighting
+   - Data Sources:
+     * IP: IpNwOpKpiMetrics table
+     * BB & ANW: BbAnwKpiNodes table
+     * OTN 1: OtnOp1Metrics table
+
+B) SLA Compliance (OTN OP 2)
+   - Formula: SLA Ratio (%) = (LinksSlaNotViolated / TotalFailedLinks) * 100
+   - Points Allocation: Node-Based Weighting (using TotalFailedLinks as the node metric).
+   - Data Sources: OtnOp2Metrics table
+
+C) Direct Value KPIs (Service Fulfilment, Enterprise, Other Operator)
+   - While the codebase retrieves the calculated percentage (KpiValue) directly from the database (clamped between 0 and 100), the underlying formulas defining these metrics are:
+     * Service Fulfilment:
+       Formula: Achieved KPI (%) = KPI Value
+     * Enterprise:
+       Formula: Achieved KPI (%) = KPI Value
+     * Other Operator - Fault SLA KPI:
+       Formula: Fault SLA (%) = (Faults Within SLA / Total Faults) * 100
+     * Other Operator - Fault Clearance KPI:
+       Formula: Clearance Rate (%) = (Cleared Within 4 Hours / Total Clearance Faults) * 100
+     * Other Operator - Repeated Fault KPI:
+       Formula: Repeated Fault Percentage = (Repeated Faults / Total Customers) * 100
+       Formula: Achieved KPI (%) = 100 - Repeated Fault Percentage
+   - Points Allocation: Equal-Share Weighting (Node weight is treated as 0 for these platforms).
+   - Data Sources:
+     * Service Fulfilment: ServiceFulfilmentKpiMetrics table
+     * Enterprise: EnterpriseKpiMetrics table
+     * Other Operator: OtherOperatorKpiMetrics table
+
+D) Routine Maintenance (IPNW, SLBN/SDH, MSAN/OLTE, Towers, Power & AC)
+   - Formulas: 
+     * IPNW, SLBN/SDH, MSAN/OLTE:
+       Achieved KPI (%) = (Cumulative Achieved / Cumulative Scheduled) * 100
+     * Towers, Power & AC:
+       Achieved KPI (%) = (Cumulative Attended / Cumulative Scheduled) * 100
+   - Points Allocation: Node-Based Weighting.
+   - Targets used for Point Calculations:
+     * IPNW, SLBN, MSAN: 100% Target
+     * Towers: 95% Target
+     * Power & AC: 90% Target
+   - Data Sources:
+     * MsanMtcData, IpnwMtcData, SlbnMtcData, TowerMtcData, PowerAndAC (Calculated dynamically by respective services)
+
+E) Telemetry
+   - Formula: Achieved KPI (%) = Percentage value from Telemetry source
+   - Target Value: Defined in the KPI description (defaults to 99.99%).
+   - Points Allocation: Node-Based Weighting (using Node_Count).
+   - Data Sources: Telemetry table
+
+F) Aged Network Failures
+   - Formula: While the codebase pulls the 'Percentage' value directly from the data source, the logical definition is:
+     If HasUnavailability = 1: 
+       Achieved KPI = 0
+     Otherwise:
+       Achieved KPI = 100
+   - Points Allocation: Equal-Share Weighting across all areas.
+   - Target Value: Parsed from the KPI Description text.
+   - Data Sources: AgedNetworkFailureMetrics table
+
+======================================================================
+3. DATA MATCHING & MAPPING
+======================================================================
+
+- Area Codes Mapping: 
+  The codebase retrieves raw metrics and normalizes area codes (removing spaces/special characters and converting to lowercase). Sometime specific mappings are applied (e.g., 'ndfrm' -> 'ndrm'). 
+  Region mapping connects metric 'Designations' to specific network engineers and area codes using the RegionData table.
+
+- KPI Matching:
+  To map platform-specific KPIs to the master KPI Definitions, a fuzzy text matching algorithm is used:
+  1. 100% match: Exact match (ignoring spaces/special characters)
+  2. 85% match: One string contains the other
+  3. 0-84% match: Jaccard token overlap ratio (calculating overlap of normalized tokens)
+
+======================================================================
+4. OVERALL SCORE AGGREGATION
+======================================================================
+- Once Points Achieved and Maximum Points are calculated for all KPIs for each Area, the system calculates the overall percentage for the area:
+  Overall KPI (%) = (Total Points Achieved / Total Max Points) * 100
+- These aggregated results are then persisted into the OverallKpiResults table for immediate access and auditing.
+
+
+**************************************************************************************************
+**************************************************************************************************
+
+======================================================================
+5. ROUTINE MAINTENANCE PERIODIC FILTERING LOGICS
+======================================================================
+Different platforms have specific time-window evaluation cycles for their routine maintenance data:
+
+A) IPNW and SLBN/SDH (2-Month Cycle)
+   - Evaluated in 2-month blocks: Jan-Feb, Mar-Apr, May-Jun, etc.
+   - Cycle Calculation: 
+     cycle = (Month + 1) / 2
+     firstMonthNum = (cycle * 2) - 1
+     secondMonthNum = cycle * 2
+   - Logic: Groups records by designation. It prefers the later month's cumulative data in the cycle (if available), otherwise falls back to the first month.
+   - Formula: Percentage = (CumulativeAchieved / CumulativeSched) * 100
+
+B) MSAN/OLTE (Half-Year Cycle)
+   - Evaluated in 6-month blocks: Jan-Jun (Cycle 1) and Jul-Dec (Cycle 2).
+   - Logic: Groups records by designation within the active cycle up to the queried month. Picks the candidate row with the highest month number that is less than or equal to the selected month.
+   - Formula: Percentage = (CumulativeAchieved / CumulativeSched) * 100
+
+C) Tower Maintenance (Year-To-Date)
+   - Evaluated continuously within the year up to the queried month.
+   - Logic: Groups records by designation and picks the candidate row with the highest month number that is less than or equal to the selected month.
+   - Formula: Percentage = (CumulativeAttended / CumulativeScheduled) * 100
+
+D) Power & AC (Quarterly Cycle)
+   - Evaluated in 3-month blocks: Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec.
+   - Quarter Calculation: quarter = ((Month - 1) / 3) + 1
+   - Logic: Retrieves records from the start of the quarter up to the queried month.
+   - Formula: Percentage = (Sum of Attended in Quarter / Sum of Scheduled in Quarter) * 100 (Calculated dynamically on the fly).
+
+======================================================================
+6. CUMULATIVE ANALYTICS AGGREGATION LOGIC
+======================================================================
+When retrieving cumulative analytics across a span of months (startMonth to endMonth for a specific year), the system uses an Averaging mechanism:
+   - Logic (AnalyticsService): 
+     Groups the 'OverallKpiResults' table by KpiDefinitionId and AreaCode.
+     For each group across the selected month range, it calculates the Mean (Average) of:
+     1. AchievedKpi: Average(AchievedKpi)
+     2. MaximumPointsPerKpi: Average(MaximumPointsPerKpi)
+     3. PointsAchieved: Average(PointsAchieved)
+
+======================================================================
+7. OTHER NORMALIZATION AND SYSTEM LOGICS
+======================================================================
+
+A) Month Normalization (Frontend/Backend)
+   - The frontend normalizes numeric month values or abbreviated dates into full month names (e.g., 'January', 'February') to align with backend grouping for routine maintenance rendering.
+   - When fetching maintenance data, the frontend pulls all records for the selected year and applies the respective time-window filtering logic entirely client-side to calculate UI placeholders.
+
+B) Platform Name Normalization
+   - String normalizations are heavily used to align disparate data sources:
+   - Spaces and special characters are stripped and converted to lowercase.
+   - Platform mappings dynamically assign UI rows based on string contains patterns:
+     * Contains 'slbn', 'bbanw', or 'slb' -> maps to 'slbn'
+     * Contains 'ipnw' or 'vpn' -> maps to 'vpn'
+     * Contains 'msan', 'olte', 'int', 'nt' -> maps to 'msan'
+
+C) Text Matching Overrides (Special Metrics)
+   - Fault Clearance/Enterprise Targets (CalculateEnterpriseOrOtherNormalized):
+     For specific text cases like "fault clearance rate", if actual > 90%, it scales to 100%, else scales proportionally (actual / 0.9).
+     For other targets where less is better (e.g., fault rates), logic applies inverse scaling:
+     If actual < target, score is 100%. Otherwise, score = 1 - ((actual - target) / target).
+
+D) Data Fallback Behaviors
+   - Denominator Fallbacks: In availability formulas, if the calculated total minutes or node constraints result in a zero denominator, the system auto-defaults to 100% availability.
+   - KPI Definition Fallbacks: If no KPI definition exists for a selected month/year, the calculation system loads all available master definitions natively and scores against them.

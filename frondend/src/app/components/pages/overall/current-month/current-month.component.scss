@@ -759,41 +759,51 @@
   background-color: #ffe5c7 !important;
 }
 
-/* Excel Sheet view direct rendering styling */
-.excel-view-container {
-  width: 100%;
-  padding: 10px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+/* Q1 Moved Banner Styling */
+.q1-moved-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
   border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  margin-top: 10px;
-  max-height: calc(100vh - 140px);
-  overflow: auto;
+  padding: 24px;
+  margin-top: 16px;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.08);
+  width: 100%;
+  max-width: 800px;
 }
 
-.excel-table-wrapper {
-  overflow: auto;
-
-  table {
-    border-collapse: collapse;
-    width: max-content;
-    min-width: 100%;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 13px;
-    background-color: #ffffff;
-
-    th, td {
-      border: 1px solid #cbd5e1;
-      padding: 8px 12px;
-      vertical-align: middle;
-      text-align: left;
-      white-space: nowrap;
-    }
-
-    tr:hover {
-      background-color: #f1f5f9;
-    }
-  }
+.q1-moved-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0f2fe;
+  padding: 10px;
+  border-radius: 50%;
+  color: #0284c7;
 }
 
+.q1-moved-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.q1-moved-content h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #0369a1;
+  font-weight: 700;
+}
+
+.q1-moved-content p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.q1-moved-content strong {
+  color: #0f172a;
+}

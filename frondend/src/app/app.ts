@@ -12,6 +12,7 @@ import { RouterOutlet, Router, NavigationEnd, NavigationError, Event as RouterEv
 import { adminNavOptions, overallNavOptions, platformNavOptions } from './page-config';
 import { HeaderTitleComponent } from './components/header-title/header-title.component';
 import { DashboardButtonComponent } from './components/dashboard-button/dashboard-button.component';
+import { Q1ButtonComponent } from './components/2026-q1-button/2026-q1-button.component';
 import { AnalyticsButtonComponent } from './components/analytics-button/analytics-button.component';
 import { OverallKpiDropdownComponent } from './components/overall-kpi-dropdown/overall-kpi-dropdown.component';
 import { PlatformKpiDropdownComponent } from './components/platform-kpi-dropdown/platform-kpi-dropdown.component';
@@ -30,6 +31,7 @@ import { AuthService } from './services/auth.service';
     RouterOutlet,
     HeaderTitleComponent,
     DashboardButtonComponent,
+    Q1ButtonComponent,
     AnalyticsButtonComponent,
     OverallKpiDropdownComponent,
     PlatformKpiDropdownComponent,
