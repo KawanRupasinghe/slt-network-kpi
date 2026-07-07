@@ -6,6 +6,7 @@
 
 import { Routes } from '@angular/router';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { Q1Component } from './components/pages/q1/q1.component';
 import { AuthGuard } from './guards/auth.guard';
 
 /* ========== ROUTE COMPONENT IMPORTS ========== */
@@ -52,6 +53,8 @@ export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent) },
   /* Main dashboard with KPI overview */
   { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
+  /* Q1 Route */
+  { path: 'q1', component: Q1Component, canActivate: [AuthGuard] },
   /* Overall KPI Routes */
   { path: 'overall/current-month', component: CurrentMonthComponent, canActivate: [AuthGuard] },
   // Placeholder for future previous month route
