@@ -6,13 +6,31 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace backend.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialAuth : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
                 name: "dbo");
+
+            migrationBuilder.CreateTable(
+                name: "AgedNetworkFailureMetrics",
+                schema: "dbo",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    area_code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    month = table.Column<int>(type: "int", nullable: false),
+                    year = table.Column<int>(type: "int", nullable: false),
+                    percentage = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
+                    remarks = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AgedNetworkFailureMetrics", x => x.id);
+                });
 
             migrationBuilder.CreateTable(
                 name: "BbAnwKpi",
@@ -47,27 +65,41 @@ namespace backend.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "finaldatatables",
+                name: "EnterpriseKpi",
+                schema: "dbo",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    network_engineer_kpi = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    division = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    section = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    kpi_percent = table.Column<decimal>(type: "decimal(6,3)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EnterpriseKpi", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ipnwmtcdata",
                 schema: "dbo",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    perspectives = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    strategicObjectives = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    keyPerformanceIndicators = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    unit = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    descriptionOfKPI = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    weightage = table.Column<decimal>(type: "decimal(10,4)", nullable: false),
-                    pointsApplicable = table.Column<int>(type: "int", nullable: false),
-                    createdAt = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    updatedAt = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    month = table.Column<byte>(type: "tinyint", nullable: false),
-                    year = table.Column<short>(type: "smallint", nullable: false)
+                    designation = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    year = table.Column<string>(type: "varchar(10)", nullable: true),
+                    month = table.Column<string>(type: "varchar(10)", nullable: true),
+                    scheduled = table.Column<int>(type: "int", nullable: true),
+                    attended = table.Column<int>(type: "int", nullable: true),
+                    Cumulative_Sched = table.Column<int>(type: "int", nullable: false),
+                    Cumulative_Achieved = table.Column<int>(type: "int", nullable: false),
+                    is_verified = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_finaldatatables", x => x.id);
+                    table.PrimaryKey("PK_ipnwmtcdata", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -89,26 +121,50 @@ namespace backend.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "kpitowertable",
+                name: "KpiDefinition",
                 schema: "dbo",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    no = table.Column<byte>(type: "tinyint", nullable: false),
-                    responsibility = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    frequency = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    weightage = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    kpi = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    month = table.Column<byte>(type: "tinyint", nullable: true),
-                    year = table.Column<short>(type: "smallint", nullable: true),
-                    createdAt = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    updatedAt = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    v = table.Column<byte>(type: "tinyint", nullable: false)
+                    perspectives = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    strategicObjectives = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    keyPerformanceIndicators = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    unit = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    descriptionOfKPI = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    weightage = table.Column<decimal>(type: "decimal(10,4)", nullable: false),
+                    pointsApplicable = table.Column<int>(type: "int", nullable: false),
+                    totalPoints = table.Column<int>(type: "int", nullable: false),
+                    category = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    engineerResponsible = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    contactNo = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    createdAt = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    updatedAt = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_kpitowertable", x => x.id);
+                    table.PrimaryKey("PK_KpiDefinition", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "msanmtcdata",
+                schema: "dbo",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    designation = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    year = table.Column<int>(type: "int", nullable: true),
+                    month = table.Column<string>(type: "varchar(10)", nullable: true),
+                    scheduled = table.Column<int>(type: "int", nullable: true),
+                    attended = table.Column<int>(type: "int", nullable: true),
+                    Cumulative_Sched = table.Column<int>(type: "int", nullable: false),
+                    Cumulative_Achieved = table.Column<int>(type: "int", nullable: false),
+                    is_verified = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_msanmtcdata", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -133,6 +189,38 @@ namespace backend.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_mtncroutinetable1", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OtherKpi",
+                schema: "dbo",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    network_engineer_kpi = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    division = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    section = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    kpi_percent = table.Column<decimal>(type: "decimal(6,3)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OtherKpi", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OtherOperatorKpi",
+                schema: "dbo",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    network_engineer_kpi = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    division = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OtherOperatorKpi", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -211,6 +299,27 @@ namespace backend.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PowerAndAC",
+                schema: "dbo",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Designation = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Year = table.Column<int>(type: "int", nullable: false),
+                    Month = table.Column<int>(type: "int", nullable: false),
+                    Scheduled = table.Column<int>(type: "int", nullable: false),
+                    Attended = table.Column<int>(type: "int", nullable: false),
+                    Cumulative_Sched = table.Column<int>(type: "int", nullable: false),
+                    Cumulative_Achieved = table.Column<int>(type: "int", nullable: false),
+                    is_verified = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PowerAndAC", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "regiondata",
                 columns: table => new
                 {
@@ -219,6 +328,7 @@ namespace backend.Migrations
                     region = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     province = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     network_engineer = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EngName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     lea_code = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -278,6 +388,45 @@ namespace backend.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "slbnmtcdata",
+                schema: "dbo",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    designation = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    year = table.Column<int>(type: "int", nullable: true),
+                    month = table.Column<string>(type: "varchar(10)", nullable: true),
+                    scheduled = table.Column<int>(type: "int", nullable: true),
+                    attended = table.Column<int>(type: "int", nullable: true),
+                    Cumulative_Sched = table.Column<int>(type: "int", nullable: false),
+                    Cumulative_Achieved = table.Column<int>(type: "int", nullable: false),
+                    is_verified = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_slbnmtcdata", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Telemetry",
+                schema: "dbo",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Designation = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Year = table.Column<int>(type: "int", nullable: false),
+                    Month = table.Column<int>(type: "int", nullable: false),
+                    Percentage = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
+                    Node_Count = table.Column<short>(type: "smallint", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Telemetry", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "tmtable1",
                 schema: "dbo",
                 columns: table => new
@@ -288,17 +437,33 @@ namespace backend.Migrations
                     kpi = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     target = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     calculation = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    platform = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    responsibleDGM = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    definedOLADetails = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    dataSources = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     createdAt = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    updatedAt = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    v = table.Column<byte>(type: "tinyint", nullable: true)
+                    updatedAt = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_tmtable1", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "towermtcdata",
+                schema: "dbo",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    designation = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    year = table.Column<int>(type: "int", nullable: true),
+                    month = table.Column<string>(type: "nchar(10)", nullable: true),
+                    scheduled = table.Column<int>(type: "int", nullable: true),
+                    attended = table.Column<int>(type: "int", nullable: true),
+                    Cumulative_Scheduled = table.Column<int>(type: "int", nullable: false),
+                    Cumulative_Achieved = table.Column<int>(type: "int", nullable: false),
+                    is_verified = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_towermtcdata", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -329,6 +494,33 @@ namespace backend.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "EnterpriseKpiMetrics",
+                schema: "dbo",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EnterpriseKpiId = table.Column<int>(type: "int", nullable: false),
+                    Site = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    KpiValue = table.Column<decimal>(type: "decimal(18,4)", nullable: true),
+                    month = table.Column<int>(type: "int", nullable: false),
+                    year = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EnterpriseKpiMetrics", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EnterpriseKpiMetrics_EnterpriseKpi",
+                        column: x => x.EnterpriseKpiId,
+                        principalSchema: "dbo",
+                        principalTable: "EnterpriseKpi",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "IpNwOpKpiMetrics",
                 schema: "dbo",
                 columns: table => new
@@ -352,6 +544,81 @@ namespace backend.Migrations
                         principalSchema: "dbo",
                         principalTable: "IpNwOpKpi",
                         principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OtherKpiMetrics",
+                schema: "dbo",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    OtherKpiId = table.Column<int>(type: "int", nullable: false),
+                    AreaCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    KpiValue = table.Column<decimal>(type: "decimal(18,4)", nullable: true),
+                    month = table.Column<int>(type: "int", nullable: false),
+                    year = table.Column<int>(type: "int", nullable: false),
+                    createdAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OtherKpiMetrics", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OtherKpiMetrics_OtherKpi",
+                        column: x => x.OtherKpiId,
+                        principalSchema: "dbo",
+                        principalTable: "OtherKpi",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OtherOperatorKpiMetrics",
+                schema: "dbo",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    OtherOperatorKpiId = table.Column<int>(type: "int", nullable: false),
+                    Site = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Year = table.Column<short>(type: "smallint", nullable: false),
+                    Month = table.Column<byte>(type: "tinyint", nullable: false),
+                    kpi_value = table.Column<decimal>(type: "decimal(18,4)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OtherOperatorKpiMetrics", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OtherOperatorKpiMetrics_OtherOperatorKpi",
+                        column: x => x.OtherOperatorKpiId,
+                        principalSchema: "dbo",
+                        principalTable: "OtherOperatorKpi",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OtherOperatorTargets",
+                schema: "dbo",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    OtherOperatorKpiId = table.Column<int>(type: "int", nullable: false),
+                    Section = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Month = table.Column<byte>(type: "tinyint", nullable: false),
+                    Year = table.Column<short>(type: "smallint", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OtherOperatorTargets", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OtherOperatorTargets_OtherOperatorKpi",
+                        column: x => x.OtherOperatorKpiId,
+                        principalSchema: "dbo",
+                        principalTable: "OtherOperatorKpi",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -519,10 +786,24 @@ namespace backend.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "UQ_AgedNetworkFailureMetrics_Row",
+                schema: "dbo",
+                table: "AgedNetworkFailureMetrics",
+                columns: new[] { "area_code", "month", "year" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "UQ_BbAnwKpiNode_Row",
                 schema: "dbo",
                 table: "BbAnwKpiNode",
                 columns: new[] { "bb_anw_kpi_id", "node_code", "month", "year" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "UQ_EnterpriseKpiMetrics_Row",
+                schema: "dbo",
+                table: "EnterpriseKpiMetrics",
+                columns: new[] { "EnterpriseKpiId", "Site", "month", "year" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -531,6 +812,25 @@ namespace backend.Migrations
                 table: "IpNwOpKpiMetrics",
                 columns: new[] { "ip_nw_op_kpi_id", "area_code", "month", "year" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "UQ_OtherKpiMetrics_Row",
+                schema: "dbo",
+                table: "OtherKpiMetrics",
+                columns: new[] { "OtherKpiId", "AreaCode", "month", "year" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OtherOperatorKpiMetrics_OtherOperatorKpiId",
+                schema: "dbo",
+                table: "OtherOperatorKpiMetrics",
+                column: "OtherOperatorKpiId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OtherOperatorTargets_OtherOperatorKpiId",
+                schema: "dbo",
+                table: "OtherOperatorTargets",
+                column: "OtherOperatorKpiId");
 
             migrationBuilder.CreateIndex(
                 name: "UQ_Otn1M",
@@ -574,6 +874,13 @@ namespace backend.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "UQ_PowerAndAC_Designation_Year_Month",
+                schema: "dbo",
+                table: "PowerAndAC",
+                columns: new[] { "Designation", "Year", "Month" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Roles_RoleName",
                 schema: "dbo",
                 table: "Roles",
@@ -585,6 +892,13 @@ namespace backend.Migrations
                 schema: "dbo",
                 table: "ServiceFulfilmentKpiMetrics",
                 columns: new[] { "ServiceFulfilmentKpiId", "area_code", "month", "year" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "UQ_Telemetry_Designation_Year_Month",
+                schema: "dbo",
+                table: "Telemetry",
+                columns: new[] { "Designation", "Year", "Month" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -619,6 +933,10 @@ namespace backend.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "AgedNetworkFailureMetrics",
+                schema: "dbo");
+
+            migrationBuilder.DropTable(
                 name: "BbAnwKpiNode",
                 schema: "dbo");
 
@@ -627,7 +945,11 @@ namespace backend.Migrations
                 schema: "dbo");
 
             migrationBuilder.DropTable(
-                name: "finaldatatables",
+                name: "EnterpriseKpiMetrics",
+                schema: "dbo");
+
+            migrationBuilder.DropTable(
+                name: "ipnwmtcdata",
                 schema: "dbo");
 
             migrationBuilder.DropTable(
@@ -635,11 +957,27 @@ namespace backend.Migrations
                 schema: "dbo");
 
             migrationBuilder.DropTable(
-                name: "kpitowertable",
+                name: "KpiDefinition",
+                schema: "dbo");
+
+            migrationBuilder.DropTable(
+                name: "msanmtcdata",
                 schema: "dbo");
 
             migrationBuilder.DropTable(
                 name: "mtncroutinetable1",
+                schema: "dbo");
+
+            migrationBuilder.DropTable(
+                name: "OtherKpiMetrics",
+                schema: "dbo");
+
+            migrationBuilder.DropTable(
+                name: "OtherOperatorKpiMetrics",
+                schema: "dbo");
+
+            migrationBuilder.DropTable(
+                name: "OtherOperatorTargets",
                 schema: "dbo");
 
             migrationBuilder.DropTable(
@@ -659,6 +997,10 @@ namespace backend.Migrations
                 schema: "dbo");
 
             migrationBuilder.DropTable(
+                name: "PowerAndAC",
+                schema: "dbo");
+
+            migrationBuilder.DropTable(
                 name: "regiondata");
 
             migrationBuilder.DropTable(
@@ -669,7 +1011,19 @@ namespace backend.Migrations
                 schema: "dbo");
 
             migrationBuilder.DropTable(
+                name: "slbnmtcdata",
+                schema: "dbo");
+
+            migrationBuilder.DropTable(
+                name: "Telemetry",
+                schema: "dbo");
+
+            migrationBuilder.DropTable(
                 name: "tmtable1",
+                schema: "dbo");
+
+            migrationBuilder.DropTable(
+                name: "towermtcdata",
                 schema: "dbo");
 
             migrationBuilder.DropTable(
@@ -681,7 +1035,19 @@ namespace backend.Migrations
                 schema: "dbo");
 
             migrationBuilder.DropTable(
+                name: "EnterpriseKpi",
+                schema: "dbo");
+
+            migrationBuilder.DropTable(
                 name: "IpNwOpKpi",
+                schema: "dbo");
+
+            migrationBuilder.DropTable(
+                name: "OtherKpi",
+                schema: "dbo");
+
+            migrationBuilder.DropTable(
+                name: "OtherOperatorKpi",
                 schema: "dbo");
 
             migrationBuilder.DropTable(

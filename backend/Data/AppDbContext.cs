@@ -84,6 +84,7 @@ namespace backend.Data
         public DbSet<EnterpriseKpiMetric> EnterpriseKpiMetrics { get; set; } = null!;
         public DbSet<OtherOperatorKpi> OtherOperatorKpis { get; set; } = null!;
         public DbSet<OtherOperatorKpiMetric> OtherOperatorKpiMetrics { get; set; } = null!;
+        public DbSet<OtherOperatorTarget> OtherOperatorTargets { get; set; } = null!;
         public DbSet<OtherKpi> OtherKpis { get; set; } = null!;
         public DbSet<OtherKpiMetric> OtherKpiMetrics { get; set; } = null!;
       // TELEMETRY / POWER & AC
@@ -671,8 +672,24 @@ namespace backend.Data
                 entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(x => x.NetworkEngineerKpi).HasColumnName("network_engineer_kpi").HasMaxLength(255).IsRequired();
                 entity.Property(x => x.Division).HasColumnName("division").HasMaxLength(100);
-                entity.Property(x => x.Section).HasColumnName("section").HasMaxLength(100);
                 entity.Property(x => x.KpiPercent).HasColumnName("kpi_percent").HasColumnType("decimal(6,3)");
+            });
+
+            modelBuilder.Entity<OtherOperatorTarget>(entity =>
+            {
+                entity.ToTable("OtherOperatorTargets", "dbo");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(x => x.OtherOperatorKpiId).HasColumnName("OtherOperatorKpiId").IsRequired();
+                entity.Property(x => x.Section).HasColumnName("Section").HasMaxLength(100);
+                entity.Property(x => x.Month).HasColumnName("Month");
+                entity.Property(x => x.Year).HasColumnName("Year");
+
+                entity.HasOne(x => x.OtherOperatorKpi)
+                      .WithMany()
+                      .HasForeignKey(x => x.OtherOperatorKpiId)
+                      .HasConstraintName("FK_OtherOperatorTargets_OtherOperatorKpi")
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<OtherOperatorKpiMetric>(entity =>

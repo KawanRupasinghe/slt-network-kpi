@@ -362,6 +362,10 @@ namespace backend.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("designation");
 
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_verified");
+
                     b.Property<string>("Month")
                         .HasColumnType("varchar(10)")
                         .HasColumnName("month");
@@ -393,6 +397,11 @@ namespace backend.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("category");
 
+                    b.Property<string>("ContactNo")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("contactNo");
+
                     b.Property<string>("CreatedAt")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
@@ -403,6 +412,11 @@ namespace backend.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("descriptionOfKPI");
+
+                    b.Property<string>("EngineerResponsible")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("engineerResponsible");
 
                     b.Property<string>("KeyPerformanceIndicators")
                         .IsRequired()
@@ -474,6 +488,10 @@ namespace backend.Migrations
                     b.Property<string>("Designation")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("designation");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_verified");
 
                     b.Property<string>("Month")
                         .HasColumnType("varchar(10)")
@@ -649,20 +667,11 @@ namespace backend.Migrations
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("division");
 
-                    b.Property<decimal?>("KpiPercent")
-                        .HasColumnType("decimal(6,3)")
-                        .HasColumnName("kpi_percent");
-
                     b.Property<string>("NetworkEngineerKpi")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("network_engineer_kpi");
-
-                    b.Property<string>("Section")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("section");
 
                     b.HasKey("Id");
 
@@ -704,6 +713,39 @@ namespace backend.Migrations
                     b.HasIndex("OtherOperatorKpiId");
 
                     b.ToTable("OtherOperatorKpiMetrics", "dbo");
+                });
+
+            modelBuilder.Entity("backend.Models.OtherOperatorTarget", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<byte>("Month")
+                        .HasColumnType("tinyint")
+                        .HasColumnName("Month");
+
+                    b.Property<int>("OtherOperatorKpiId")
+                        .HasColumnType("int")
+                        .HasColumnName("OtherOperatorKpiId");
+
+                    b.Property<string>("Section")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("Section");
+
+                    b.Property<short>("Year")
+                        .HasColumnType("smallint")
+                        .HasColumnName("Year");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OtherOperatorKpiId");
+
+                    b.ToTable("OtherOperatorTargets", "dbo");
                 });
 
             modelBuilder.Entity("backend.Models.OtnOp1", b =>
@@ -1021,6 +1063,12 @@ namespace backend.Migrations
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("Designation");
 
+                    b.Property<bool>("IsVerified")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_verified");
+
                     b.Property<int>("Month")
                         .HasColumnType("int")
                         .HasColumnName("Month");
@@ -1050,6 +1098,10 @@ namespace backend.Migrations
                         .HasColumnName("id");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("EngName")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("EngName");
 
                     b.Property<string>("LeaCode")
                         .IsRequired()
@@ -1247,6 +1299,10 @@ namespace backend.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("designation");
 
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_verified");
+
                     b.Property<string>("Month")
                         .HasColumnType("varchar(10)")
                         .HasColumnName("month");
@@ -1367,6 +1423,10 @@ namespace backend.Migrations
                     b.Property<string>("Designation")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("designation");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_verified");
 
                     b.Property<string>("Month")
                         .HasColumnType("nchar(10)")
@@ -1506,6 +1566,18 @@ namespace backend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_OtherOperatorKpiMetrics_OtherOperatorKpi");
+
+                    b.Navigation("OtherOperatorKpi");
+                });
+
+            modelBuilder.Entity("backend.Models.OtherOperatorTarget", b =>
+                {
+                    b.HasOne("backend.Models.OtherOperatorKpi", "OtherOperatorKpi")
+                        .WithMany()
+                        .HasForeignKey("OtherOperatorKpiId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_OtherOperatorTargets_OtherOperatorKpi");
 
                     b.Navigation("OtherOperatorKpi");
                 });

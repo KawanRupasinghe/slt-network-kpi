@@ -19,7 +19,8 @@ export interface OtherMetricDto {
   networkEngineerKpi?: string;
   division?: string;
   section?: string;
-  kpiPercent?: number;
+  target?: string | null;
+  kpiPercent?: number | null;
   site: string;
   kpiValue?: number | null;
   month: number;
