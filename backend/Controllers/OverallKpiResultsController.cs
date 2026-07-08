@@ -290,9 +290,6 @@ namespace backend.Controllers
             var enterpriseTargets = await _db.EnterpriseKpis.AsNoTracking()
                 .ToDictionaryAsync(x => x.Id, x => x.KpiPercent ?? 0m);
 
-            var otherTargets = await _db.OtherOperatorKpis.AsNoTracking()
-                .ToDictionaryAsync(x => x.Id, x => x.KpiPercent ?? 0m);
-
             var daysInMonth = DateTime.DaysInMonth(year, month);
             var results = new List<OverallKpiResult>();
             var nowUtc = DateTime.UtcNow;
@@ -572,7 +569,7 @@ namespace backend.Controllers
                     continue;
                 }
 
-                var snapshots = BuildAreaSnapshots(matchedKpi, ipMetrics, bbMetrics, otn1Metrics, otn2Metrics, sfMetrics, entMetrics, otherMetrics, enterpriseTargets, otherTargets, daysInMonth);
+                var snapshots = BuildAreaSnapshots(matchedKpi, ipMetrics, bbMetrics, otn1Metrics, otn2Metrics, sfMetrics, entMetrics, otherMetrics, enterpriseTargets, daysInMonth);
 
                 var areaSnapshots = normalizedAreas
                     .Select(area => (area, snapshot: FindSnapshotForArea(snapshots, NormalizeArea(area))))
@@ -687,7 +684,6 @@ namespace backend.Controllers
             List<EnterpriseKpiMetric> entMetrics,
             List<OtherOperatorKpiMetric> otherMetrics,
             IReadOnlyDictionary<int, decimal> enterpriseTargets,
-            IReadOnlyDictionary<int, decimal> otherTargets,
             int daysInMonth)
         {
             var result = new Dictionary<string, AreaSnapshot>();

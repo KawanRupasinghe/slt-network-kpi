@@ -404,6 +404,10 @@ export class OtherOperatorComponent implements OnInit {
         targetRow = this.createRowFromMetric(metric, baseRows.length + extraRows.length + 1);
         rowsByKey.set(metricKey, targetRow);
         extraRows.push(targetRow);
+      } else {
+        // update section/kpiPercent from metric (month/year-aware values)
+        targetRow.section = metric.target ?? targetRow.section;
+        targetRow.kpiPercent = this.formatWeightageValue(metric.kpiPercent ?? null) || targetRow.kpiPercent;
       }
       this.applyMetricValueToRow(targetRow, metric);
     });
@@ -433,8 +437,8 @@ export class OtherOperatorComponent implements OnInit {
           no: displayOrder,
           networkEngineerKpi: master?.networkEngineerKpi ?? metric.networkEngineerKpi ?? '',
           division: master?.division ?? metric.division ?? '',
-          section: master?.section ?? metric.section ?? '',
-          kpiPercent: this.formatWeightageValue(master?.kpiPercent ?? metric.kpiPercent),
+          section: metric.target ?? '',
+          kpiPercent: this.formatWeightageValue(metric.kpiPercent ?? master?.kpiPercent),
           areas: {}
         });
       }
@@ -467,7 +471,7 @@ export class OtherOperatorComponent implements OnInit {
       no: fallbackOrder,
       networkEngineerKpi: metric.networkEngineerKpi ?? '',
       division: metric.division ?? '',
-      section: metric.section ?? '',
+      section: metric.target ?? '',
       kpiPercent: this.formatWeightageValue(metric.kpiPercent),
       areas: {}
     };

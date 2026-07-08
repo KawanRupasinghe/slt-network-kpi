@@ -33,7 +33,6 @@ namespace backend.Controllers
                     Id = x.Id,
                     NetworkEngineerKpi = x.NetworkEngineerKpi,
                     Division = x.Division,
-                    Section = x.Section,
                     KpiPercent = x.KpiPercent
                 })
                 .ToListAsync();
@@ -52,7 +51,6 @@ namespace backend.Controllers
                     Id = x.Id,
                     NetworkEngineerKpi = x.NetworkEngineerKpi,
                     Division = x.Division,
-                    Section = x.Section,
                     KpiPercent = x.KpiPercent
                 })
                 .FirstOrDefaultAsync();
@@ -70,9 +68,7 @@ namespace backend.Controllers
             var entity = new OtherOperatorKpi
             {
                 NetworkEngineerKpi = dto.NetworkEngineerKpi.Trim(),
-                Division = dto.Division,
-                Section = dto.Section,
-                KpiPercent = dto.KpiPercent
+                Division = dto.Division
             };
 
             _db.OtherOperatorKpis.Add(entity);
@@ -82,9 +78,7 @@ namespace backend.Controllers
             {
                 Id = entity.Id,
                 NetworkEngineerKpi = entity.NetworkEngineerKpi,
-                Division = entity.Division,
-                Section = entity.Section,
-                KpiPercent = entity.KpiPercent
+                Division = entity.Division
             });
         }
 
@@ -99,8 +93,6 @@ namespace backend.Controllers
 
             entity.NetworkEngineerKpi = dto.NetworkEngineerKpi.Trim();
             entity.Division = dto.Division;
-            entity.Section = dto.Section;
-            entity.KpiPercent = dto.KpiPercent;
 
             await _db.SaveChangesAsync();
             return NoContent();
@@ -132,8 +124,13 @@ namespace backend.Controllers
                 from metric in _db.OtherOperatorKpiMetrics.AsNoTracking()
                 join kpi in _db.OtherOperatorKpis.AsNoTracking()
                     on metric.OtherOperatorKpiId equals kpi.Id
+                join target in _db.OtherOperatorTargets.AsNoTracking()
+                    on new { metric.OtherOperatorKpiId, metric.Month, metric.Year }
+                    equals new { target.OtherOperatorKpiId, target.Month, target.Year }
+                    into targetJoin
+                from target in targetJoin.DefaultIfEmpty()
                 where metric.Month == month && metric.Year == year
-                select new { metric, kpi };
+                select new { metric, kpi, target };
 
             if (!string.IsNullOrWhiteSpace(site))
             {
@@ -149,10 +146,10 @@ namespace backend.Controllers
                     OtherOperatorKpiId = x.kpi.Id,
                     NetworkEngineerKpi = x.kpi.NetworkEngineerKpi,
                     Division = x.kpi.Division,
-                    Section = x.kpi.Section,
-                    KpiPercent = x.kpi.KpiPercent,
                     Site = x.metric.Site ?? string.Empty,
                     KpiValue = x.metric.KpiValue,
+                    Target = x.target != null ? x.target.Section : null,
+                    KpiPercent = x.kpi.KpiPercent,
                     Month = x.metric.Month,
                     Year = x.metric.Year
                 })
@@ -200,7 +197,17 @@ namespace backend.Controllers
 
             await _db.SaveChangesAsync();
 
-            return Ok(ToMetricDto(metric, kpi));
+            return Ok(new OtherOperatorKpiMetricDto
+            {
+                Id = metric.Id,
+                OtherOperatorKpiId = kpi.Id,
+                NetworkEngineerKpi = kpi.NetworkEngineerKpi,
+                Division = kpi.Division,
+                Site = metric.Site ?? string.Empty,
+                KpiValue = metric.KpiValue,
+                Month = metric.Month,
+                Year = metric.Year
+            });
         }
 
         [HttpDelete("metrics/{metricId:int}")]
@@ -216,20 +223,6 @@ namespace backend.Controllers
             await _db.SaveChangesAsync();
             return NoContent();
         }
-
-        private static OtherOperatorKpiMetricDto ToMetricDto(OtherOperatorKpiMetric metric, OtherOperatorKpi kpi) => new()
-        {
-            Id = metric.Id,
-            OtherOperatorKpiId = kpi.Id,
-            NetworkEngineerKpi = kpi.NetworkEngineerKpi,
-            Division = kpi.Division,
-            Section = kpi.Section,
-            KpiPercent = kpi.KpiPercent,
-            Site = metric.Site ?? string.Empty,
-            KpiValue = metric.KpiValue,
-            Month = metric.Month,
-            Year = metric.Year
-        };
 
         private static string NormalizeSite(string? value) => (value ?? string.Empty).Trim().ToUpperInvariant();
     }

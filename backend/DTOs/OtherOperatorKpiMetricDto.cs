@@ -1,4 +1,3 @@
-using System;
 using System.Text.Json.Serialization;
 
 namespace backend.DTOs
@@ -24,17 +23,17 @@ namespace backend.DTOs
         [JsonPropertyName("division")]
         public string? Division { get; set; }
 
-        [JsonPropertyName("section")]
-        public string? Section { get; set; }
-
-        [JsonPropertyName("kpiPercent")]
-        public decimal? KpiPercent { get; set; }
-
         [JsonPropertyName("site")]
         public string? Site { get; set; }
 
         [JsonPropertyName("kpiValue")]
         public decimal? KpiValue { get; set; }
+
+        [JsonPropertyName("target")]
+        public string? Target { get; set; }
+
+        [JsonPropertyName("kpiPercent")]
+        public decimal? KpiPercent { get; set; }
 
         [JsonPropertyName("month")]
         public byte Month { get; set; }

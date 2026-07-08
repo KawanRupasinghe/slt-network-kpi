@@ -14,9 +14,7 @@ namespace backend.Models
 
         public string? Division { get; set; }
 
-        public string? Section { get; set; }
-
-        [Column(TypeName = "decimal(6,3)")]
+        [Column("kpi_percent", TypeName = "decimal(6,3)")]
         public decimal? KpiPercent { get; set; }
     }
 }
