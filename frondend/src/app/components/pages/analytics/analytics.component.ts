@@ -15,7 +15,6 @@ import { FormsModule } from '@angular/forms';
 import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { Subscription } from 'rxjs';
-import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../../../environments/environment';
 import { AnalyticsResultApi, AnalyticsService } from '../../../services/analytics.service';
 import { Region as RegionApi, RegionService } from '../../../services/region.service';
@@ -131,8 +130,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
     private http: HttpClient,
     private regionService: RegionService,
     private analyticsService: AnalyticsService,
-    private cdr: ChangeDetectorRef,
-    private toastr: ToastrService
+    private cdr: ChangeDetectorRef
   ) {
     const now = new Date();
     this.selectedYear = now.getFullYear();
@@ -154,6 +152,14 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
       { value: 12, label: 'December' }
     ];
     this.yearOptions = [this.selectedYear, this.selectedYear - 1, this.selectedYear - 2];
+
+    const available = this.getAvailableMonths(this.selectedYear);
+    if (!available.find(m => m.value === this.selectedStartMonth)) {
+      this.selectedStartMonth = available[0].value;
+    }
+    if (!available.find(m => m.value === this.selectedEndMonth)) {
+      this.selectedEndMonth = available[0].value;
+    }
   }
 
   ngOnInit(): void {
@@ -189,6 +195,13 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onYearChange(year: number): void {
     this.selectedYear = Number(year);
+    const available = this.getAvailableMonths(this.selectedYear);
+    if (!available.find(m => m.value === this.selectedStartMonth)) {
+      this.selectedStartMonth = available[0].value;
+    }
+    if (!available.find(m => m.value === this.selectedEndMonth)) {
+      this.selectedEndMonth = available[0].value;
+    }
   }
 
   onStartMonthChange(month: number): void {
@@ -203,10 +216,11 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.activeView = view;
   }
 
-  public shouldShowQ1Redirect(): boolean {
-    return this.selectedYear === 2026 && 
-           this.selectedStartMonth === this.selectedEndMonth && 
-           (this.selectedStartMonth === 1 || this.selectedStartMonth === 2 || this.selectedStartMonth === 3);
+  getAvailableMonths(year: number): { value: number; label: string }[] {
+    if (year === 2026) {
+      return this.monthOptions.filter(m => m.value >= 4);
+    }
+    return this.monthOptions;
   }
 
   getMonthLabel(monthValue: number): string {
@@ -549,13 +563,6 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   exportToExcel(): void {
-    if (this.shouldShowQ1Redirect()) {
-      this.toastr.info(
-        'No KPI data is available for download for the selected month. Please use the 2026 Q1 page to view this data.',
-        'No Data Available'
-      );
-      return;
-    }
     console.log('Export button clicked - analytics scaffold');
   }
 
