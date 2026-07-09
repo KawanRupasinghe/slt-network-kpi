@@ -22,6 +22,8 @@ export class Q1Component implements OnInit {
   selectedYear: number;
   monthOptions: { value: number; label: string }[] = [];
   yearOptions: number[] = [];
+  
+  activeView: 'monthly' | 'summary' = 'monthly';
 
   engineersCount = 0;
   loading = false;
@@ -59,6 +61,10 @@ export class Q1Component implements OnInit {
 
   ngOnInit(): void {
     this.loadRegions();
+  }
+
+  setActiveView(view: 'monthly' | 'summary'): void {
+    this.activeView = view;
   }
 
   onMonthChange(month: number): void {

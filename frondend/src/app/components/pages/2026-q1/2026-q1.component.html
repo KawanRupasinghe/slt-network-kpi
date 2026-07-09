@@ -1,13 +1,31 @@
 <div class="final-tables-container">
   <header class="current-month-header">
     <div class="header-left">
-      <h1>2026 Q1 KPI Details</h1>
-      <p class="subtitle">
-        Detailed KPI metrics for {{ currentMonth }} {{ currentYear }} across operational areas
-      </p>
+      <ng-container *ngIf="activeView === 'monthly'">
+        <h1>2026 Q1 KPI Details</h1>
+        <p class="subtitle">
+          Detailed KPI metrics for {{ currentMonth }} {{ currentYear }} across operational areas
+        </p>
+      </ng-container>
+
+      <ng-container *ngIf="activeView === 'summary'">
+        <h1>2026 Q1 KPI Summary</h1>
+        <p class="subtitle">
+          Summary of KPI performance across all operational areas for Q1 2026.
+        </p>
+      </ng-container>
+
+      <div class="view-toggle-bar" role="tablist" aria-label="2026 Q1 view tabs">
+        <button type="button" class="view-toggle-btn" [class.active]="activeView === 'monthly'" (click)="setActiveView('monthly')">
+          Monthly View
+        </button>
+        <button type="button" class="view-toggle-btn" [class.active]="activeView === 'summary'" (click)="setActiveView('summary')">
+          Summary View
+        </button>
+      </div>
     </div>
 
-    <div class="header-filters">
+    <div class="header-filters" *ngIf="activeView === 'monthly'">
       <div class="filter-group">
         <label for="month-select">Month:</label>
         <select id="month-select" class="filter-select" [(ngModel)]="selectedMonth"
@@ -36,11 +54,19 @@
     </div>
   </header>
 
-  <div class="no-data-banner" *ngIf="!loading && noOverallResults">
-    No data for the selected month and year.
-  </div>
+  <ng-container *ngIf="activeView === 'monthly'">
+    <div class="no-data-banner" *ngIf="!loading && noOverallResults">
+      No data for the selected month and year.
+    </div>
 
-  <div class="excel-view-container" *ngIf="!loading && isExcelView">
-    <div class="excel-table-wrapper" [innerHTML]="excelHtmlContent"></div>
-  </div>
+    <div class="excel-view-container" *ngIf="!loading && isExcelView">
+      <div class="excel-table-wrapper" [innerHTML]="excelHtmlContent"></div>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="activeView === 'summary'">
+    <div class="no-data-banner" style="margin-top: 2rem;">
+      Summary View (Coming Soon)
+    </div>
+  </ng-container>
 </div>
