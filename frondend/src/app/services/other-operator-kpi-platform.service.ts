@@ -31,6 +31,7 @@ export interface UpsertOtherMetricRequest {
   otherKpiId: number;
   site: string;
   kpiValue?: number | null;
+  target?: string | null;
   month: number;
   year: number;
 }
