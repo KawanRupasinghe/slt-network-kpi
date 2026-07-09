@@ -105,7 +105,7 @@
                       <div class="editable-cell" [class.can-edit]="isEditingAllowed" [class.is-active]="isEditingCell(row, column)">
                         <ng-container *ngIf="isEditingCell(row, column); else metricDisplay">
                           <form class="inline-edit-form" (submit)="$event.preventDefault(); saveEdit(row, column)">
-                            <input type="number" class="form-control form-control-sm" [(ngModel)]="activeEditValue" [ngModelOptions]="{ standalone: true }" min="0" step="0.01" inputmode="decimal" autofocus (focus)="selectMetricInput($event)" (keyup.escape)="cancelEdit()" />
+                            <input [type]="editingCell.key === 'section' ? 'text' : 'number'" class="form-control form-control-sm" [(ngModel)]="activeEditValue" [ngModelOptions]="{ standalone: true }" min="0" step="0.01" inputmode="decimal" autofocus (focus)="selectMetricInput($event)" (keyup.escape)="cancelEdit()" />
                             <div class="inline-edit-actions"><button type="submit" class="icon-btn success" [disabled]="metricsLoading"><i class="bi bi-check-lg"></i><span>Save</span></button><button type="button" class="icon-btn ghost" (click)="cancelEdit()"><i class="bi bi-x-lg"></i><span>Cancel</span></button></div>
                           </form>
                         </ng-container>

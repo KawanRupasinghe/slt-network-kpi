@@ -21,5 +21,11 @@ namespace backend.DTOs
 
         [JsonPropertyName("year")]
         public int Year { get; set; }
+
+        [JsonPropertyName("target")]
+        public string? Target { get; set; }
+
+        [JsonPropertyName("kpiPercent")]
+        public decimal? KpiPercent { get; set; }
     }
 }

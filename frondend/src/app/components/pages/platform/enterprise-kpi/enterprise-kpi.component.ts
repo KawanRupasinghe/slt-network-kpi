@@ -66,7 +66,7 @@ export class EnterpriseKpiComponent implements OnInit {
   userRole: string = 'User';
   private editingMessageShown = false;
 
-  nonEditableColumns = ['no', 'networkEngineerKpi', 'division', 'section', 'kpiPercent'];
+  nonEditableColumns = ['no', 'networkEngineerKpi', 'division', 'kpiPercent'];
   baseColumns = ['no', 'networkEngineerKpi', 'division', 'section', 'kpiPercent'];
   readonly metricColumnKey = 'kpiValue';
 
@@ -390,6 +390,8 @@ export class EnterpriseKpiComponent implements OnInit {
         rowsByKey.set(metricKey, targetRow);
         extraRows.push(targetRow);
       }
+      targetRow.section = metric.target ?? targetRow.section;
+      targetRow.kpiPercent = this.formatWeightageValue(metric.kpiPercent) || targetRow.kpiPercent;
       this.applyMetricValueToRow(targetRow, metric);
     });
 
@@ -418,7 +420,7 @@ export class EnterpriseKpiComponent implements OnInit {
           no: displayOrder,
           networkEngineerKpi: master?.networkEngineerKpi ?? metric.networkEngineerKpi ?? '',
           division: master?.division ?? metric.division ?? '',
-          section: master?.section ?? metric.section ?? '',
+          section: master?.section ?? (metric.target ?? ''),
           kpiPercent: this.formatWeightageValue(master?.kpiPercent ?? metric.kpiPercent),
           areas: {}
         });
@@ -451,7 +453,7 @@ export class EnterpriseKpiComponent implements OnInit {
       no: fallbackOrder,
       networkEngineerKpi: metric.networkEngineerKpi ?? '',
       division: metric.division ?? '',
-      section: metric.section ?? '',
+      section: metric.target ?? '',
       kpiPercent: this.formatWeightageValue(metric.kpiPercent),
       areas: {}
     };
@@ -611,11 +613,21 @@ export class EnterpriseKpiComponent implements OnInit {
     if (kpiId === null) { this.toastr.error('Unable to resolve the KPI identifier for this row.', 'Missing KPI Id'); return; }
 
     const normalizedValue = String(this.activeEditValue ?? '').replace(/%/g, '').trim();
-    if (!/^([0-9]+(\.[0-9]+)?|\.[0-9]+)$/.test(normalizedValue)) { this.toastr.error('Please enter a valid numeric or decimal value before saving.', 'Invalid Value'); return; }
-    const numericValue = Number(normalizedValue);
-    if (!Number.isFinite(numericValue)) { this.toastr.error('Please enter a valid numeric or decimal value before saving.', 'Invalid Value'); return; }
+    if (key !== 'section') {
+      if (!/^([0-9]+(\.[0-9]+)?|\.[0-9]+)$/.test(normalizedValue)) { this.toastr.error('Please enter a valid numeric or decimal value before saving.', 'Invalid Value'); return; }
+      const numericValue = Number(normalizedValue);
+      if (!Number.isFinite(numericValue)) { this.toastr.error('Please enter a valid numeric or decimal value before saving.', 'Invalid Value'); return; }
+    }
 
-    const request: UpsertEnterpriseMetricRequest = { enterpriseKpiId: kpiId, site: areaCode, kpiValue: numericValue, month: Number(this.selectedMonth), year: Number(this.selectedYear) };
+    const numericValue = key !== 'section' ? Number(normalizedValue) : null;
+    const request: UpsertEnterpriseMetricRequest = {
+      enterpriseKpiId: kpiId,
+      site: areaCode,
+      kpiValue: key === 'section' ? (this.getCellValue(latestRow, this.metricColumnKey) ?? null) : numericValue,
+      target: key === 'section' ? String(this.activeEditValue ?? '').trim() : (latestRow.section ? String(latestRow.section) : undefined),
+      month: Number(this.selectedMonth),
+      year: Number(this.selectedYear)
+    };
     this.metricsLoading = true;
     this.enterpriseKpiService.upsertMetric(request).subscribe({
       next: (result) => { this.metricsLoading = false; this.editingCell = { rowId: null, key: null }; this.activeEditValue = ''; this.cdr.detectChanges(); const msg = result.isNew ? 'Saved successfully.' : 'Updated successfully.'; this.toastr.success(msg, 'Success'); this.loadMetrics(); },
