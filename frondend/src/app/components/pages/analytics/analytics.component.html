@@ -53,7 +53,24 @@
     </div>
   </header>
 
-  <ng-container *ngIf="activeView === 'table'">
+  <div class="q1-moved-banner" *ngIf="!loading && shouldShowQ1Redirect()">
+    <div class="q1-moved-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+    </div>
+    <div class="q1-moved-content">
+      <h3>{{ getMonthLabel(selectedStartMonth) }} 2026 KPI Data Moved</h3>
+      <p>
+        {{ getMonthLabel(selectedStartMonth) }} 2026 KPI data has been moved to the <strong>2026 Q1</strong> page.<br>
+        To view the KPI details for {{ getMonthLabel(selectedStartMonth) }} 2026, please navigate to the <strong>2026 Q1</strong> tab in the top navigation bar.
+      </p>
+    </div>
+  </div>
+
+  <ng-container *ngIf="activeView === 'table' && !shouldShowQ1Redirect()">
     <div class="no-data-banner" *ngIf="!loading && (noDefinitions || noOverallResults)">
       No data for the selected period.
     </div>
@@ -218,7 +235,7 @@
     </div>
   </ng-container>
 
-  <div class="analytics-dashboard-view" *ngIf="activeView === 'dashboard'">
+  <div class="analytics-dashboard-view" *ngIf="activeView === 'dashboard' && !shouldShowQ1Redirect()">
     <div class="analytics-dashboard-summary">
       <h3>Performance Dashboard</h3>
       <p>Percent values are calculated from the same KPI mapping used in the table view for the selected month range.</p>

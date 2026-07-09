@@ -15,6 +15,7 @@ import { FormsModule } from '@angular/forms';
 import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { Subscription } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../../../environments/environment';
 import { AnalyticsResultApi, AnalyticsService } from '../../../services/analytics.service';
 import { Region as RegionApi, RegionService } from '../../../services/region.service';
@@ -130,7 +131,8 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
     private http: HttpClient,
     private regionService: RegionService,
     private analyticsService: AnalyticsService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toastr: ToastrService
   ) {
     const now = new Date();
     this.selectedYear = now.getFullYear();
@@ -199,6 +201,16 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   setActiveView(view: 'table' | 'dashboard'): void {
     this.activeView = view;
+  }
+
+  public shouldShowQ1Redirect(): boolean {
+    return this.selectedYear === 2026 && 
+           this.selectedStartMonth === this.selectedEndMonth && 
+           (this.selectedStartMonth === 1 || this.selectedStartMonth === 2 || this.selectedStartMonth === 3);
+  }
+
+  getMonthLabel(monthValue: number): string {
+    return this.monthOptions.find(m => m.value === monthValue)?.label || '';
   }
 
   calculate(): void {
@@ -537,6 +549,13 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   exportToExcel(): void {
+    if (this.shouldShowQ1Redirect()) {
+      this.toastr.info(
+        'No KPI data is available for download for the selected month. Please use the 2026 Q1 page to view this data.',
+        'No Data Available'
+      );
+      return;
+    }
     console.log('Export button clicked - analytics scaffold');
   }
 
