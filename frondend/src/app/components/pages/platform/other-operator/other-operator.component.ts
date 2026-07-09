@@ -66,7 +66,7 @@ export class OtherOperatorComponent implements OnInit {
   userRole: string = 'User';
   private editingMessageShown = false;
 
-  nonEditableColumns = ['no', 'networkEngineerKpi', 'division', 'section', 'kpiPercent'];
+  nonEditableColumns = ['no', 'networkEngineerKpi', 'division', 'kpiPercent'];
   baseColumns = ['no', 'networkEngineerKpi', 'division', 'section', 'kpiPercent'];
   readonly metricColumnKey = 'kpiValue';
 
@@ -630,12 +630,26 @@ export class OtherOperatorComponent implements OnInit {
     const kpiId = this.resolveKpiIdentifier(latestRow);
     if (kpiId === null) { this.toastr.error('Unable to resolve the KPI identifier for this row.', 'Missing KPI Id'); return; }
 
-    const normalizedValue = String(this.activeEditValue ?? '').replace(/%/g, '').trim();
-    if (!/^([0-9]+(\.[0-9]+)?|\.[0-9]+)$/.test(normalizedValue)) { this.toastr.error('Please enter a valid numeric or decimal value before saving.', 'Invalid Value'); return; }
-    const numericValue = Number(normalizedValue);
-    if (!Number.isFinite(numericValue)) { this.toastr.error('Please enter a valid numeric or decimal value before saving.', 'Invalid Value'); return; }
+    const normalizedValue = String(this.activeEditValue ?? '').trim();
+    if (key === 'section') {
+      // section (Target) accepts any string
+      if (!normalizedValue) { this.toastr.error('Please enter a value before saving.', 'Invalid Value'); return; }
+    } else {
+      const cleanValue = normalizedValue.replace(/%/g, '');
+      if (!/^([0-9]+(\.[0-9]+)?|\.[0-9]+)$/.test(cleanValue)) { this.toastr.error('Please enter a valid numeric or decimal value before saving.', 'Invalid Value'); return; }
+      const numericValue = Number(cleanValue);
+      if (!Number.isFinite(numericValue)) { this.toastr.error('Please enter a valid numeric or decimal value before saving.', 'Invalid Value'); return; }
+    }
+    const numericValue = key === 'section' ? 0 : Number(String(this.activeEditValue ?? '').replace(/%/g, '').trim());
 
-    const request: UpsertOtherMetricRequest = { otherKpiId: kpiId, site: areaCode, kpiValue: numericValue, month: Number(this.selectedMonth), year: Number(this.selectedYear) };
+    const request: UpsertOtherMetricRequest = {
+      otherKpiId: kpiId,
+      site: areaCode,
+      kpiValue: key === this.metricColumnKey ? numericValue : (this.getCellValue(latestRow, this.metricColumnKey) ?? undefined),
+      target: key === 'section' ? String(this.activeEditValue ?? '').trim() : (latestRow.section ? String(latestRow.section) : undefined),
+      month: Number(this.selectedMonth),
+      year: Number(this.selectedYear)
+    };
     this.metricsLoading = true;
     this.otherOperatorKpiService.upsertMetric(request).subscribe({
       next: (result) => { this.metricsLoading = false; this.editingCell = { rowId: null, key: null }; this.activeEditValue = ''; this.cdr.detectChanges(); this.toastr.success('Saved successfully.', 'Success'); this.loadMetrics(); },

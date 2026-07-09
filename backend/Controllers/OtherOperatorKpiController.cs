@@ -148,7 +148,7 @@ namespace backend.Controllers
                     Division = x.kpi.Division,
                     Site = x.metric.Site ?? string.Empty,
                     KpiValue = x.metric.KpiValue,
-                    Target = x.target != null ? x.target.Section : null,
+                    Target = x.metric.Target != null ? x.metric.Target : (x.target != null ? x.target.Section : null),
                     KpiPercent = x.kpi.KpiPercent,
                     Month = x.metric.Month,
                     Year = x.metric.Year
@@ -194,6 +194,7 @@ namespace backend.Controllers
             }
 
             metric.KpiValue = dto.KpiValue;
+            metric.Target = dto.Target;
 
             await _db.SaveChangesAsync();
 
@@ -205,6 +206,8 @@ namespace backend.Controllers
                 Division = kpi.Division,
                 Site = metric.Site ?? string.Empty,
                 KpiValue = metric.KpiValue,
+                Target = metric.Target,
+                KpiPercent = kpi.KpiPercent,
                 Month = metric.Month,
                 Year = metric.Year
             });

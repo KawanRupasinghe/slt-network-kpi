@@ -702,6 +702,7 @@ namespace backend.Data
                 entity.Property(x => x.Year).HasColumnName("Year");
                 entity.Property(x => x.Month).HasColumnName("Month");
                 entity.Property(x => x.KpiValue).HasColumnName("kpi_value").HasColumnType("decimal(18,4)");
+                entity.Property(x => x.Target).HasColumnName("Target").HasMaxLength(100);
 
                 entity.HasOne(x => x.OtherOperatorKpi)
                       .WithMany()

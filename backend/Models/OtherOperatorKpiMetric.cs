@@ -21,6 +21,8 @@ namespace backend.Models
         [Column("kpi_value", TypeName = "decimal(18,4)")]
         public decimal? KpiValue { get; set; }
 
+        public string? Target { get; set; }
+
         [ForeignKey(nameof(OtherOperatorKpiId))]
         public OtherOperatorKpi? OtherOperatorKpi { get; set; }
     }
