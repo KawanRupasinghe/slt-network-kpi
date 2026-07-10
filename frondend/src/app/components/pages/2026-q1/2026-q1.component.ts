@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ViewChildren, QueryList, ElementRef, OnDestroy, AfterViewInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
@@ -6,6 +6,46 @@ import { RegionService } from '../../../services/region.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import * as ExcelJS from 'exceljs';
 import { environment } from '../../../../environments/environment';
+import { Subscription } from 'rxjs';
+
+export interface Region {
+  id: number;
+  region: string;
+  province: string;
+  networkEngineer: string;
+  lea: string;
+}
+
+export interface KpiMetric {
+  achieved: number | string;
+  maximumPoints: number | string;
+  pointsAchieved: number | string;
+}
+
+export interface KpiRow {
+  id: number;
+  number: number;
+  perspectives: string;
+  category: string;
+  strategicObjectives: string;
+  kpi: string;
+  target: string;
+  weightage: number;
+  pointsApplicable: number;
+  metrics: KpiMetric[];
+}
+
+export type KpiDefinition = {
+  id: number;
+  perspectives: string;
+  category?: string;
+  strategicObjectives: string;
+  keyPerformanceIndicators: string;
+  unit: string;
+  descriptionOfKPI: string;
+  weightage: number;
+  pointsApplicable: number;
+};
 
 @Component({
   selector: 'app-q1',
@@ -14,7 +54,7 @@ import { environment } from '../../../../environments/environment';
   templateUrl: './2026-q1.component.html',
   styleUrls: ['./2026-q1.component.scss']
 })
-export class Q1Component implements OnInit {
+export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
   currentMonth: string;
   currentYear: number;
   
@@ -31,6 +71,26 @@ export class Q1Component implements OnInit {
 
   isExcelView = false;
   excelHtmlContent: SafeHtml | string = '';
+
+  regionGroups: { region: string; provinces: { province: string; engineers: Region[] }[]; totalEngineers: number }[] = [];
+  engineersFlat: Region[] = [];
+  kpiRows: KpiRow[] = [];
+  hoveredRowIndex: number | null = null;
+  totalPointsApplicable = 0;
+  totalPointsAchievedByRegion: number[] = [];
+  totalMaximumPointsByRegion: number[] = [];
+  totalPointsNormalized: number[] = [];
+  noDefinitions = false;
+  summaryLoaded = false;
+
+  @ViewChildren('leftRowRef', { read: ElementRef })
+  private leftRowElements!: QueryList<ElementRef<HTMLTableRowElement>>;
+
+  @ViewChildren('rightRowRef', { read: ElementRef })
+  private rightRowElements!: QueryList<ElementRef<HTMLTableRowElement>>;
+
+  private readonly rowChangesSub = new Subscription();
+  private pendingFrame: number | null = null;
 
   private readonly apiBase = `${environment.apiUrl}/kpi-definitions`;
 
@@ -57,6 +117,22 @@ export class Q1Component implements OnInit {
     this.yearOptions = [2026];
 
     this.syncDisplayedPeriod();
+  }
+
+  ngAfterViewInit(): void {
+    this.scheduleRowSync();
+    this.rowChangesSub.add(this.leftRowElements?.changes.subscribe(() => this.scheduleRowSync()));
+    this.rowChangesSub.add(this.rightRowElements?.changes.subscribe(() => this.scheduleRowSync()));
+  }
+
+  ngOnDestroy(): void {
+    this.rowChangesSub.unsubscribe();
+    if (this.pendingFrame !== null) cancelAnimationFrame(this.pendingFrame);
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.scheduleRowSync();
   }
 
   ngOnInit(): void {
@@ -103,19 +179,31 @@ export class Q1Component implements OnInit {
           regionMap.set(item.region, provinceMap);
         });
 
-        const regionGroups = Array.from(regionMap.entries()).map(([region, provinceMap]) => {
+        this.regionGroups = Array.from(regionMap.entries()).map(([region, provinceMap]) => {
           const provinces = Array.from(provinceMap.entries()).map(([province, engineers]) => ({
             province,
-            engineers,
+            engineers: engineers.map((r: any) => ({
+                id: r.id,
+                region: r.region,
+                province: r.province,
+                networkEngineer: r.networkEngineer || r.networkengineer || r.network_engineer || '—',
+                lea: r.lea || r.leaCode || r.leacode || r.lea_code || '—'
+            }))
           }));
-          return { region, provinces };
+          const totalEngineers = provinces.reduce((sum, p) => sum + p.engineers.length, 0);
+          return { region, provinces, totalEngineers };
         });
 
-        const engineersFlat = regionGroups.flatMap((g) =>
+        this.engineersFlat = this.regionGroups.flatMap((g) =>
           g.provinces.flatMap((p) => p.engineers)
         );
 
-        this.engineersCount = engineersFlat.length;
+        this.engineersCount = this.engineersFlat.length;
+        
+        // Initialize dummy arrays for layout consistency since we aren't calculating averages yet
+        this.totalPointsAchievedByRegion = new Array(this.engineersCount).fill(0);
+        this.totalPointsNormalized = new Array(this.engineersCount).fill(0);
+
         this.loadLeftTableFromApi();
       },
       error: (err) => {
@@ -132,8 +220,29 @@ export class Q1Component implements OnInit {
     const year = this.selectedYear;
     const url = `${this.apiBase}?month=${month}&year=${year}`;
 
-    this.http.get<any[]>(url).subscribe({
+    this.http.get<KpiDefinition[]>(url).subscribe({
       next: (res) => {
+        const definitions = res || [];
+        if (definitions.length === 0) {
+          this.noDefinitions = true;
+        } else {
+          this.noDefinitions = false;
+          const list = definitions.sort((a, b) => a.id - b.id);
+          this.kpiRows = list.map((row, rowIndex) => ({
+             id: row.id,
+             number: rowIndex + 1,
+             perspectives: row.perspectives,
+             category: row.category ?? '',
+             strategicObjectives: (row.strategicObjectives ?? '').replace(/service assurance/gi, 'SA'),
+             kpi: row.keyPerformanceIndicators,
+             target: row.descriptionOfKPI,
+             weightage: row.weightage,
+             pointsApplicable: row.pointsApplicable ?? 0,
+             metrics: this.engineersFlat.map(() => ({ achieved: '-', maximumPoints: '-', pointsAchieved: '-' }))
+          }));
+          this.totalPointsApplicable = this.kpiRows.reduce((sum, row) => sum + (row.pointsApplicable ?? 0), 0);
+        }
+
         // Definitions loaded as required
         this.loadOverallResultsFromExcel(month, year);
       },
@@ -376,5 +485,73 @@ export class Q1Component implements OnInit {
     link.href = url;
     link.download = fileName;
     link.click();
+  }
+
+  // --- Summary View Helpers ---
+
+  setHoveredRowIndex(index: number | null): void {
+    this.hoveredRowIndex = index;
+    this.cdr.detectChanges();
+  }
+
+  getComputedWeightage(row: KpiRow): string {
+    if (this.totalPointsApplicable <= 0) return '0.00%';
+    const weightage = (Number(row.pointsApplicable ?? 0) / this.totalPointsApplicable) * 100;
+    return `${weightage.toFixed(2)}%`;
+  }
+
+  getKpiRowClass(row: KpiRow): string {
+    const cat = (row.category ?? '').toLowerCase();
+    if (cat.includes('enterprise')) return 'category-enterprise';
+    if (cat.includes('operator')) return 'category-other-operator';
+    if (cat.includes('assurance')) return 'category-assurance';
+    if (cat.includes('fulfillment')) return 'category-fulfillment';
+    return '';
+  }
+
+  getAchievedCellClass(metric: KpiMetric): string {
+    // Empty cells don't have a class yet
+    return '';
+  }
+
+  formatHeaderLabel(value: string | null | undefined): string {
+    if (!value) return '';
+    const withSpaces = value.replace(/([a-zA-Z])([0-9])/g, '$1 $2');
+    return withSpaces.split(/\s+/).map((part) => {
+      const isAllCaps = part === part.toUpperCase();
+      if (isAllCaps && part.length <= 4) return part;
+      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+    }).join(' ');
+  }
+
+  private scheduleRowSync(): void {
+    if (!this.leftRowElements || !this.rightRowElements) return;
+    if (this.pendingFrame !== null) cancelAnimationFrame(this.pendingFrame);
+    this.pendingFrame = requestAnimationFrame(() => {
+      this.pendingFrame = null;
+      this.syncRowHeights();
+    });
+  }
+
+  private syncRowHeights(): void {
+    if (!this.leftRowElements || !this.rightRowElements) return;
+    const leftRows = this.leftRowElements.toArray().map((ref) => ref.nativeElement);
+    const rightRows = this.rightRowElements.toArray().map((ref) => ref.nativeElement);
+
+    if (!leftRows.length || !rightRows.length) return;
+
+    leftRows.forEach((row) => row.style.removeProperty('height'));
+    rightRows.forEach((row) => row.style.removeProperty('height'));
+
+    const pairCount = Math.min(leftRows.length, rightRows.length);
+
+    for (let i = 0; i < pairCount; i++) {
+      const leftHeight = leftRows[i].getBoundingClientRect().height;
+      const rightHeight = rightRows[i].getBoundingClientRect().height;
+      const maxHeight = Math.max(leftHeight, rightHeight);
+
+      leftRows[i].style.height = `${maxHeight}px`;
+      rightRows[i].style.height = `${maxHeight}px`;
+    }
   }
 }

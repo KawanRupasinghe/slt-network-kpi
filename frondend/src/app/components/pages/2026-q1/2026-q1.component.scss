@@ -1,3 +1,5 @@
+@import '../overall/current-month/current-month.component.scss';
+
 /* Header Container Styling */
 .current-month-header {
   width: 100%;
@@ -19,6 +21,11 @@
   margin: 0;
   letter-spacing: 0.3px;
   line-height: 1.2;
+}
+
+.col-perspectives, .col-strategic {
+  text-align: center;
+  min-width: 120px;
 }
 
 .header-left .subtitle {
