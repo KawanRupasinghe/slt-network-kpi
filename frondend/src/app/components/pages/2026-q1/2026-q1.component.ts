@@ -540,7 +540,8 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
 
   private readonly KPI_NAME_ALIASES: Record<string, string> = {
     'routine maintenance - slbn/sdh': 'routine maintenance - slbn',
-    'routine maintenance - msan/olte': 'routine maintenance - msan/olt'
+    'routine maintenance - msan/olte': 'routine maintenance - msan/olt',
+    'fiber failure restoration(large scale<pole damages etc>):<8 hrs': 'fiber failures restoration(large scale<pole damages etc>):<8 hrs'
   };
 
   private loadSummaryAverages(): void {
@@ -564,7 +565,16 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
             if (typeof v === 'number') return v;
             if (typeof v === 'object' && (v as any).result !== undefined) {
               const r = (v as any).result;
-              return typeof r === 'number' ? r : null;
+              if (typeof r === 'number') return r;
+              if (typeof r === 'string') {
+                const n = parseFloat(r.replace(/[%\s]/g, ''));
+                return isNaN(n) ? null : n;
+              }
+              return null;
+            }
+            if (typeof v === 'string') {
+              const n = parseFloat(v.replace(/[%\s]/g, ''));
+              return isNaN(n) ? null : n;
             }
             const n = parseFloat(String(v));
             return isNaN(n) ? null : n;
