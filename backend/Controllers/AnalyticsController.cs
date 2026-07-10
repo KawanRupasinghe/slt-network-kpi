@@ -37,5 +37,12 @@ namespace backend.Controllers
             var results = await _analyticsService.GetCumulativeAnalyticsAsync(year, startMonth, endMonth);
             return Ok(results);
         }
+
+        [HttpGet("years")]
+        public async Task<ActionResult<List<int>>> GetAvailableYears()
+        {
+            var years = await _analyticsService.GetAvailableYearsAsync();
+            return Ok(years);
+        }
     }
 }
