@@ -78,10 +78,8 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
   hoveredRowIndex: number | null = null;
   totalPointsApplicable = 0;
   totalPointsAchievedByRegion: number[] = [];
-  totalMaximumPointsByRegion: number[] = [];
   totalPointsNormalized: number[] = [];
   noDefinitions = false;
-  summaryLoaded = false;
 
   @ViewChildren('leftRowRef', { read: ElementRef })
   private leftRowElements!: QueryList<ElementRef<HTMLTableRowElement>>;
@@ -139,39 +137,98 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
     this.loadRegions();
   }
 
-  private logLifecycleState(methodName: string): void {
-    const firstMetric = this.kpiRows?.[0]?.metrics?.[0];
-    const firstMetricStatus = !firstMetric
-      ? 'none'
-      : (typeof firstMetric.achieved === 'string' && firstMetric.achieved === '-' ? 'placeholder' : 'real');
-
-    console.log('[Q1-LIFECYCLE]', {
-      method: methodName,
-      activeView: this.activeView,
-      summaryLoaded: this.summaryLoaded,
-      kpiRowsLength: this.kpiRows.length,
-      firstMetricStatus
-    });
-  }
-
   setActiveView(view: 'monthly' | 'summary'): void {
     this.activeView = view;
-    this.logLifecycleState('setActiveView');
   }
 
   calculateSummary(): void {
-    this.summaryLoaded = false;
-    this.kpiRows.forEach(row => {
-      row.metrics = this.engineersFlat.map(() => ({ achieved: '-', maximumPoints: '-', pointsAchieved: '-' }));
-    });
     this.loadSummaryAverages();
   }
 
-  exportSummaryToExcel(): void {
-    const link = document.createElement('a');
-    link.href = 'assets/kpi-sheets/q1_summary_2026.xlsx';
-    link.download = 'q1_summary_2026.xlsx';
-    link.click();
+  async exportSummaryToExcel(): Promise<void> {
+    const ExcelJSLib = ExcelJS;
+    const workbook = new ExcelJSLib.Workbook();
+    const worksheet = workbook.addWorksheet('Q1 Summary');
+
+    const headerBgColor = '0057A6';
+    const headerTextColor = 'FFFFFF';
+    const borderColor = 'D1D5DB';
+    const totalRowBgColor = '02B28C';
+
+    // Left header columns
+    const leftHeaders = ['Perspectives', 'Strategic Objectives (KRA)', 'Category', 'KPI'];
+    leftHeaders.forEach((h, i) => {
+      const cell = worksheet.getCell(1, i + 1);
+      cell.value = h;
+      cell.font = { bold: true, color: { argb: headerTextColor } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    });
+    worksheet.getColumn(1).width = 16;
+    worksheet.getColumn(2).width = 28;
+    worksheet.getColumn(3).width = 20;
+    worksheet.getColumn(4).width = 32;
+
+    // Right headers: one group of 3 per engineer
+    let col = 5;
+    for (const eng of this.engineersFlat) {
+      worksheet.getCell(1, col).value = `${eng.networkEngineer} (${eng.lea})`;
+      worksheet.getCell(1, col).font = { bold: true, color: { argb: headerTextColor } };
+      worksheet.getCell(1, col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
+      worksheet.getCell(1, col).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      worksheet.mergeCells(1, col, 1, col + 2);
+      ['Achieved KPI', 'Points Applicable', 'Points Achieved'].forEach((sub, si) => {
+        const c = worksheet.getCell(2, col + si);
+        c.value = sub;
+        c.font = { bold: true, color: { argb: headerTextColor } };
+        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
+        c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        worksheet.getColumn(col + si).width = 14;
+      });
+      col += 3;
+    }
+
+    // Data rows
+    this.kpiRows.forEach((row, rowIdx) => {
+      const r = rowIdx + 3;
+      worksheet.getCell(r, 1).value = row.perspectives;
+      worksheet.getCell(r, 2).value = row.strategicObjectives;
+      worksheet.getCell(r, 3).value = row.category;
+      worksheet.getCell(r, 4).value = row.kpi;
+      worksheet.getCell(r, 4).font = { bold: true };
+      let c = 5;
+      row.metrics.forEach(metric => {
+        worksheet.getCell(r, c).value = metric.achieved === '-' ? '-' : Number(metric.achieved);
+        worksheet.getCell(r, c + 1).value = metric.maximumPoints === '-' ? '-' : Number(metric.maximumPoints);
+        worksheet.getCell(r, c + 2).value = metric.pointsAchieved === '-' ? '-' : Number(metric.pointsAchieved);
+        [c, c + 1, c + 2].forEach(ci => {
+          worksheet.getCell(r, ci).alignment = { horizontal: 'center', vertical: 'middle' };
+          worksheet.getCell(r, ci).border = {
+            top: { style: 'thin', color: { argb: borderColor } },
+            bottom: { style: 'thin', color: { argb: borderColor } },
+            left: { style: 'thin', color: { argb: borderColor } },
+            right: { style: 'thin', color: { argb: borderColor } }
+          };
+        });
+        c += 3;
+      });
+    });
+
+    // Total row
+    const totalRow = this.kpiRows.length + 3;
+    worksheet.getCell(totalRow, 1).value = 'Q1 Average';
+    worksheet.getCell(totalRow, 1).font = { bold: true, color: { argb: headerTextColor } };
+    worksheet.mergeCells(totalRow, 1, totalRow, 4);
+    worksheet.getCell(totalRow, 1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
+    worksheet.getCell(totalRow, 1).alignment = { horizontal: 'right', vertical: 'middle' };
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'Q1_Summary_2026.xlsx';
+    a.click();
+    URL.revokeObjectURL(a.href);
   }
 
   onMonthChange(month: number): void {
@@ -231,7 +288,6 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
 
         this.engineersCount = this.engineersFlat.length;
         
-        // Initialize dummy arrays for layout consistency since we aren't calculating averages yet
         this.totalPointsAchievedByRegion = new Array(this.engineersCount).fill(0);
         this.totalPointsNormalized = new Array(this.engineersCount).fill(0);
 
@@ -246,7 +302,6 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private loadLeftTableFromApi(): void {
-    this.logLifecycleState('loadLeftTableFromApi');
     this.loading = true;
     const month = this.selectedMonth;
     const year = this.selectedYear;
@@ -542,8 +597,8 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getAchievedCellClass(metric: KpiMetric): string {
-    // Empty cells don't have a class yet
-    return '';
+    if (metric.achieved === '-' || metric.maximumPoints === '-') return '';
+    return Number(metric.pointsAchieved) >= Number(metric.maximumPoints) ? 'target-achieved' : 'target-failed';
   }
 
   formatHeaderLabel(value: string | null | undefined): string {
@@ -574,7 +629,6 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
   };
 
   loadSummaryAverages(): void {
-    this.logLifecycleState('loadSummaryAverages');
     this.loading = true;
     const urls = [
       'assets/kpi-sheets/overall_kpi_2026_01.xlsx',
@@ -610,7 +664,7 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
             return isNaN(n) ? null : n;
           };
 
-          const parseSheet = async (buffer: ArrayBuffer, monthLabel: string): Promise<SheetData> => {
+          const parseSheet = async (buffer: ArrayBuffer): Promise<SheetData> => {
             const wb = new ExcelJS.Workbook();
             await wb.xlsx.load(buffer);
 
@@ -700,7 +754,7 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
             return data;
           };
 
-          const [jan, feb, mar] = await Promise.all(buffers.map((buf, i) => parseSheet(buf, ['JAN', 'FEB', 'MAR'][i])));
+          const [jan, feb, mar] = await Promise.all(buffers.map(buf => parseSheet(buf)));
 
           const avg = (a: number | null, b: number | null, c: number | null): number | string => {
             const vals = [a, b, c].filter((v): v is number => v !== null);
@@ -728,9 +782,7 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
             });
           }
 
-          this.summaryLoaded = true;
           this.loading = false;
-          this.cdr.detectChanges();
           this.cdr.detectChanges();
           this.scheduleRowSync();
         } catch (e) {
