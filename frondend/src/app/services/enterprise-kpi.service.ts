@@ -23,6 +23,21 @@ export interface CreateEnterpriseKpi {
   kpiPercent?: number;
 }
 
+export interface EnterpriseTargetDto {
+  id: number;
+  enterpriseKpiId: number;
+  section: string;
+  month: number;
+  year: number;
+}
+
+export interface CreateEnterpriseTargetDto {
+  enterpriseKpiId: number;
+  section: string;
+  month: number;
+  year: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class EnterpriseKpiService {
   private readonly apiUrl = environment.apiUrl;
@@ -43,5 +58,18 @@ export class EnterpriseKpiService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/EnterpriseKpi/${id}`);
+  }
+
+  // Target Methods
+  getTargets(): Observable<EnterpriseTargetDto[]> {
+    return this.http.get<EnterpriseTargetDto[]>(`${this.apiUrl}/enterprise-targets`);
+  }
+
+  createTarget(payload: CreateEnterpriseTargetDto): Observable<EnterpriseTargetDto> {
+    return this.http.post<EnterpriseTargetDto>(`${this.apiUrl}/enterprise-targets`, payload);
+  }
+
+  updateTarget(id: number, payload: CreateEnterpriseTargetDto): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/enterprise-targets/${id}`, payload);
   }
 }

@@ -3,6 +3,8 @@
   --accent-secondary: #02b28c;
   --card-shadow: 0 18px 35px rgba(8, 50, 94, 0.12);
   --card-border: rgba(255, 255, 255, 0.45);
+  --header-light-blue: #4da3ff;
+
 
   display: block;
   min-height: 100vh;
@@ -215,6 +217,12 @@
   background: white;
   box-shadow: var(--card-shadow);
 }
+
+.table-header h3 {
+  color: var(--header-light-blue);
+  font-weight: 800;
+}
+
 
 .kpi-table {
   width: 100%;

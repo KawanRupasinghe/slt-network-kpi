@@ -218,6 +218,15 @@
   background: #0057A6;
 }
 
+.table-header h3 {
+  background: var(--header-light-blue);
+  color: #ffffff;
+  padding: .6rem 1rem;
+  border-radius: 10px;
+  width: 100%;
+}
+
+
 .kpi-table thead th {
   background-clip: padding-box;
 }
