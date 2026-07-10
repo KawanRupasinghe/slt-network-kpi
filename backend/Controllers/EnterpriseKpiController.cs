@@ -40,7 +40,6 @@ namespace backend.Controllers
                     Id = x.Id,
                     NetworkEngineerKpi = x.NetworkEngineerKpi,
                     Division = x.Division,
-                    Section = x.Section,
                     KpiPercent = x.KpiPercent
                 })
                 .ToListAsync();
@@ -65,8 +64,13 @@ namespace backend.Controllers
                 from metric in _db.EnterpriseKpiMetrics.AsNoTracking()
                 join kpi in _db.EnterpriseKpis.AsNoTracking()
                     on metric.EnterpriseKpiId equals kpi.Id
+                join et in _db.EnterpriseTargets.AsNoTracking()
+                    on new { metric.EnterpriseKpiId, metric.Month, metric.Year }
+                    equals new { et.EnterpriseKpiId, Month = (int)et.Month, Year = (int)et.Year }
+                    into etJoin
+                from et in etJoin.DefaultIfEmpty()
                 where metric.Month == month && metric.Year == year
-                select new { metric, kpi })
+                select new { metric, kpi, et })
                 .ToListAsync();
 
             rows = rows
@@ -80,7 +84,7 @@ namespace backend.Controllers
                     id = x.kpi.Id,
                     networkEngineerKpi = x.kpi.NetworkEngineerKpi,
                     division = x.kpi.Division,
-                    section = x.kpi.Section,
+                    target = x.metric.Target != null ? x.metric.Target : (x.et != null ? x.et.Section : null),
                     kpiPercent = x.kpi.KpiPercent,
                     site = x.metric.Site ?? string.Empty,
                     kpi_value = x.metric.KpiValue,
@@ -104,7 +108,6 @@ namespace backend.Controllers
                     Id = x.Id,
                     NetworkEngineerKpi = x.NetworkEngineerKpi,
                     Division = x.Division,
-                    Section = x.Section,
                     KpiPercent = x.KpiPercent
                 })
                 .FirstOrDefaultAsync();
@@ -125,7 +128,6 @@ namespace backend.Controllers
             {
                 NetworkEngineerKpi = dto.NetworkEngineerKpi.Trim(),
                 Division = dto.Division,
-                Section = dto.Section,
                 KpiPercent = dto.KpiPercent
             };
 
@@ -137,7 +139,6 @@ namespace backend.Controllers
                 Id = entity.Id,
                 NetworkEngineerKpi = entity.NetworkEngineerKpi,
                 Division = entity.Division,
-                Section = entity.Section,
                 KpiPercent = entity.KpiPercent
             };
 
@@ -157,7 +158,6 @@ namespace backend.Controllers
 
             entity.NetworkEngineerKpi = dto.NetworkEngineerKpi.Trim();
             entity.Division = dto.Division;
-            entity.Section = dto.Section;
             entity.KpiPercent = dto.KpiPercent;
 
             await _db.SaveChangesAsync();
@@ -188,8 +188,6 @@ namespace backend.Controllers
                 if (dto == null) return BadRequest("Request body is required.");
                 if (dto.EnterpriseKpiId <= 0) return BadRequest("EnterpriseKpiId must be > 0.");
                 if (dto.Month == 0 || dto.Year == 0) return BadRequest("Month and Year must be greater than zero.");
-                if (dto.KpiValue == null) return BadRequest("KpiValue is required.");
-
                 var kpi = await _db.EnterpriseKpis.FirstOrDefaultAsync(x => x.Id == dto.EnterpriseKpiId);
                 if (kpi == null)
                     return NotFound($"Enterprise KPI with id '{dto.EnterpriseKpiId}' was not found.");
@@ -215,6 +213,7 @@ namespace backend.Controllers
                         EnterpriseKpiId = dto.EnterpriseKpiId,
                         Site = normalizedSite,
                         KpiValue = dto.KpiValue,
+                        Target = dto.Target,
                         Month = dto.Month,
                         Year = dto.Year,
                         CreatedAt = DateTime.UtcNow
@@ -225,6 +224,7 @@ namespace backend.Controllers
                 {
                     metric.Site = normalizedSite;
                     metric.KpiValue = dto.KpiValue;
+                    metric.Target = dto.Target;
                     metric.Month = dto.Month;
                     metric.Year = dto.Year;
                 }
@@ -236,7 +236,7 @@ namespace backend.Controllers
                     id = kpi.Id,
                     networkEngineerKpi = kpi.NetworkEngineerKpi,
                     division = kpi.Division,
-                    section = kpi.Section,
+                    target = metric.Target,
                     kpiPercent = kpi.KpiPercent,
                     site = metric.Site,
                     kpi_value = metric.KpiValue,

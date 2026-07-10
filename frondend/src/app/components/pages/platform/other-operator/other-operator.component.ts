@@ -559,7 +559,7 @@ export class OtherOperatorComponent implements OnInit {
     }
   }
 
-  onPeriodChange() { this.periodLockedByUser = true; this.loadMetrics(); }
+  onPeriodChange() { this.periodLockedByUser = true; this.editingRowId = null; this.rowEditValues = {}; this.loadMetrics(); }
 
   resetAreaFilter() {
     if (!this.formValues.dropdown4) return;
@@ -618,7 +618,72 @@ export class OtherOperatorComponent implements OnInit {
     this.activeEditValue = existing === null || existing === undefined ? '' : String(existing);
   }
 
-  cancelEdit() { this.editingCell = { rowId: null, key: null }; this.activeEditValue = ''; }
+  rowEditValues: { [rowId: string]: { kpiValue: string; section: string } } = {};
+  editingRowId: string | number | null = null;
+
+  enterRowEditMode(row: KpiData) {
+    if (!this.isEditingAllowed) { this.toastr.info('You do not have edit permission on this page.', 'Edit Disabled'); return; }
+    const id = this.getRowId(row);
+    const kv = this.getCellValue(row, this.metricColumnKey);
+    this.rowEditValues[String(id)] = {
+      kpiValue: kv !== null && kv !== undefined ? String(kv) : '',
+      section: row.section ?? ''
+    };
+    this.editingRowId = id;
+  }
+
+  cancelRowEditMode() {
+    this.editingRowId = null;
+    this.rowEditValues = {};
+  }
+
+  isEditingRow(row: KpiData): boolean {
+    return this.editingRowId !== null && this.editingRowId === this.getRowId(row);
+  }
+
+  saveRow(row: KpiData) {
+    if (!this.isEditingAllowed) { this.toastr.error('You do not have permission to update KPI values.', 'Permission Denied'); return; }
+    const areaCode = this.resolveAreaCode(this.formValues.dropdown4);
+    if (!areaCode) { this.toastr.error('Unable to determine the selected RTOM area.', 'Invalid Area'); return; }
+    const kpiId = this.resolveKpiIdentifier(row);
+    if (kpiId === null) { this.toastr.error('Unable to resolve the KPI identifier for this row.', 'Missing KPI Id'); return; }
+
+    const edits = this.rowEditValues[String(this.getRowId(row))];
+    if (!edits) return;
+
+    const kpiValueStr = String(edits.kpiValue ?? '').replace(/%/g, '').trim();
+    const kpiValue = kpiValueStr === '' ? undefined : Number(kpiValueStr);
+    if (kpiValue !== undefined && !Number.isFinite(kpiValue)) {
+      this.toastr.error('Please enter a valid numeric value for Achievement.', 'Invalid Value'); return;
+    }
+
+    const request: UpsertOtherMetricRequest = {
+      otherKpiId: kpiId,
+      site: areaCode,
+      kpiValue: kpiValue ?? undefined,
+      target: edits.section.trim() || undefined,
+      month: Number(this.selectedMonth),
+      year: Number(this.selectedYear)
+    };
+
+    this.metricsLoading = true;
+    this.otherOperatorKpiService.upsertMetric(request).subscribe({
+      next: () => {
+        this.metricsLoading = false;
+        this.editingRowId = null;
+        this.rowEditValues = {};
+        this.cdr.detectChanges();
+        this.toastr.success('Saved successfully.', 'Success');
+        this.loadMetrics();
+      },
+      error: (err) => {
+        this.metricsLoading = false;
+        console.error('Failed to save Other Operator KPI metric value', err);
+        this.cdr.detectChanges();
+        this.toastr.error('Save failed. Please try again.', 'Save Failed');
+      }
+    });
+  }
 
   saveEdit(item: KpiData, key: string) {
     if (!this.isEditingAllowed) { this.toastr.error('You do not have permission to update this KPI value.', 'Permission Denied'); return; }
