@@ -88,32 +88,50 @@
     <div class="card shadow-sm border-0">
       <div class="card-header bg-primary text-white"><h5 class="mb-0"><i class="bi bi-building-fill me-2"></i>Enterprise KPI</h5></div>
       <div class="card-body p-0">
-        <div *ngIf="isEditingAllowed" class="edit-mode-banner">
-          <i class="bi bi-pencil-square me-2"></i>
-          Inline editing enabled for {{ optionMapping[formValues.dropdown4] || formValues.dropdown4 }}.
-          Click KPI Value to enter a numeric value and press Enter to save.
-        </div>
         <div class="table-responsive" *ngIf="data.length > 0; else noKpiData">
           <ng-container *ngIf="getColumnsToRender() as columns">
             <table class="table table-hover table-bordered mb-0 data-table">
-              <thead class="table-dark"><tr><th *ngFor="let column of columns">{{ headerMapping[column] || optionMapping[column] || column }}</th></tr></thead>
+              <thead class="table-dark">
+                <tr>
+                  <th *ngFor="let column of columns">{{ headerMapping[column] || optionMapping[column] || column }}</th>
+                  <th *ngIf="formValues.dropdown4 && isEditingAllowed" style="width:120px"></th>
+                </tr>
+              </thead>
               <tbody>
                 <tr *ngFor="let row of data">
                   <td *ngFor="let column of columns">
-                    <ng-container *ngIf="nonEditableColumns.includes(column); else metricValue">{{ getCellValue(row, column) || '-' }}</ng-container>
-                    <ng-template #metricValue>
-                      <div class="editable-cell" [class.can-edit]="isEditingAllowed" [class.is-active]="isEditingCell(row, column)">
-                        <ng-container *ngIf="isEditingCell(row, column); else metricDisplay">
-                          <form class="inline-edit-form" (submit)="$event.preventDefault(); saveEdit(row, column)">
-                            <input type="number" class="form-control form-control-sm" [(ngModel)]="activeEditValue" [ngModelOptions]="{ standalone: true }" min="0" step="0.01" inputmode="decimal" autofocus (focus)="selectMetricInput($event)" (keyup.escape)="cancelEdit()" />
-                            <div class="inline-edit-actions"><button type="submit" class="icon-btn success" [disabled]="metricsLoading"><i class="bi bi-check-lg"></i><span>Save</span></button><button type="button" class="icon-btn ghost" (click)="cancelEdit()"><i class="bi bi-x-lg"></i><span>Cancel</span></button></div>
-                          </form>
-                        </ng-container>
-                        <ng-template #metricDisplay>
-                          <div class="metric-display"><span class="metric-value">{{ formatMetricValue(getCellValue(row, column)) }}</span><button type="button" class="icon-btn" [disabled]="!isEditingAllowed" (click)="startEdit(row, column)"><i class="bi bi-pencil-square"></i><span>Edit</span></button></div>
-                        </ng-template>
-                      </div>
-                    </ng-template>
+                    <ng-container *ngIf="nonEditableColumns.includes(column)">{{ getCellValue(row, column) || '-' }}</ng-container>
+                    <ng-container *ngIf="!nonEditableColumns.includes(column)">
+                      <ng-container *ngIf="isEditingRow(row); else readOnlyCell">
+                        <input *ngIf="column === metricColumnKey"
+                          type="number" class="form-control form-control-sm"
+                          [(ngModel)]="rowEditValues[getRowId(row)].kpiValue"
+                          [ngModelOptions]="{ standalone: true }"
+                          min="0" step="0.01" />
+                        <input *ngIf="column === 'section'"
+                          type="text" class="form-control form-control-sm"
+                          [(ngModel)]="rowEditValues[getRowId(row)].section"
+                          [ngModelOptions]="{ standalone: true }" />
+                      </ng-container>
+                      <ng-template #readOnlyCell>
+                        {{ column === 'section' ? (getCellValue(row, column) || '-') : formatMetricValue(getCellValue(row, column)) }}
+                      </ng-template>
+                    </ng-container>
+                  </td>
+                  <td *ngIf="formValues.dropdown4 && isEditingAllowed" class="text-center align-middle">
+                    <ng-container *ngIf="!isEditingRow(row)">
+                      <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="editingRowId !== null" (click)="enterRowEditMode(row)">
+                        <i class="bi bi-pencil-square me-1"></i>Edit
+                      </button>
+                    </ng-container>
+                    <ng-container *ngIf="isEditingRow(row)">
+                      <button type="button" class="btn btn-sm btn-success me-1" [disabled]="metricsLoading" (click)="saveRow(row)">
+                        <i class="bi bi-check-lg"></i>
+                      </button>
+                      <button type="button" class="btn btn-sm btn-secondary" (click)="cancelRowEditMode()">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </ng-container>
                   </td>
                 </tr>
               </tbody>

@@ -8,7 +8,6 @@ export interface EnterpriseKpiDto {
   id?: number | string;
   networkEngineerKpi: string;
   division: string;
-  section: string;
   kpiPercent: number;
   displayOrder?: number;
 }
@@ -17,7 +16,7 @@ interface EnterpriseMetricResponse {
   id?: number | string;
   networkEngineerKpi: string;
   division: string;
-  section: string;
+  target?: string | null;
   kpiPercent: number;
   site: string;
   kpi_value: number;
@@ -30,7 +29,8 @@ export interface EnterpriseMetricDto {
   id?: number | string;
   networkEngineerKpi: string;
   division: string;
-  section: string;
+  section: string | null;
+  target?: string | null;
   kpiPercent: number;
   site: string;
   kpiValue: number;
@@ -42,9 +42,10 @@ export interface EnterpriseMetricDto {
 export interface UpsertEnterpriseMetricRequest {
   enterpriseKpiId: number;
   site: string;
-  kpiValue: number | null;
+  kpiValue?: number | null;
   month: number;
   year: number;
+  target?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -79,7 +80,8 @@ export class EnterpriseKpiPlatformService {
           id: item.id,
           networkEngineerKpi: item.networkEngineerKpi,
           division: item.division,
-          section: item.section,
+          section: item.target ?? null,
+          target: item.target,
           kpiPercent: item.kpiPercent,
           site: item.site,
           kpiValue: item.kpi_value,
@@ -96,7 +98,8 @@ export class EnterpriseKpiPlatformService {
         id: item.id,
         networkEngineerKpi: item.networkEngineerKpi,
         division: item.division,
-        section: item.section,
+        section: item.target ?? null,
+        target: item.target,
         kpiPercent: item.kpiPercent,
         site: item.site,
         kpiValue: item.kpi_value,

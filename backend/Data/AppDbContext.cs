@@ -82,6 +82,7 @@ namespace backend.Data
         // =========================
         public DbSet<EnterpriseKpi> EnterpriseKpis { get; set; } = null!;
         public DbSet<EnterpriseKpiMetric> EnterpriseKpiMetrics { get; set; } = null!;
+        public DbSet<EnterpriseTarget> EnterpriseTargets { get; set; } = null!;
         public DbSet<OtherOperatorKpi> OtherOperatorKpis { get; set; } = null!;
         public DbSet<OtherOperatorKpiMetric> OtherOperatorKpiMetrics { get; set; } = null!;
         public DbSet<OtherOperatorTarget> OtherOperatorTargets { get; set; } = null!;
@@ -598,7 +599,6 @@ namespace backend.Data
                 entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(x => x.NetworkEngineerKpi).HasColumnName("network_engineer_kpi").HasMaxLength(255).IsRequired();
                 entity.Property(x => x.Division).HasColumnName("division").HasMaxLength(100);
-                entity.Property(x => x.Section).HasColumnName("section").HasMaxLength(100);
                 entity.Property(x => x.KpiPercent).HasColumnName("kpi_percent").HasColumnType("decimal(6,3)");
             });
 
@@ -615,6 +615,7 @@ namespace backend.Data
                 entity.Property(x => x.Year).HasColumnName("year");
                 entity.Property(x => x.CreatedAt).HasColumnName("CreatedAt");
                 entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
+                entity.Property(x => x.Target).HasColumnName("Target").HasMaxLength(100);
 
                 entity.HasOne(x => x.EnterpriseKpi)
                       .WithMany()
@@ -625,6 +626,23 @@ namespace backend.Data
                     entity.HasIndex(x => new { x.EnterpriseKpiId, x.Site, x.Month, x.Year })
                       .IsUnique()
                       .HasDatabaseName("UQ_EnterpriseKpiMetrics_Row");
+            });
+
+            modelBuilder.Entity<EnterpriseTarget>(entity =>
+            {
+                entity.ToTable("EnterpriseTargets", "dbo");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(x => x.EnterpriseKpiId).HasColumnName("EnterpriseKpiId").IsRequired();
+                entity.Property(x => x.Section).HasColumnName("Section").HasMaxLength(100);
+                entity.Property(x => x.Month).HasColumnName("Month");
+                entity.Property(x => x.Year).HasColumnName("Year");
+
+                entity.HasOne(x => x.EnterpriseKpi)
+                      .WithMany()
+                      .HasForeignKey(x => x.EnterpriseKpiId)
+                      .HasConstraintName("FK_EnterpriseTargets_EnterpriseKpi")
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             // =========================
@@ -702,6 +720,7 @@ namespace backend.Data
                 entity.Property(x => x.Year).HasColumnName("Year");
                 entity.Property(x => x.Month).HasColumnName("Month");
                 entity.Property(x => x.KpiValue).HasColumnName("kpi_value").HasColumnType("decimal(18,4)");
+                entity.Property(x => x.Target).HasColumnName("Target").HasMaxLength(100);
 
                 entity.HasOne(x => x.OtherOperatorKpi)
                       .WithMany()
