@@ -30,4 +30,8 @@ export class AnalyticsService {
 
     return this.http.get<AnalyticsResultApi[]>(this.apiBase, { params });
   }
+
+  getAvailableYears(): Observable<number[]> {
+    return this.http.get<number[]>(`${this.apiBase}/years`);
+  }
 }

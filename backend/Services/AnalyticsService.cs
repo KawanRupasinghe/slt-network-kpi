@@ -36,5 +36,15 @@ namespace backend.Services
 
             return results;
         }
+
+        public async Task<List<int>> GetAvailableYearsAsync()
+        {
+            return await _db.OverallKpiResults
+                .AsNoTracking()
+                .Select(x => (int)x.Year)
+                .Distinct()
+                .OrderByDescending(y => y)
+                .ToListAsync();
+        }
     }
 }

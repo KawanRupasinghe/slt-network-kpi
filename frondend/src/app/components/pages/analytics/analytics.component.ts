@@ -151,7 +151,6 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
       { value: 11, label: 'November' },
       { value: 12, label: 'December' }
     ];
-    this.yearOptions = [this.selectedYear, this.selectedYear - 1, this.selectedYear - 2];
 
     const available = this.getAvailableMonths(this.selectedYear);
     if (!available.find(m => m.value === this.selectedStartMonth)) {
@@ -163,7 +162,19 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadRegions();
+    this.analyticsService.getAvailableYears().subscribe({
+      next: (years) => {
+        this.yearOptions = years.length ? years : [this.selectedYear];
+        if (!this.yearOptions.includes(this.selectedYear)) {
+          this.selectedYear = this.yearOptions[0];
+        }
+        this.loadRegions();
+      },
+      error: () => {
+        this.yearOptions = [this.selectedYear];
+        this.loadRegions();
+      }
+    });
   }
 
   ngAfterViewInit(): void {
@@ -183,12 +194,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.pendingFrame !== null) cancelAnimationFrame(this.pendingFrame);
   }
 
-  @HostListener('window:focus')
-  onWindowFocus(): void {
-    this.loadRegions();
-  }
-
-  @HostListener('window:resize')
+@HostListener('window:resize')
   onWindowResize(): void {
     this.scheduleRowSync();
   }
