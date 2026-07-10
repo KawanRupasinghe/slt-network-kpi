@@ -46,9 +46,19 @@
       </div>
     </div>
 
-    <div class="header-right">
+    <div class="header-right" *ngIf="activeView === 'monthly'">
       <span class="count-pill">{{ engineersCount }} NEs</span>
       <button class="export-btn" type="button" (click)="exportToExcel()">
+        Export to Excel
+      </button>
+    </div>
+
+    <div class="header-right" *ngIf="activeView === 'summary'">
+      <span class="count-pill">{{ engineersCount }} NEs</span>
+      <button class="primary-btn calculate-btn" type="button" (click)="calculateSummary()" [disabled]="loading">
+        {{ loading ? 'Calculating...' : 'Calculate' }}
+      </button>
+      <button class="export-btn" type="button" (click)="exportSummaryToExcel()">
         Export to Excel
       </button>
     </div>
@@ -184,7 +194,7 @@
                 (mouseenter)="setHoveredRowIndex(idx)"
                 (mouseleave)="setHoveredRowIndex(null)"
                 #rightRowRef>
-              <ng-container *ngFor="let metric of row.metrics">
+              <ng-container *ngFor="let metric of row.metrics; let mIdx = index">
                 <td class="text-center achieved-cell" [ngClass]="getAchievedCellClass(metric)">
                   {{ metric.achieved }}
                 </td>
