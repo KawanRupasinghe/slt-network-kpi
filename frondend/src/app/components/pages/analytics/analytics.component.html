@@ -27,7 +27,7 @@
       <div class="filter-group">
         <label for="start-month-select">Start Month:</label>
         <select id="start-month-select" class="filter-select" [(ngModel)]="selectedStartMonth" (ngModelChange)="onStartMonthChange($event)">
-          <option *ngFor="let month of monthOptions" [ngValue]="month.value">
+          <option *ngFor="let month of getAvailableMonths(selectedYear)" [ngValue]="month.value">
             {{ month.label }}
           </option>
         </select>
@@ -35,7 +35,7 @@
       <div class="filter-group">
         <label for="end-month-select">End Month:</label>
         <select id="end-month-select" class="filter-select" [(ngModel)]="selectedEndMonth" (ngModelChange)="onEndMonthChange($event)">
-          <option *ngFor="let month of monthOptions" [ngValue]="month.value">
+          <option *ngFor="let month of getAvailableMonths(selectedYear)" [ngValue]="month.value">
             {{ month.label }}
           </option>
         </select>
