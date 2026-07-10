@@ -152,6 +152,14 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
       { value: 12, label: 'December' }
     ];
     this.yearOptions = [this.selectedYear, this.selectedYear - 1, this.selectedYear - 2];
+
+    const available = this.getAvailableMonths(this.selectedYear);
+    if (!available.find(m => m.value === this.selectedStartMonth)) {
+      this.selectedStartMonth = available[0].value;
+    }
+    if (!available.find(m => m.value === this.selectedEndMonth)) {
+      this.selectedEndMonth = available[0].value;
+    }
   }
 
   ngOnInit(): void {
@@ -187,6 +195,13 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onYearChange(year: number): void {
     this.selectedYear = Number(year);
+    const available = this.getAvailableMonths(this.selectedYear);
+    if (!available.find(m => m.value === this.selectedStartMonth)) {
+      this.selectedStartMonth = available[0].value;
+    }
+    if (!available.find(m => m.value === this.selectedEndMonth)) {
+      this.selectedEndMonth = available[0].value;
+    }
   }
 
   onStartMonthChange(month: number): void {
@@ -199,6 +214,17 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   setActiveView(view: 'table' | 'dashboard'): void {
     this.activeView = view;
+  }
+
+  getAvailableMonths(year: number): { value: number; label: string }[] {
+    if (year === 2026) {
+      return this.monthOptions.filter(m => m.value >= 4);
+    }
+    return this.monthOptions;
+  }
+
+  getMonthLabel(monthValue: number): string {
+    return this.monthOptions.find(m => m.value === monthValue)?.label || '';
   }
 
   calculate(): void {

@@ -1,3 +1,5 @@
+@import '../overall/current-month/current-month.component.scss';
+
 /* Header Container Styling */
 .current-month-header {
   width: 100%;
@@ -19,6 +21,11 @@
   margin: 0;
   letter-spacing: 0.3px;
   line-height: 1.2;
+}
+
+.col-perspectives, .col-strategic {
+  text-align: center;
+  min-width: 120px;
 }
 
 .header-left .subtitle {
@@ -98,7 +105,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-left: 12px;
+  margin-left: auto;
 }
 
 .count-pill {
@@ -187,4 +194,33 @@
       background-color: #f1f5f9;
     }
   }
+}
+
+.view-toggle-bar {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.view-toggle-btn {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-toggle-btn:hover {
+  border-color: #0057a6;
+  color: #0057a6;
+}
+
+.view-toggle-btn.active {
+  background: #0057a6;
+  border-color: #0057a6;
+  color: #ffffff;
 }
