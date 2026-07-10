@@ -65,7 +65,7 @@
           <label for="dropdown3" class="form-label">NW EE:</label>
           <select id="dropdown3" class="form-select" [(ngModel)]="formValues.dropdown3" name="dropdown3" [disabled]="!formValues.dropdown2" (change)="onDropdownChange('dropdown3', $any($event.target)?.value || '')">
             <option value="">Select an option</option>
-            <option *ngFor="let engineer of dropdown3Options" [value]="engineer">{{ engineer }}</option>
+            <option *ngFor="let engineer of dropdown3Options" [value]="engineer">{{ engineerNameMap[engineer] || engineer }}</option>
           </select>
         </div>
         <div class="col-md-2">
@@ -81,7 +81,7 @@
     <div class="selected-filters mb-4">
       <div class="filter-chip"><span class="filter-label">R-GM:</span><span class="filter-value">{{ formValues.dropdown1 || 'Select an option' }}</span></div>
       <div class="filter-chip"><span class="filter-label">P-DGM:</span><span class="filter-value">{{ formValues.dropdown2 || 'Select an option' }}</span></div>
-      <div class="filter-chip"><span class="filter-label">NW EE:</span><span class="filter-value">{{ formValues.dropdown3 || 'Select an option' }}</span></div>
+      <div class="filter-chip"><span class="filter-label">NW EE:</span><span class="filter-value">{{ formValues.dropdown3 ? (engineerNameMap[formValues.dropdown3] || formValues.dropdown3) : 'Select an option' }}</span></div>
       <div class="filter-chip"><span class="filter-label">RTOM AREA:</span><span class="filter-value">{{ formValues.dropdown4 ? (optionMapping[formValues.dropdown4] || formValues.dropdown4) : 'Select an option' }}</span></div>
     </div>
 
