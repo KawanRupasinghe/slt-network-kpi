@@ -40,7 +40,6 @@ namespace backend.Controllers
                     Id = x.Id,
                     NetworkEngineerKpi = x.NetworkEngineerKpi,
                     Division = x.Division,
-                    Section = x.Section,
                     KpiPercent = x.KpiPercent
                 })
                 .ToListAsync();
@@ -109,7 +108,6 @@ namespace backend.Controllers
                     Id = x.Id,
                     NetworkEngineerKpi = x.NetworkEngineerKpi,
                     Division = x.Division,
-                    Section = x.Section,
                     KpiPercent = x.KpiPercent
                 })
                 .FirstOrDefaultAsync();
@@ -130,7 +128,6 @@ namespace backend.Controllers
             {
                 NetworkEngineerKpi = dto.NetworkEngineerKpi.Trim(),
                 Division = dto.Division,
-                Section = dto.Section,
                 KpiPercent = dto.KpiPercent
             };
 
@@ -142,7 +139,6 @@ namespace backend.Controllers
                 Id = entity.Id,
                 NetworkEngineerKpi = entity.NetworkEngineerKpi,
                 Division = entity.Division,
-                Section = entity.Section,
                 KpiPercent = entity.KpiPercent
             };
 
@@ -162,7 +158,6 @@ namespace backend.Controllers
 
             entity.NetworkEngineerKpi = dto.NetworkEngineerKpi.Trim();
             entity.Division = dto.Division;
-            entity.Section = dto.Section;
             entity.KpiPercent = dto.KpiPercent;
 
             await _db.SaveChangesAsync();
@@ -193,8 +188,6 @@ namespace backend.Controllers
                 if (dto == null) return BadRequest("Request body is required.");
                 if (dto.EnterpriseKpiId <= 0) return BadRequest("EnterpriseKpiId must be > 0.");
                 if (dto.Month == 0 || dto.Year == 0) return BadRequest("Month and Year must be greater than zero.");
-                if (dto.KpiValue == null) return BadRequest("KpiValue is required.");
-
                 var kpi = await _db.EnterpriseKpis.FirstOrDefaultAsync(x => x.Id == dto.EnterpriseKpiId);
                 if (kpi == null)
                     return NotFound($"Enterprise KPI with id '{dto.EnterpriseKpiId}' was not found.");

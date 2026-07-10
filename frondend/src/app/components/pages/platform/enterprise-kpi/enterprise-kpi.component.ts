@@ -351,7 +351,7 @@ export class EnterpriseKpiComponent implements OnInit {
         no: displayOrder,
         networkEngineerKpi: kpi.networkEngineerKpi,
         division: kpi.division,
-        section: kpi.section,
+        section: '',
         kpiPercent: this.formatWeightageValue(kpi.kpiPercent),
         areas: {}
       };
@@ -390,7 +390,7 @@ export class EnterpriseKpiComponent implements OnInit {
         rowsByKey.set(metricKey, targetRow);
         extraRows.push(targetRow);
       }
-      targetRow.section = metric.target ?? targetRow.section;
+      targetRow.section = metric.target ?? targetRow.section ?? '';
       targetRow.kpiPercent = this.formatWeightageValue(metric.kpiPercent) || targetRow.kpiPercent;
       this.applyMetricValueToRow(targetRow, metric);
     });
@@ -420,7 +420,7 @@ export class EnterpriseKpiComponent implements OnInit {
           no: displayOrder,
           networkEngineerKpi: master?.networkEngineerKpi ?? metric.networkEngineerKpi ?? '',
           division: master?.division ?? metric.division ?? '',
-          section: master?.section ?? (metric.target ?? ''),
+          section: metric.target ?? '',
           kpiPercent: this.formatWeightageValue(master?.kpiPercent ?? metric.kpiPercent),
           areas: {}
         });
@@ -541,7 +541,7 @@ export class EnterpriseKpiComponent implements OnInit {
     }
   }
 
-  onPeriodChange() { this.periodLockedByUser = true; this.loadMetrics(); }
+  onPeriodChange() { this.periodLockedByUser = true; this.editingRowId = null; this.rowEditValues = {}; this.loadMetrics(); }
 
   resetAreaFilter() {
     if (!this.formValues.dropdown4) return;
@@ -600,7 +600,73 @@ export class EnterpriseKpiComponent implements OnInit {
     this.activeEditValue = existing === null || existing === undefined ? '' : String(existing);
   }
 
-  cancelEdit() { this.editingCell = { rowId: null, key: null }; this.activeEditValue = ''; }
+  isRowEditMode = false;
+  rowEditValues: { [rowId: string]: { kpiValue: string; section: string } } = {};
+  editingRowId: string | number | null = null;
+
+  enterRowEditMode(row: KpiData) {
+    if (!this.isEditingAllowed) { this.toastr.info('You do not have edit permission on this page.', 'Edit Disabled'); return; }
+    const id = this.getRowId(row);
+    const kv = this.getCellValue(row, this.metricColumnKey);
+    this.rowEditValues[String(id)] = {
+      kpiValue: kv !== null && kv !== undefined ? String(kv) : '',
+      section: row.section ?? ''
+    };
+    this.editingRowId = id;
+  }
+
+  cancelRowEditMode() {
+    this.editingRowId = null;
+    this.rowEditValues = {};
+  }
+
+  isEditingRow(row: KpiData): boolean {
+    return this.editingRowId !== null && this.editingRowId === this.getRowId(row);
+  }
+
+  saveRow(row: KpiData) {
+    if (!this.isEditingAllowed) { this.toastr.error('You do not have permission to update KPI values.', 'Permission Denied'); return; }
+    const areaCode = this.resolveAreaCode(this.formValues.dropdown4);
+    if (!areaCode) { this.toastr.error('Unable to determine the selected RTOM area.', 'Invalid Area'); return; }
+    const kpiId = this.resolveKpiIdentifier(row);
+    if (kpiId === null) { this.toastr.error('Unable to resolve the KPI identifier for this row.', 'Missing KPI Id'); return; }
+
+    const edits = this.rowEditValues[String(this.getRowId(row))];
+    if (!edits) return;
+
+    const kpiValueStr = String(edits.kpiValue ?? '').replace(/%/g, '').trim();
+    const kpiValue = kpiValueStr === '' ? undefined : Number(kpiValueStr);
+    if (kpiValue !== undefined && !Number.isFinite(kpiValue)) {
+      this.toastr.error('Please enter a valid numeric value for Achievement.', 'Invalid Value'); return;
+    }
+
+    const request: UpsertEnterpriseMetricRequest = {
+      enterpriseKpiId: kpiId,
+      site: areaCode,
+      kpiValue: kpiValue ?? undefined,
+      target: edits.section.trim() || undefined,
+      month: Number(this.selectedMonth),
+      year: Number(this.selectedYear)
+    };
+
+    this.metricsLoading = true;
+    this.enterpriseKpiService.upsertMetric(request).subscribe({
+      next: (result) => {
+        this.metricsLoading = false;
+        this.editingRowId = null;
+        this.rowEditValues = {};
+        this.cdr.detectChanges();
+        this.toastr.success(result.isNew ? 'Saved successfully.' : 'Updated successfully.', 'Success');
+        this.loadMetrics();
+      },
+      error: (err) => {
+        this.metricsLoading = false;
+        console.error('Failed to save row', err);
+        this.cdr.detectChanges();
+        this.toastr.error('Save failed. Please try again.', 'Save Failed');
+      }
+    });
+  }
 
   saveEdit(item: KpiData, key: string) {
     if (!this.isEditingAllowed) { this.toastr.error('You do not have permission to update this KPI value.', 'Permission Denied'); return; }
@@ -612,18 +678,21 @@ export class EnterpriseKpiComponent implements OnInit {
     const kpiId = this.resolveKpiIdentifier(latestRow);
     if (kpiId === null) { this.toastr.error('Unable to resolve the KPI identifier for this row.', 'Missing KPI Id'); return; }
 
-    const normalizedValue = String(this.activeEditValue ?? '').replace(/%/g, '').trim();
-    if (key !== 'section') {
-      if (!/^([0-9]+(\.[0-9]+)?|\.[0-9]+)$/.test(normalizedValue)) { this.toastr.error('Please enter a valid numeric or decimal value before saving.', 'Invalid Value'); return; }
-      const numericValue = Number(normalizedValue);
+    const normalizedValue = String(this.activeEditValue ?? '').trim();
+    if (key === 'section') {
+      if (!normalizedValue) { this.toastr.error('Please enter a value before saving.', 'Invalid Value'); return; }
+    } else {
+      const cleanValue = normalizedValue.replace(/%/g, '');
+      if (!/^([0-9]+(\.[0-9]+)?|\.[0-9]+)$/.test(cleanValue)) { this.toastr.error('Please enter a valid numeric or decimal value before saving.', 'Invalid Value'); return; }
+      const numericValue = Number(cleanValue);
       if (!Number.isFinite(numericValue)) { this.toastr.error('Please enter a valid numeric or decimal value before saving.', 'Invalid Value'); return; }
     }
+    const numericValue = key === 'section' ? undefined : Number(String(this.activeEditValue ?? '').replace(/%/g, '').trim());
 
-    const numericValue = key !== 'section' ? Number(normalizedValue) : null;
     const request: UpsertEnterpriseMetricRequest = {
       enterpriseKpiId: kpiId,
       site: areaCode,
-      kpiValue: key === 'section' ? (this.getCellValue(latestRow, this.metricColumnKey) ?? null) : numericValue,
+      kpiValue: key === this.metricColumnKey ? numericValue! : (this.getCellValue(latestRow, this.metricColumnKey) ?? undefined),
       target: key === 'section' ? String(this.activeEditValue ?? '').trim() : (latestRow.section ? String(latestRow.section) : undefined),
       month: Number(this.selectedMonth),
       year: Number(this.selectedYear)

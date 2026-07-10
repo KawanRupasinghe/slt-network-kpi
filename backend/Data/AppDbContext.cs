@@ -599,7 +599,6 @@ namespace backend.Data
                 entity.Property(x => x.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(x => x.NetworkEngineerKpi).HasColumnName("network_engineer_kpi").HasMaxLength(255).IsRequired();
                 entity.Property(x => x.Division).HasColumnName("division").HasMaxLength(100);
-                entity.Property(x => x.Section).HasColumnName("section").HasMaxLength(100);
                 entity.Property(x => x.KpiPercent).HasColumnName("kpi_percent").HasColumnType("decimal(6,3)");
             });
 

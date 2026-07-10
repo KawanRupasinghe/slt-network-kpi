@@ -8,7 +8,6 @@ export interface EnterpriseKpiDto {
   id?: number | string;
   networkEngineerKpi: string;
   division: string;
-  section: string;
   kpiPercent: number;
   displayOrder?: number;
 }
@@ -30,7 +29,7 @@ export interface EnterpriseMetricDto {
   id?: number | string;
   networkEngineerKpi: string;
   division: string;
-  section: string;
+  section: string | null;
   target?: string | null;
   kpiPercent: number;
   site: string;
@@ -43,7 +42,7 @@ export interface EnterpriseMetricDto {
 export interface UpsertEnterpriseMetricRequest {
   enterpriseKpiId: number;
   site: string;
-  kpiValue: number | null;
+  kpiValue?: number | null;
   month: number;
   year: number;
   target?: string | null;
@@ -81,7 +80,7 @@ export class EnterpriseKpiPlatformService {
           id: item.id,
           networkEngineerKpi: item.networkEngineerKpi,
           division: item.division,
-          section: item.target ?? '',
+          section: item.target ?? null,
           target: item.target,
           kpiPercent: item.kpiPercent,
           site: item.site,
@@ -99,7 +98,7 @@ export class EnterpriseKpiPlatformService {
         id: item.id,
         networkEngineerKpi: item.networkEngineerKpi,
         division: item.division,
-        section: item.target ?? '',
+        section: item.target ?? null,
         target: item.target,
         kpiPercent: item.kpiPercent,
         site: item.site,
