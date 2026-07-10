@@ -23,6 +23,8 @@ export interface Region {
   networkengineer: string;
   /* LEA (Least Cost Route) code */
   leacode: string;
+  /* Engineer Name */
+  engName?: string;
 }
 
 /* ========== REGION SERVICE ========== */

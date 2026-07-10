@@ -35,6 +35,7 @@ interface RegionData {
   province: string;
   networkEngineer: string;
   lea: string;
+  engName?: string;
 }
 
 @Component({
@@ -59,6 +60,7 @@ export class OtherOperatorComponent implements OnInit {
   dropdown3Options: string[] = [];
   dropdown4Options: string[] = [];
   visibleColumns: string[] = [];
+  engineerNameMap: Record<string, string> = {};
 
   loading = true;
   error: string | null = null;
@@ -251,7 +253,8 @@ export class OtherOperatorComponent implements OnInit {
           region: item.region ?? item.Region ?? '',
           province: item.province ?? item.Province ?? '',
           networkEngineer: item.networkEngineer ?? item.networkengineer ?? item.NetworkEngineer ?? '',
-          lea: item.lea ?? item.leacode ?? item.leaCode ?? item.LEA ?? ''
+          lea: item.lea ?? item.leacode ?? item.leaCode ?? item.LEA ?? '',
+          engName: item.engName ?? item.EngName ?? item.engname ?? ''
         }));
         this.regionTable = mapped.length ? mapped : [...this.regionData];
       },
@@ -529,6 +532,13 @@ export class OtherOperatorComponent implements OnInit {
     if (!this.formValues.dropdown2 || !this.formValues.dropdown1) { this.dropdown3Options = []; this.formValues.dropdown3 = ''; return; }
     const engineers = Array.from(new Set(this.regionTable.filter(x => x.region === this.formValues.dropdown1 && x.province === this.formValues.dropdown2).map(x => x.networkEngineer))).filter(Boolean);
     this.dropdown3Options = engineers;
+    
+    this.engineerNameMap = {};
+    this.dropdown3Options.forEach(eng => {
+      const regionRec = this.regionTable.find(x => x.networkEngineer === eng && x.engName);
+      this.engineerNameMap[eng] = regionRec?.engName ? `${eng} [${regionRec.engName}]` : eng;
+    });
+
     this.formValues.dropdown3 = '';
     this.dropdown4Options = []; this.formValues.dropdown4 = '';
     this.visibleColumns = [...this.baseColumns];

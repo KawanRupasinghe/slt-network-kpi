@@ -34,6 +34,7 @@ interface RegionData {
   province: string;
   networkEngineer: string;
   lea: string;
+  engName?: string;
 }
 
 @Component({
@@ -65,6 +66,7 @@ export class ServiceFulfilmentComponent implements OnInit {
   dropdown2Options: string[] = [];
   dropdown3Options: string[] = [];
   dropdown4Options: string[] = [];
+  engineerNameMap: Record<string, string> = {};
   
   // Columns
   visibleColumns: string[] = [];
@@ -286,7 +288,8 @@ export class ServiceFulfilmentComponent implements OnInit {
           region: item.region ?? item.Region ?? '',
           province: item.province ?? item.Province ?? '',
           networkEngineer: item.networkEngineer ?? item.networkengineer ?? item.NetworkEngineer ?? '',
-          lea: item.lea ?? item.leacode ?? item.leaCode ?? item.LEA ?? ''
+          lea: item.lea ?? item.leacode ?? item.leaCode ?? item.LEA ?? '',
+          engName: item.engName ?? item.EngName ?? item.engname ?? ''
         }));
         this.regionTable = mapped.length ? mapped : [...this.regionData];
       },
@@ -744,6 +747,13 @@ export class ServiceFulfilmentComponent implements OnInit {
       )
     ).filter(Boolean);
     this.dropdown3Options = engineers;
+    
+    this.engineerNameMap = {};
+    this.dropdown3Options.forEach(eng => {
+      const regionRec = this.regionTable.find(x => x.networkEngineer === eng && x.engName);
+      this.engineerNameMap[eng] = regionRec?.engName ? `${eng} [${regionRec.engName}]` : eng;
+    });
+
     this.formValues.dropdown3 = '';
     this.dropdown4Options = [];
     this.formValues.dropdown4 = '';

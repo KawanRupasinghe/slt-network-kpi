@@ -25,6 +25,7 @@ interface RegionRow {
 	province?: string;
 	networkEngineer?: string;
 	lea?: string;
+	engName?: string;
 }
 
 interface NodeMeta {
@@ -109,6 +110,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 	dropdown2Options: string[] = [];
 	dropdown3Options: string[] = [];
 	dropdown4Options: string[] = [];
+	engineerNameMap: Record<string, string> = {};
 
 	selectedYear: number = new Date().getFullYear();
 	selectedMonth: number = new Date().getMonth() + 1;
@@ -300,6 +302,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 					networkEngineer:
 						item.networkEngineer ?? item.networkengineer ?? item.NetworkEngineer ?? '',
 					lea: item.lea ?? item.leacode ?? item.leaCode ?? item.LEA ?? '',
+					engName: item.engName ?? item.EngName ?? item.engname ?? ''
 				}));
 				this.regionTable = mapped.length ? mapped : [...LOCAL_REGION_TABLE];
 				this.initializeFilters();
@@ -455,6 +458,12 @@ private updateDropdown3Options(province: string): void {
 					.filter(Boolean) as string[]
 			)
 		);
+		
+		this.engineerNameMap = {};
+		this.dropdown3Options.forEach(eng => {
+			const regionRec = this.regionTable.find(x => x.networkEngineer === eng && x.engName);
+			this.engineerNameMap[eng] = regionRec?.engName ? `${eng} [${regionRec.engName}]` : eng;
+		});
 	}
 
 	private updateDropdown4Options(engineer: string): void {

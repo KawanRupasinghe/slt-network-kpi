@@ -19,6 +19,7 @@ interface RegionRow {
 	province?: string;
 	networkEngineer?: string;
 	lea?: string;
+	engName?: string;
 }
 
 interface BaseEntry {
@@ -122,6 +123,7 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 	dropdown2Options: string[] = [];
 	dropdown3Options: string[] = [];
 	dropdown4Options: string[] = [];
+	engineerNameMap: Record<string, string> = {};
 
 	selectedYear: number = new Date().getFullYear();
 	selectedMonth: number = new Date().getMonth() + 1;
@@ -396,7 +398,8 @@ ngOnInit(): void {
 					region: item.region ?? item.Region ?? '',
 					province: item.province ?? item.Province ?? '',
 					networkEngineer: item.networkEngineer ?? item.networkengineer ?? item.NetworkEngineer ?? '',
-					lea: item.lea ?? item.leacode ?? item.leaCode ?? item.LEA ?? ''
+					lea: item.lea ?? item.leacode ?? item.leaCode ?? item.LEA ?? '',
+					engName: item.engName ?? item.EngName ?? item.engname ?? ''
 				}));
 				this.regionTable = mapped.length ? mapped : [...LOCAL_REGION_TABLE];
 				this.initializeFilters();
@@ -780,6 +783,12 @@ ngOnInit(): void {
 					.filter(Boolean) as string[]
 			)
 		);
+		
+		this.engineerNameMap = {};
+		this.dropdown3Options.forEach(eng => {
+			const regionRec = this.regionTable.find(x => x.networkEngineer === eng && x.engName);
+			this.engineerNameMap[eng] = regionRec?.engName ? `${eng} [${regionRec.engName}]` : eng;
+		});
 	}
 
 	private updateDropdown4Options(engineer: string): void {
