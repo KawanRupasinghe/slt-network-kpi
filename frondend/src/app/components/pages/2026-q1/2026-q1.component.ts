@@ -139,8 +139,24 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
     this.loadRegions();
   }
 
+  private logLifecycleState(methodName: string): void {
+    const firstMetric = this.kpiRows?.[0]?.metrics?.[0];
+    const firstMetricStatus = !firstMetric
+      ? 'none'
+      : (typeof firstMetric.achieved === 'string' && firstMetric.achieved === '-' ? 'placeholder' : 'real');
+
+    console.log('[Q1-LIFECYCLE]', {
+      method: methodName,
+      activeView: this.activeView,
+      summaryLoaded: this.summaryLoaded,
+      kpiRowsLength: this.kpiRows.length,
+      firstMetricStatus
+    });
+  }
+
   setActiveView(view: 'monthly' | 'summary'): void {
     this.activeView = view;
+    this.logLifecycleState('setActiveView');
     if (view === 'summary' && !this.summaryLoaded) {
       this.loadSummaryAverages();
     }
@@ -218,6 +234,7 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private loadLeftTableFromApi(): void {
+    this.logLifecycleState('loadLeftTableFromApi');
     this.loading = true;
     const month = this.selectedMonth;
     const year = this.selectedYear;
@@ -545,6 +562,7 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
   };
 
   private loadSummaryAverages(): void {
+    this.logLifecycleState('loadSummaryAverages');
     this.loading = true;
     const urls = [
       'assets/kpi-sheets/overall_kpi_2026_01.xlsx',
