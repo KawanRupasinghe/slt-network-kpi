@@ -75,5 +75,60 @@
         </tbody>
       </table>
     </div>
+
+    <div class="table-wrapper mt-5">
+      <div class="table-header bg-primary text-white d-flex justify-content-between align-items-center mb-3" style="padding: 10px; border-radius: 5px;">
+        <h3 (click)="toggleTargetsExpanded()" style="cursor: pointer;" class="m-0 text-white">
+          <i class="bi" [ngClass]="targetsExpanded ? 'bi-chevron-down' : 'bi-chevron-right'"></i> 
+          Variable Target Assignment
+        </h3>
+        
+        <div class="d-flex align-items-center gap-2" *ngIf="targetsExpanded">
+          <label class="mb-0 fw-bold text-white">Month:</label>
+          <select class="form-select form-select-sm" [(ngModel)]="selectedMonth" (change)="onTargetPeriodChange()" style="width: auto;">
+            <option *ngFor="let m of monthOptions" [value]="m.value">{{ m.label }}</option>
+          </select>
+
+          <label class="mb-0 fw-bold ms-3 text-white">Year:</label>
+          <select class="form-select form-select-sm" [(ngModel)]="selectedYear" (change)="onTargetPeriodChange()" style="width: auto;">
+            <option *ngFor="let y of yearOptions" [value]="y">{{ y }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-responsive" *ngIf="targetsExpanded">
+        <table class="kpi-table">
+          <thead>
+            <tr>
+              <th>KPI ID</th>
+              <th>KPI Name</th>
+              <th>Target</th>
+              <th class="actions-col">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="records.length === 0">
+              <td colspan="4" class="no-data">No KPIs available to assign targets.</td>
+            </tr>
+            <tr *ngFor="let record of records">
+              <td>{{ record.id }}</td>
+              <td>{{ record.networkEngineerKpi }}</td>
+              <td>
+                <input type="text" class="form-control form-control-sm" 
+                       [(ngModel)]="targetEditValues[record.id]" 
+                       placeholder="Enter Target" />
+              </td>
+              <td class="actions-col">
+                <button type="button" class="btn-submit btn-sm" 
+                        (click)="saveTarget(record.id)" 
+                        [disabled]="targetSaving[record.id]">
+                  {{ targetSaving[record.id] ? 'Saving...' : 'Save' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>

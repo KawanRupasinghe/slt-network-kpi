@@ -6,8 +6,8 @@
 
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { OtherOperatorKpiService, OtherOperatorKpiRecord, CreateOtherOperatorKpi } from '../../../../services/other-operator-kpi.service';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { OtherOperatorKpiService, OtherOperatorKpiRecord, CreateOtherOperatorKpi, OtherOperatorTargetDto, CreateOtherOperatorTargetDto } from '../../../../services/other-operator-kpi.service';
 
 @Component({
   selector: 'app-other-operator',
@@ -15,6 +15,7 @@ import { OtherOperatorKpiService, OtherOperatorKpiRecord, CreateOtherOperatorKpi
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     ReactiveFormsModule
   ],
   templateUrl: './other-operator.component.html',
@@ -31,6 +32,23 @@ export class OtherOperatorComponent implements OnInit {
   errorMessage = '';
   editingId: number | null = null;
 
+  // Target Variables
+  selectedMonth: number = new Date().getMonth() + 1;
+  selectedYear: number = new Date().getFullYear();
+  monthOptions: { value: number; label: string }[] = [
+    { value: 1, label: 'January' }, { value: 2, label: 'February' },
+    { value: 3, label: 'March' }, { value: 4, label: 'April' },
+    { value: 5, label: 'May' }, { value: 6, label: 'June' },
+    { value: 7, label: 'July' }, { value: 8, label: 'August' },
+    { value: 9, label: 'September' }, { value: 10, label: 'October' },
+    { value: 11, label: 'November' }, { value: 12, label: 'December' }
+  ];
+  yearOptions: number[] = [];
+  allTargets: OtherOperatorTargetDto[] = [];
+  targetEditValues: { [kpiId: number]: string } = {};
+  targetSaving: { [kpiId: number]: boolean } = {};
+  targetsExpanded = true;
+
   constructor(
     private fb: FormBuilder,
     private service: OtherOperatorKpiService,
@@ -45,7 +63,13 @@ export class OtherOperatorComponent implements OnInit {
       kpiPercent: ['']
     });
 
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear - 2; y <= currentYear + 2; y++) {
+      this.yearOptions.push(y);
+    }
+
     this.loadData();
+    this.loadTargets();
   }
 
   // =========================
@@ -170,4 +194,92 @@ export class OtherOperatorComponent implements OnInit {
     this.editingId = null;
     this.saving = false;
   }
+
+  // =========================
+  // TARGET ASSIGNMENT
+  // =========================
+  toggleTargetsExpanded(): void {
+    this.targetsExpanded = !this.targetsExpanded;
+  }
+
+  onTargetPeriodChange(): void {
+    this.populateTargetEditValues();
+  }
+
+  loadTargets(): void {
+    this.service.getTargets().subscribe({
+      next: (data) => {
+        this.allTargets = data;
+        this.populateTargetEditValues();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Failed to load targets', err);
+      }
+    });
+  }
+
+  populateTargetEditValues(): void {
+    this.targetEditValues = {};
+    for (const record of this.records) {
+      const target = this.getTargetForKpi(record.id);
+      this.targetEditValues[record.id] = target?.section || '';
+    }
+  }
+
+  getTargetForKpi(kpiId: number): OtherOperatorTargetDto | undefined {
+    return this.allTargets.find(t => 
+      t.otherOperatorKpiId === kpiId && 
+      t.month === Number(this.selectedMonth) && 
+      t.year === Number(this.selectedYear)
+    );
+  }
+
+  saveTarget(kpiId: number): void {
+    const val = this.targetEditValues[kpiId];
+    // if (!val) return; // Allow empty string to save empty target if needed
+
+    this.targetSaving[kpiId] = true;
+    const existing = this.getTargetForKpi(kpiId);
+
+    const payload: CreateOtherOperatorTargetDto = {
+      otherOperatorKpiId: kpiId,
+      section: val,
+      month: Number(this.selectedMonth),
+      year: Number(this.selectedYear)
+    };
+
+    if (existing) {
+      this.service.updateTarget(existing.id, payload).subscribe({
+        next: () => {
+          existing.section = val;
+          this.targetSaving[kpiId] = false;
+          this.cdr.detectChanges();
+          alert('Target updated successfully.');
+        },
+        error: (err) => {
+          console.error(err);
+          this.targetSaving[kpiId] = false;
+          alert('Failed to update target.');
+          this.cdr.detectChanges();
+        }
+      });
+    } else {
+      this.service.createTarget(payload).subscribe({
+        next: (newTarget) => {
+          this.allTargets.push(newTarget);
+          this.targetSaving[kpiId] = false;
+          this.cdr.detectChanges();
+          alert('Target created successfully.');
+        },
+        error: (err) => {
+          console.error(err);
+          this.targetSaving[kpiId] = false;
+          alert('Failed to create target.');
+          this.cdr.detectChanges();
+        }
+      });
+    }
+  }
 }
+

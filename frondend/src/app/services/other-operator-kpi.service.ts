@@ -23,6 +23,23 @@ export interface CreateOtherOperatorKpi {
   kpiPercent?: number;
 }
 
+export interface OtherOperatorTargetDto {
+  id: number;
+  otherOperatorKpiId: number;
+  networkEngineerKpi?: string;
+  division?: string;
+  section?: string;
+  month: number;
+  year: number;
+}
+
+export interface CreateOtherOperatorTargetDto {
+  otherOperatorKpiId: number;
+  section?: string;
+  month: number;
+  year: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class OtherOperatorKpiService {
   private readonly apiUrl = environment.apiUrl;
@@ -43,5 +60,24 @@ export class OtherOperatorKpiService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/OtherOperatorKpi/${id}`);
+  }
+
+  // =========================
+  // TARGETS
+  // =========================
+  getTargets(): Observable<OtherOperatorTargetDto[]> {
+    return this.http.get<OtherOperatorTargetDto[]>(`${this.apiUrl}/other-operator-targets`);
+  }
+
+  createTarget(payload: CreateOtherOperatorTargetDto): Observable<OtherOperatorTargetDto> {
+    return this.http.post<OtherOperatorTargetDto>(`${this.apiUrl}/other-operator-targets`, payload);
+  }
+
+  updateTarget(id: number, payload: CreateOtherOperatorTargetDto): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/other-operator-targets/${id}`, payload);
+  }
+
+  deleteTarget(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/other-operator-targets/${id}`);
   }
 }
