@@ -46,9 +46,19 @@
       </div>
     </div>
 
-    <div class="header-right">
+    <div class="header-right" *ngIf="activeView === 'monthly'">
       <span class="count-pill">{{ engineersCount }} NEs</span>
       <button class="export-btn" type="button" (click)="exportToExcel()">
+        Export to Excel
+      </button>
+    </div>
+
+    <div class="header-right" *ngIf="activeView === 'summary'">
+      <span class="count-pill">{{ engineersCount }} NEs</span>
+      <button class="primary-btn calculate-btn" type="button" (click)="calculateSummary()" [disabled]="loading">
+        {{ loading ? 'Calculating...' : 'Calculate' }}
+      </button>
+      <button class="export-btn" type="button" (click)="exportSummaryToExcel()">
         Export to Excel
       </button>
     </div>

@@ -157,9 +157,21 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
   setActiveView(view: 'monthly' | 'summary'): void {
     this.activeView = view;
     this.logLifecycleState('setActiveView');
-    if (view === 'summary' && !this.summaryLoaded) {
-      this.loadSummaryAverages();
-    }
+  }
+
+  calculateSummary(): void {
+    this.summaryLoaded = false;
+    this.kpiRows.forEach(row => {
+      row.metrics = this.engineersFlat.map(() => ({ achieved: '-', maximumPoints: '-', pointsAchieved: '-' }));
+    });
+    this.loadSummaryAverages();
+  }
+
+  exportSummaryToExcel(): void {
+    const link = document.createElement('a');
+    link.href = 'assets/kpi-sheets/q1_summary_2026.xlsx';
+    link.download = 'q1_summary_2026.xlsx';
+    link.click();
   }
 
   onMonthChange(month: number): void {
@@ -561,7 +573,7 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
     'fiber failure restoration(large scale<pole damages etc>):<8 hrs': 'fiber failures restoration(large scale<pole damages etc>):<8 hrs'
   };
 
-  private loadSummaryAverages(): void {
+  loadSummaryAverages(): void {
     this.logLifecycleState('loadSummaryAverages');
     this.loading = true;
     const urls = [
@@ -718,6 +730,7 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
 
           this.summaryLoaded = true;
           this.loading = false;
+          this.cdr.detectChanges();
           this.cdr.detectChanges();
           this.scheduleRowSync();
         } catch (e) {
