@@ -184,7 +184,7 @@
                 (mouseenter)="setHoveredRowIndex(idx)"
                 (mouseleave)="setHoveredRowIndex(null)"
                 #rightRowRef>
-              <ng-container *ngFor="let metric of row.metrics">
+              <ng-container *ngFor="let metric of row.metrics; let mIdx = index">
                 <td class="text-center achieved-cell" [ngClass]="getAchievedCellClass(metric)">
                   {{ metric.achieved }}
                 </td>

@@ -6,7 +6,7 @@ import { RegionService } from '../../../services/region.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import * as ExcelJS from 'exceljs';
 import { environment } from '../../../../environments/environment';
-import { Subscription } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 
 export interface Region {
   id: number;
@@ -141,6 +141,9 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
 
   setActiveView(view: 'monthly' | 'summary'): void {
     this.activeView = view;
+    if (view === 'summary' && !this.summaryLoaded) {
+      this.loadSummaryAverages();
+    }
   }
 
   onMonthChange(month: number): void {
@@ -522,6 +525,185 @@ export class Q1Component implements OnInit, AfterViewInit, OnDestroy {
       if (isAllCaps && part.length <= 4) return part;
       return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
     }).join(' ');
+  }
+
+  private normalizeKpiKey(name: string): string {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, ' ')          // collapse multiple spaces
+      .replace(/\s*\(\s*/g, '(')     // remove spaces around opening paren
+      .replace(/\s*\)\s*/g, ')')     // remove spaces around closing paren
+      .replace(/\s*<\s*/g, '<')      // remove spaces around <
+      .replace(/\s*>\s*/g, '>');     // remove spaces around >
+  }
+
+  private readonly KPI_NAME_ALIASES: Record<string, string> = {
+    'routine maintenance - slbn/sdh': 'routine maintenance - slbn',
+    'routine maintenance - msan/olte': 'routine maintenance - msan/olt'
+  };
+
+  private loadSummaryAverages(): void {
+    this.loading = true;
+    const urls = [
+      'assets/kpi-sheets/overall_kpi_2026_01.xlsx',
+      'assets/kpi-sheets/overall_kpi_2026_02.xlsx',
+      'assets/kpi-sheets/overall_kpi_2026_03.xlsx'
+    ];
+
+    forkJoin(urls.map(url => this.http.get(url, { responseType: 'arraybuffer' }))).subscribe({
+      next: async (buffers: ArrayBuffer[]) => {
+        try {
+          // Parse each workbook into a map: kpiName -> leaCode -> { achieved, maximumPoints, pointsAchieved }
+          type EngMetric = { achieved: number | null; maximumPoints: number | null; pointsAchieved: number | null };
+          type SheetData = Map<string, Map<string, EngMetric>>;
+
+          const getCellNum = (cell: ExcelJS.Cell): number | null => {
+            const v = cell.value;
+            if (v === null || v === undefined || v === '') return null;
+            if (typeof v === 'number') return v;
+            if (typeof v === 'object' && (v as any).result !== undefined) {
+              const r = (v as any).result;
+              return typeof r === 'number' ? r : null;
+            }
+            const n = parseFloat(String(v));
+            return isNaN(n) ? null : n;
+          };
+
+          const parseSheet = async (buffer: ArrayBuffer, monthLabel: string): Promise<SheetData> => {
+            const wb = new ExcelJS.Workbook();
+            await wb.xlsx.load(buffer);
+
+            const getCellText = (cell: ExcelJS.Cell): string => {
+              const v = cell.value;
+              if (v === null || v === undefined || v === '') return '';
+              if (typeof v === 'object' && (v as any).richText) {
+                return (v as any).richText.map((x: any) => x.text).join('');
+              }
+              if (typeof v === 'object' && (v as any).result !== undefined) {
+                return String((v as any).result);
+              }
+              return String(v);
+            };
+
+            const ws = wb.getWorksheet('KPI Calculation') ?? wb.worksheets.find((candidate) => {
+              for (let rowIndex = 1; rowIndex <= Math.min(candidate.rowCount, 15); rowIndex++) {
+                const row = candidate.getRow(rowIndex);
+                for (let colIndex = 1; colIndex <= Math.min(candidate.columnCount, 20); colIndex++) {
+                  const text = getCellText(row.getCell(colIndex)).trim().toLowerCase();
+                  if (text.includes('key performance indicators (kpi)')) {
+                    return true;
+                  }
+                }
+              }
+              return false;
+            }) ?? wb.worksheets[0];
+
+            const data: SheetData = new Map();
+
+            let headerRowIndex = 0;
+            let kpiColumnIndex = -1;
+            for (let rowIndex = 1; rowIndex <= Math.min(ws.rowCount, 20); rowIndex++) {
+              const row = ws.getRow(rowIndex);
+              for (let colIndex = 1; colIndex <= Math.min(ws.columnCount, 20); colIndex++) {
+                const text = getCellText(row.getCell(colIndex)).trim().toLowerCase();
+                if (text === 'key performance indicators (kpi)') {
+                  headerRowIndex = rowIndex;
+                  kpiColumnIndex = colIndex;
+                  break;
+                }
+              }
+              if (headerRowIndex > 0) break;
+            }
+
+            if (headerRowIndex <= 0 || kpiColumnIndex <= 0) {
+              return data;
+            }
+
+            const engineerRow = ws.getRow(headerRowIndex - 1);
+            const leaColMap: { lea: string; col: number }[] = [];
+            for (let colIndex = 1; colIndex <= ws.columnCount; colIndex++) {
+              const lea = getCellText(engineerRow.getCell(colIndex)).trim();
+              if (!lea) continue;
+              const nextCol = colIndex + 1;
+              const nextNextCol = colIndex + 2;
+              if (getCellText(engineerRow.getCell(nextCol)).trim() === lea && getCellText(engineerRow.getCell(nextNextCol)).trim() === lea) {
+                leaColMap.push({ lea, col: colIndex });
+                colIndex += 2;
+              }
+            }
+
+            for (let rowIndex = headerRowIndex + 1; rowIndex <= ws.rowCount; rowIndex++) {
+              const row = ws.getRow(rowIndex);
+              const rawKpi = getCellText(row.getCell(kpiColumnIndex)).trim();
+              if (!rawKpi) continue;
+
+              const hasMetricValues = leaColMap.some(({ col }) => {
+                return [col, col + 1, col + 2].some((metricCol) => getCellNum(row.getCell(metricCol)) !== null);
+              });
+              if (!hasMetricValues) continue;
+
+              const kpiKey = this.normalizeKpiKey(rawKpi);
+
+              const engMap = new Map<string, EngMetric>();
+              for (const { lea, col } of leaColMap) {
+                engMap.set(lea.toLowerCase(), {
+                  achieved:       getCellNum(row.getCell(col)),
+                  maximumPoints:  getCellNum(row.getCell(col + 1)),
+                  pointsAchieved: getCellNum(row.getCell(col + 2))
+                });
+              }
+
+              data.set(kpiKey, engMap);
+            }
+
+            return data;
+          };
+
+          const [jan, feb, mar] = await Promise.all(buffers.map((buf, i) => parseSheet(buf, ['JAN', 'FEB', 'MAR'][i])));
+
+          const avg = (a: number | null, b: number | null, c: number | null): number | string => {
+            const vals = [a, b, c].filter((v): v is number => v !== null);
+            if (vals.length === 0) return '-';
+            return parseFloat((vals.reduce((s, v) => s + v, 0) / 3).toFixed(2));
+          };
+
+          for (const kpiRow of this.kpiRows) {
+            const normalized = this.normalizeKpiKey(kpiRow.kpi);
+            const kpiKey = this.KPI_NAME_ALIASES[normalized] ?? normalized;
+            const janKpi = jan.get(kpiKey);
+            const febKpi = feb.get(kpiKey);
+            const marKpi = mar.get(kpiKey);
+
+            this.engineersFlat.forEach((eng, idx) => {
+              const leaKey = eng.lea.trim().toLowerCase();
+              const j = janKpi?.get(leaKey);
+              const f = febKpi?.get(leaKey);
+              const m = marKpi?.get(leaKey);
+              kpiRow.metrics[idx] = {
+                achieved:       avg(j?.achieved       ?? null, f?.achieved       ?? null, m?.achieved       ?? null),
+                maximumPoints:  avg(j?.maximumPoints  ?? null, f?.maximumPoints  ?? null, m?.maximumPoints  ?? null),
+                pointsAchieved: avg(j?.pointsAchieved ?? null, f?.pointsAchieved ?? null, m?.pointsAchieved ?? null)
+              };
+            });
+          }
+
+          this.summaryLoaded = true;
+          this.loading = false;
+          this.cdr.detectChanges();
+          this.scheduleRowSync();
+        } catch (e) {
+          console.error('Error loading summary averages:', e);
+          this.loading = false;
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => {
+        console.error('Failed loading Excel files for summary:', err);
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   private scheduleRowSync(): void {
