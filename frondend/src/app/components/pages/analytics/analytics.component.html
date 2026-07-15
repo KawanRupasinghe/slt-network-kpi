@@ -155,8 +155,7 @@
               <ng-container *ngFor="let region of regionGroups">
                 <ng-container *ngFor="let province of region.provinces">
                   <th *ngFor="let eng of province.engineers" colspan="3" class="ee-area-header group-margin">
-                    <div class="nw-engineer">{{ eng.networkEngineer }}</div>
-                    <div class="rtom-area">({{ eng.lea }})</div>
+<div class="nw-engineer">{{ getEngineerHeaderLabel(eng) }}</div>
                   </th>
                 </ng-container>
               </ng-container>

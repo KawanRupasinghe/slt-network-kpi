@@ -44,6 +44,16 @@ namespace backend.Controllers
                 })
                 .ToListAsync();
 
+            if (items.Count >= 3)
+            {
+                var item1 = items[0];
+                var item2 = items[1];
+                var item3 = items[2];
+                items[0] = item2;
+                items[1] = item3;
+                items[2] = item1;
+            }
+
             return Ok(items);
         }
 
@@ -92,6 +102,16 @@ namespace backend.Controllers
                     year = x.metric.Year
                 })
                 .ToList();
+
+            if (result.Count >= 3)
+            {
+                var item1 = result[0];
+                var item2 = result[1];
+                var item3 = result[2];
+                result[0] = item2;
+                result[1] = item3;
+                result[2] = item1;
+            }
 
             return Ok(result);
         }

@@ -155,6 +155,7 @@ export class ServiceFulfilmentComponent implements OnInit {
   yearOptions: number[] = [];
 
   // Region data (simplified for now - in real app, this would come from API)
+  //fallback values
   regionData: RegionData[] = [
     { id: 1, region: 'metro', province: 'metro 1', networkEngineer: 'NW/WPC1', lea: 'CEN/HK' },
     { id: 2, region: 'metro', province: 'metro 1', networkEngineer: 'NW/WPC2', lea: 'CEN/MD' },

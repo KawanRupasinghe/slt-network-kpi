@@ -25,6 +25,7 @@ type Region = {
   province: string;
   networkEngineer: string;
   lea: string;
+  engName?: string;
 };
 
 interface KpiMetric {
@@ -313,12 +314,13 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
             (r as any)['lea_code'] ??
             '';
 
-          return {
+return {
             id: r.id,
             region: r.region,
             province: r.province,
             networkEngineer: networkEngineer || '—',
             lea: lea || '—',
+            engName: (r as any).engName ?? (r as any).EngName ?? (r as any)['EngName'] ?? (r as any)['engName'] ?? undefined,
           };
         });
 
@@ -527,8 +529,17 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
     return '#ef4444';
   }
 
-  getDashboardProgressPercent(percent: number): number {
-    return Math.min(100, percent);
+getDashboardProgressPercent(percent: number): number {
+  return Math.min(100, percent);
+}
+
+  getEngineerHeaderLabel(eng: Region): string {
+    const ne = eng.networkEngineer ?? '';
+    const name = eng.engName ?? '';
+    const lea = eng.lea ?? '';
+
+    const parts = [`${ne} - ${name}`.trim()];
+    return `${parts[0]} (${lea})`.replace(/\s+/g, ' ').trim();
   }
 
   private scheduleRowSync(): void {
