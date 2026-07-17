@@ -8,6 +8,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { OtherOperatorKpiService, OtherOperatorKpiRecord, CreateOtherOperatorKpi, OtherOperatorTargetDto, CreateOtherOperatorTargetDto } from '../../../../services/other-operator-kpi.service';
+import { FilterUtils } from '../../../../utils/filter.utils';
 
 @Component({
   selector: 'app-other-operator',
@@ -35,15 +36,8 @@ export class OtherOperatorComponent implements OnInit {
   // Target Variables
   selectedMonth: number = new Date().getMonth() + 1;
   selectedYear: number = new Date().getFullYear();
-  monthOptions: { value: number; label: string }[] = [
-    { value: 1, label: 'January' }, { value: 2, label: 'February' },
-    { value: 3, label: 'March' }, { value: 4, label: 'April' },
-    { value: 5, label: 'May' }, { value: 6, label: 'June' },
-    { value: 7, label: 'July' }, { value: 8, label: 'August' },
-    { value: 9, label: 'September' }, { value: 10, label: 'October' },
-    { value: 11, label: 'November' }, { value: 12, label: 'December' }
-  ];
-  yearOptions: number[] = [];
+  get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
+  yearOptions: number[] = FilterUtils.generateYearOptions();
   allTargets: OtherOperatorTargetDto[] = [];
   targetEditValues: { [kpiId: number]: string } = {};
   targetSaving: { [kpiId: number]: boolean } = {};
@@ -62,11 +56,6 @@ export class OtherOperatorComponent implements OnInit {
       section: [''],
       kpiPercent: ['']
     });
-
-    const currentYear = new Date().getFullYear();
-    for (let y = currentYear - 2; y <= currentYear + 2; y++) {
-      this.yearOptions.push(y);
-    }
 
     this.loadData();
     this.loadTargets();

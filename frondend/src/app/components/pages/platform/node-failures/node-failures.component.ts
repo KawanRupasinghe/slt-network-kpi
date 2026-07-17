@@ -4,8 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RegionService, Region } from '../../../../services/region.service';
 import { AuthService } from '../../../../services/auth.service';
 import { AgedNetworkFailureService } from '../../../../services/aged-network-failure.service';
-
-const DEFAULT_YEARS = [2023, 2024, 2025, 2026, 2027, 2028];
+import { FilterUtils } from '../../../../utils/filter.utils';
 
 interface AreaRow {
   areaCode: string; // lowercase, e.g. 'adipr'
@@ -30,7 +29,7 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
 
   selectedMonth: number = new Date().getMonth() + 1;
   selectedYear: number = new Date().getFullYear();
-  yearOptions: number[] = DEFAULT_YEARS;
+  yearOptions: number[] = FilterUtils.generateYearOptions();
 
   // Filter state
   formValues = {
@@ -56,20 +55,7 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
 
   private permissionTimer: ReturnType<typeof setInterval> | null = null;
 
-  monthOptions: Array<{ value: number; label: string }> = [
-    { value: 1, label: 'January' },
-    { value: 2, label: 'February' },
-    { value: 3, label: 'March' },
-    { value: 4, label: 'April' },
-    { value: 5, label: 'May' },
-    { value: 6, label: 'June' },
-    { value: 7, label: 'July' },
-    { value: 8, label: 'August' },
-    { value: 9, label: 'September' },
-    { value: 10, label: 'October' },
-    { value: 11, label: 'November' },
-    { value: 12, label: 'December' },
-  ];
+  get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
 
   optionMapping: Record<string, string> = {
     cenhkmd: 'CEN/HK/MD',

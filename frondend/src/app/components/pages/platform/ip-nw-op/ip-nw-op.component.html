@@ -60,9 +60,8 @@
           <label for="monthSelect" class="form-label">Month:</label>
           <select id="monthSelect" class="form-select" [(ngModel)]="selectedMonth" (change)="onMonthYearChange()"
             name="month">
-            <option *ngFor="let m of [1,2,3,4,5,6,7,8,9,10,11,12]" [value]="m">
-              {{ ['January', 'February', 'March', 'April', 'May', 'June',
-              'July', 'August', 'September', 'October', 'November', 'December'][m-1] }}
+            <option *ngFor="let m of monthOptions" [value]="m.value">
+              {{ m.label }}
             </option>
           </select>
         </div>
@@ -71,7 +70,7 @@
           <label for="yearSelect" class="form-label">Year:</label>
           <select id="yearSelect" class="form-select" [(ngModel)]="selectedYear" (change)="onMonthYearChange()"
             name="year">
-            <option *ngFor="let y of [2023,2024,2025,2026,2027,2028]" [value]="y">{{ y }}</option>
+            <option *ngFor="let y of yearOptions" [value]="y">{{ y }}</option>
           </select>
         </div>
 

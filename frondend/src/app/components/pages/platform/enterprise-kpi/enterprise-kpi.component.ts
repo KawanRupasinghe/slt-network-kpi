@@ -11,6 +11,7 @@ import {
 } from '../../../../services/enterprise-kpi-platform.service';
 import { RegionService, Region } from '../../../../services/region.service';
 import { AuthService } from '../../../../services/auth.service';
+import { FilterUtils } from '../../../../utils/filter.utils';
 
 interface KpiData {
   _id: { $oid: string } | number;
@@ -118,12 +119,7 @@ export class EnterpriseKpiComponent implements OnInit {
   selectedMonth = new Date().getMonth() + 1;
   selectedYear = new Date().getFullYear();
   private periodLockedByUser = false;
-  readonly monthOptions = [
-    { value: 1, label: 'January' }, { value: 2, label: 'February' }, { value: 3, label: 'March' },
-    { value: 4, label: 'April' }, { value: 5, label: 'May' }, { value: 6, label: 'June' },
-    { value: 7, label: 'July' }, { value: 8, label: 'August' }, { value: 9, label: 'September' },
-    { value: 10, label: 'October' }, { value: 11, label: 'November' }, { value: 12, label: 'December' }
-  ];
+  get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
   yearOptions: number[] = [];
 
   regionData: RegionData[] = [
@@ -157,7 +153,7 @@ export class EnterpriseKpiComponent implements OnInit {
     private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {
-    this.yearOptions = this.generateYearOptions();
+    this.yearOptions = FilterUtils.generateYearOptions();
   }
 
   ngOnInit() {
@@ -269,13 +265,7 @@ export class EnterpriseKpiComponent implements OnInit {
     this.isEditingAllowed = this.authService.canEditPage('ENTERPRISE KPI');
   }
 
-  private generateYearOptions(span: number = 10): number[] {
-    const currentYear = new Date().getFullYear();
-    const startYear = currentYear - (span - 1);
-    const years: number[] = [];
-    for (let year = startYear; year <= currentYear; year++) years.push(year);
-    return years;
-  }
+
 
   getUniqueRegions(): string[] {
     return Array.from(new Set(this.regionTable.map(r => r.region))).filter(Boolean);

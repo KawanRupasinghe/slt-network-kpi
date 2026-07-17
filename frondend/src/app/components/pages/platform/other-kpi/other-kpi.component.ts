@@ -5,13 +5,9 @@ import { RegionService, Region } from '../../../../services/region.service';
 import { TelemetryService } from '../../../../services/telemetry.service';
 import { PowerAndACService, PowerAndACRecord } from '../../../../services/power-and-ac.service';
 import { AuthService } from '../../../../services/auth.service';
+import { FilterUtils } from '../../../../utils/filter.utils';
 
-const MONTH_OPTIONS = [
-  { value: 1, label: 'January' }, { value: 2, label: 'February' }, { value: 3, label: 'March' },
-  { value: 4, label: 'April' }, { value: 5, label: 'May' }, { value: 6, label: 'June' },
-  { value: 7, label: 'July' }, { value: 8, label: 'August' }, { value: 9, label: 'September' },
-  { value: 10, label: 'October' }, { value: 11, label: 'November' }, { value: 12, label: 'December' }
-];
+
 
 const AREA_MAPPING: Record<string, string> = {
   cenhkmd: 'CEN/HK/MD', gqkintb: 'GQ / KI / NTB', ndfrm: 'ND / RM',
@@ -64,8 +60,8 @@ export class OtherKpiComponent implements OnInit {
   pacError: string | null = null;
   pacRows: PowerAndACRecord[] = [];
 
-  readonly monthOptions = MONTH_OPTIONS;
-  readonly yearOptions: number[] = this.buildYears();
+  get monthOptions() { return FilterUtils.getMonthOptions(this.pacYear); }
+  yearOptions: number[] = FilterUtils.generateYearOptions();
 
   constructor(
     private regionService: RegionService,
@@ -84,7 +80,7 @@ export class OtherKpiComponent implements OnInit {
   // ── Computed ──
 
   get telMonthLabel(): string {
-    return MONTH_OPTIONS.find(m => m.value === this.telMonth)?.label ?? '';
+    return this.monthOptions.find(m => m.value === this.telMonth)?.label ?? '';
   }
 
   // ── Filter handlers ──
@@ -274,15 +270,12 @@ export class OtherKpiComponent implements OnInit {
   }
 
   getMonthLabel(month: number): string {
-    return MONTH_OPTIONS.find(m => m.value === month)?.label?.substring(0, 3) ?? String(month);
+    return this.monthOptions.find(m => m.value === month)?.label?.substring(0, 3) ?? String(month);
   }
 
   private norm(s: string): string {
     return s ? s.replace(/[^A-Za-z0-9]/g, '').toLowerCase() : '';
   }
 
-  private buildYears(): number[] {
-    const cur = new Date().getFullYear();
-    return [cur + 1, cur, cur - 1, cur - 2];
-  }
+
 }

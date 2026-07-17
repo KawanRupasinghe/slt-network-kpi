@@ -16,7 +16,8 @@ import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { Subscription } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { AnalyticsResultApi, AnalyticsService } from '../../../services/analytics.service';
+import { AnalyticsService } from '../../../services/analytics.service';
+import { FilterUtils } from '../../../utils/filter.utils';
 import { Region as RegionApi, RegionService } from '../../../services/region.service';
 
 type Region = {
@@ -91,8 +92,8 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedEndMonth: number;
   activeView: 'table' | 'dashboard' = 'table';
 
-  monthOptions: { value: number; label: string }[] = [];
-  yearOptions: number[] = [];
+  get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
+  yearOptions: number[] = FilterUtils.generateYearOptions();
 
   loading = false;
   error: string | null = null;
@@ -138,20 +139,6 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedStartMonth = 1;
     this.selectedEndMonth = now.getMonth() + 1;
 
-    this.monthOptions = [
-      { value: 1, label: 'January' },
-      { value: 2, label: 'February' },
-      { value: 3, label: 'March' },
-      { value: 4, label: 'April' },
-      { value: 5, label: 'May' },
-      { value: 6, label: 'June' },
-      { value: 7, label: 'July' },
-      { value: 8, label: 'August' },
-      { value: 9, label: 'September' },
-      { value: 10, label: 'October' },
-      { value: 11, label: 'November' },
-      { value: 12, label: 'December' }
-    ];
 
     const available = this.getAvailableMonths(this.selectedYear);
     if (!available.find(m => m.value === this.selectedStartMonth)) {
@@ -164,15 +151,16 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.analyticsService.getAvailableYears().subscribe({
-      next: (years) => {
-        this.yearOptions = years.length ? years : [this.selectedYear];
+      next: (years: number[]) => {
+        const generated = FilterUtils.generateYearOptions();
+        this.yearOptions = generated;
         if (!this.yearOptions.includes(this.selectedYear)) {
           this.selectedYear = this.yearOptions[0];
         }
         this.loadRegions();
       },
-      error: () => {
-        this.yearOptions = [this.selectedYear];
+      error: (err: any) => {
+        this.yearOptions = FilterUtils.generateYearOptions();
         this.loadRegions();
       }
     });
@@ -204,10 +192,13 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedYear = Number(year);
     const available = this.getAvailableMonths(this.selectedYear);
     if (!available.find(m => m.value === this.selectedStartMonth)) {
-      this.selectedStartMonth = available[0].value;
+      this.selectedStartMonth = available[0]?.value ?? this.selectedStartMonth;
     }
     if (!available.find(m => m.value === this.selectedEndMonth)) {
-      this.selectedEndMonth = available[0].value;
+      this.selectedEndMonth = available[available.length - 1]?.value ?? this.selectedEndMonth;
+    }
+    if (this.selectedStartMonth > this.selectedEndMonth) {
+      this.selectedEndMonth = this.selectedStartMonth;
     }
   }
 
@@ -224,10 +215,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getAvailableMonths(year: number): { value: number; label: string }[] {
-    if (year === 2026) {
-      return this.monthOptions.filter(m => m.value >= 4);
-    }
-    return this.monthOptions;
+    return FilterUtils.getMonthOptions(year);
   }
 
   getMonthLabel(monthValue: number): string {
@@ -245,10 +233,10 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.analyticsService.getCumulativeAnalytics(this.selectedYear, this.selectedStartMonth, this.selectedEndMonth)
       .subscribe({
-        next: (results) => {
+        next: (results: any[]) => {
           // Reset existing metrics to 0 first
           this.kpiRows.forEach(row => {
-            row.metrics.forEach(m => {
+            row.metrics.forEach((m: any) => {
               m.achieved = 0;
               m.maximumPoints = 0;
               m.pointsAchieved = 0;
@@ -264,8 +252,8 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
             this.engineersFlat.forEach((eng, idx) => {
                leaToIndex.set(normalizeArea(eng.lea), idx);
             });
-
-            results.forEach(apiResult => {
+            // Map API results
+            results.forEach((apiResult: any) => {
                const row = this.kpiRows.find(r => r.id === apiResult.kpiDefinitionId);
                if (row) {
                   const idx = leaToIndex.get(normalizeArea(apiResult.areaCode));
@@ -285,7 +273,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
           this.loading = false;
           this.cdr.detectChanges();
         },
-        error: (err) => {
+        error: (err: any) => {
           console.error('Failed loading analytics results:', err);
           this.error = 'Unable to load analytics results from backend.';
           this.noOverallResults = true;
@@ -327,7 +315,7 @@ return {
         this.buildRegionGrouping();
         this.loadKpiDefinitions();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Failed loading regions:', err);
         this.error = 'Unable to load regions from backend.';
         this.regions = [];
@@ -434,7 +422,7 @@ return {
         this.loading = false;
         this.cdr.detectChanges();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Failed loading final table KPI rows:', err);
         this.error = 'Unable to load KPI rows from backend.';
         this.noDefinitions = true;
@@ -579,8 +567,330 @@ getDashboardProgressPercent(percent: number): number {
     this.cdr.detectChanges();
   }
 
-  exportToExcel(): void {
-    console.log('Export button clicked - analytics scaffold');
+  async exportToExcel(): Promise<void> {
+    if (this.kpiRows.length === 0 || this.noOverallResults) {
+      console.warn('No KPI data is available for download for the selected period.');
+      return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Analytics KPI');
+
+    // Define colors matching your UI
+    const headerBgColor = '0057A6'; // SLT Blue
+    const headerTextColor = 'FFFFFF'; // White
+    const altRowBgColor = 'E2EDFF'; // Light blue
+    const totalRowBgColor = '02B28C'; // SLT Teal
+    const borderColor = 'D1D5DB'; // Gray border
+
+    // Starting column for left table
+    let currentCol = 1;
+
+    // ===== LEFT TABLE: KPI DEFINITIONS =====
+    // Header row 1: R-GM
+    const rgmCell = worksheet.getCell(1, currentCol);
+    rgmCell.value = 'R-GM';
+    rgmCell.font = { bold: true, color: { argb: headerTextColor }, size: 12 };
+    rgmCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
+    rgmCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    worksheet.mergeCells(1, currentCol, 1, currentCol + 6);
+
+    // Header row 2: P-DGM
+    const pdgmCell = worksheet.getCell(2, currentCol);
+    pdgmCell.value = 'P-DGM';
+    pdgmCell.font = { bold: true, color: { argb: headerTextColor }, size: 12 };
+    pdgmCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
+    pdgmCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    worksheet.mergeCells(2, currentCol, 2, currentCol + 6);
+
+    // Header row 3: NW EE/RTOM AREA
+    const nwCell = worksheet.getCell(3, currentCol);
+    nwCell.value = 'NW EE/RTOM AREA';
+    nwCell.font = { bold: true, color: { argb: headerTextColor }, size: 12 };
+    nwCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
+    nwCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    worksheet.mergeCells(3, currentCol, 3, currentCol + 6);
+
+    // Column headers row 4
+    const leftHeaders = ['Perspectives', 'Category', 'Key Performance Indicators (KPI)', 'Target', 'Weightage', 'Points Applicable', 'Total KPI Percentage'];
+    leftHeaders.forEach((header, idx) => {
+      const cell = worksheet.getCell(4, currentCol + idx);
+      cell.value = header;
+      cell.font = { bold: true, color: { argb: headerTextColor }, size: 10 };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      cell.border = {
+        top: { style: 'thin', color: { argb: borderColor } },
+        bottom: { style: 'thin', color: { argb: borderColor } },
+        left: { style: 'thin', color: { argb: borderColor } },
+        right: { style: 'thin', color: { argb: borderColor } }
+      };
+    });
+
+    // Set column widths for left table
+    worksheet.getColumn(currentCol).width = 18;     // Perspectives
+    worksheet.getColumn(currentCol + 1).width = 25; // Category
+    worksheet.getColumn(currentCol + 2).width = 35; // KPI
+    worksheet.getColumn(currentCol + 3).width = 20; // Target
+    worksheet.getColumn(currentCol + 4).width = 12; // Weightage
+    worksheet.getColumn(currentCol + 5).width = 15; // Points Applicable
+    worksheet.getColumn(currentCol + 6).width = 20; // Total KPI Percentage
+
+    // Data rows
+    let currentRow = 5;
+    this.kpiRows.forEach((row, idx) => {
+      const isAltRow = idx % 2 === 1;
+      const rowData = [
+        row.perspectives,
+        row.category,
+        row.kpi,
+        row.target,
+        this.getComputedWeightage(row),
+        row.pointsApplicable,
+        Number(this.getTotalKpiPercentage(row).toFixed(2))
+      ];
+
+      rowData.forEach((value, colIdx) => {
+        const cell = worksheet.getCell(currentRow, currentCol + colIdx);
+        cell.value = value;
+        if (colIdx === 6) {
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.numFmt = '0.00"%"';
+        } else {
+          cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        }
+        if (isAltRow) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: altRowBgColor } };
+        }
+        cell.border = {
+          top: { style: 'thin', color: { argb: borderColor } },
+          bottom: { style: 'thin', color: { argb: borderColor } },
+          left: { style: 'thin', color: { argb: borderColor } },
+          right: { style: 'thin', color: { argb: borderColor } }
+        };
+        if (colIdx === 2) { // KPI column
+          cell.font = { bold: true };
+        }
+      });
+      currentRow++;
+    });
+
+    // Total Marks row
+    const totalCell1 = worksheet.getCell(currentRow, currentCol);
+    totalCell1.value = 'Total Marks';
+    totalCell1.font = { bold: true, color: { argb: headerTextColor } };
+    totalCell1.alignment = { horizontal: 'right', vertical: 'middle' };
+    totalCell1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
+    worksheet.mergeCells(currentRow, currentCol, currentRow, currentCol + 4);
+
+    const totalCell2 = worksheet.getCell(currentRow, currentCol + 5);
+    totalCell2.value = this.totalPointsApplicable;
+    totalCell2.font = { bold: true, color: { argb: headerTextColor } };
+    totalCell2.alignment = { horizontal: 'center', vertical: 'middle' };
+    totalCell2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
+
+    const totalCell3 = worksheet.getCell(currentRow, currentCol + 6);
+    totalCell3.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
+    totalCell3.border = {
+      top: { style: 'thin', color: { argb: borderColor } },
+      bottom: { style: 'thin', color: { argb: borderColor } },
+      left: { style: 'thin', color: { argb: borderColor } },
+      right: { style: 'thin', color: { argb: borderColor } }
+    };
+    currentRow++;
+
+    // KPI label row
+    const kpiLabelCell = worksheet.getCell(currentRow, currentCol);
+    kpiLabelCell.value = 'KPI';
+    kpiLabelCell.font = { bold: true };
+    kpiLabelCell.alignment = { horizontal: 'right', vertical: 'middle' };
+    kpiLabelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F3F4F6' } };
+    worksheet.mergeCells(currentRow, currentCol, currentRow, currentCol + 4);
+
+    const kpiLabelCell2 = worksheet.getCell(currentRow, currentCol + 5);
+    kpiLabelCell2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F3F4F6' } };
+    kpiLabelCell2.border = {
+      top: { style: 'thin', color: { argb: borderColor } },
+      bottom: { style: 'thin', color: { argb: borderColor } },
+      left: { style: 'thin', color: { argb: borderColor } },
+      right: { style: 'thin', color: { argb: borderColor } }
+    };
+
+    const kpiLabelCell3 = worksheet.getCell(currentRow, currentCol + 6);
+    kpiLabelCell3.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F3F4F6' } };
+    kpiLabelCell3.border = {
+      top: { style: 'thin', color: { argb: borderColor } },
+      bottom: { style: 'thin', color: { argb: borderColor } },
+      left: { style: 'thin', color: { argb: borderColor } },
+      right: { style: 'thin', color: { argb: borderColor } }
+    };
+    currentRow++;
+
+    // ===== RIGHT TABLE: REGION PERFORMANCE =====
+    currentCol = 8; // Start after left table columns
+    currentRow = 1;
+
+    // Region headers
+    this.regionGroups.forEach(region => {
+      const startCol = currentCol;
+      const regionCell = worksheet.getCell(currentRow, startCol);
+      regionCell.value = this.formatHeaderLabel(region.region);
+      regionCell.font = { bold: true, color: { argb: headerTextColor }, size: 12 };
+      regionCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
+      regionCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.mergeCells(currentRow, startCol, currentRow, startCol + (region.totalEngineers * 3) - 1);
+      currentCol += region.totalEngineers * 3;
+    });
+
+    // Province headers
+    currentCol = 8;
+    currentRow = 2;
+    this.regionGroups.forEach(region => {
+      region.provinces.forEach(province => {
+        const startCol = currentCol;
+        const provCell = worksheet.getCell(currentRow, startCol);
+        provCell.value = this.formatHeaderLabel(province.province);
+        provCell.font = { bold: true, color: { argb: headerTextColor }, size: 11 };
+        provCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
+        provCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        worksheet.mergeCells(currentRow, startCol, currentRow, startCol + (province.engineers.length * 3) - 1);
+        currentCol += province.engineers.length * 3;
+      });
+    });
+
+    // Network Engineer headers
+    currentCol = 8;
+    currentRow = 3;
+    this.engineersFlat.forEach(eng => {
+      const startCol = currentCol;
+      const engCell = worksheet.getCell(currentRow, startCol);
+      engCell.value = this.getEngineerHeaderLabel(eng);
+      engCell.font = { bold: true, color: { argb: headerTextColor }, size: 10 };
+      engCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
+      engCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      worksheet.mergeCells(currentRow, startCol, currentRow, startCol + 2);
+      currentCol += 3;
+    });
+
+    // Column sub-headers (Achieved KPI, Maximum Points, Points Achieved)
+    currentCol = 8;
+    currentRow = 4;
+    this.engineersFlat.forEach(() => {
+      const headers = ['Achieved KPI', 'Maximum Points Per KPI', 'Points Achieved'];
+      headers.forEach(header => {
+        const cell = worksheet.getCell(currentRow, currentCol);
+        cell.value = header;
+        cell.font = { bold: true, color: { argb: headerTextColor }, size: 9 };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        cell.border = {
+          top: { style: 'thin', color: { argb: borderColor } },
+          bottom: { style: 'thin', color: { argb: borderColor } },
+          left: { style: 'thin', color: { argb: borderColor } },
+          right: { style: 'thin', color: { argb: borderColor } }
+        };
+        worksheet.getColumn(currentCol).width = 12;
+        currentCol++;
+      });
+    });
+
+    // Data rows for right table
+    currentRow = 5;
+    this.kpiRows.forEach((row, idx) => {
+      const isAltRow = idx % 2 === 1;
+      currentCol = 8;
+
+      row.metrics.forEach(metric => {
+        const achievedCell = worksheet.getCell(currentRow, currentCol);
+        achievedCell.value = Number((metric.achieved).toFixed(2));
+        achievedCell.numFmt = '0.00"%"';
+        achievedCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        if (isAltRow) achievedCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: altRowBgColor } };
+        achievedCell.border = {
+          top: { style: 'thin', color: { argb: borderColor } },
+          bottom: { style: 'thin', color: { argb: borderColor } },
+          left: { style: 'thin', color: { argb: borderColor } },
+          right: { style: 'thin', color: { argb: borderColor } }
+        };
+
+        const maxPointsCell = worksheet.getCell(currentRow, currentCol + 1);
+        maxPointsCell.value = Number(metric.maximumPoints.toFixed(4));
+        maxPointsCell.numFmt = '0.0000';
+        maxPointsCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        if (isAltRow) maxPointsCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: altRowBgColor } };
+        maxPointsCell.border = {
+          top: { style: 'thin', color: { argb: borderColor } },
+          bottom: { style: 'thin', color: { argb: borderColor } },
+          left: { style: 'thin', color: { argb: borderColor } },
+          right: { style: 'thin', color: { argb: borderColor } }
+        };
+
+        const pointsAchCell = worksheet.getCell(currentRow, currentCol + 2);
+        pointsAchCell.value = Number(metric.pointsAchieved.toFixed(4));
+        pointsAchCell.numFmt = '0.0000';
+        pointsAchCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        if (isAltRow) pointsAchCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: altRowBgColor } };
+        pointsAchCell.border = {
+          top: { style: 'thin', color: { argb: borderColor } },
+          bottom: { style: 'thin', color: { argb: borderColor } },
+          left: { style: 'thin', color: { argb: borderColor } },
+          right: { style: 'thin', color: { argb: borderColor } }
+        };
+
+        currentCol += 3;
+      });
+      currentRow++;
+    });
+
+    // Summary row (totals)
+    currentCol = 8;
+    this.totalPointsAchievedByRegion.forEach((total, idx) => {
+      const emptyCell = worksheet.getCell(currentRow, currentCol);
+      emptyCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
+
+      const maxCell = worksheet.getCell(currentRow, currentCol + 1);
+      maxCell.value = Number(this.totalMaximumPointsByRegion[idx].toFixed(4));
+      maxCell.numFmt = '0.0000';
+      maxCell.font = { bold: true, color: { argb: headerTextColor } };
+      maxCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      maxCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
+
+      const totalCell = worksheet.getCell(currentRow, currentCol + 2);
+      totalCell.value = Number(total.toFixed(4));
+      totalCell.numFmt = '0.0000';
+      totalCell.font = { bold: true, color: { argb: headerTextColor } };
+      totalCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      totalCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
+
+      currentCol += 3;
+    });
+    currentRow++;
+
+    // Normalized percentage row
+    currentCol = 8;
+    this.totalPointsNormalized.forEach(norm => {
+      const emptyCell1 = worksheet.getCell(currentRow, currentCol);
+      emptyCell1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
+
+      const emptyCell2 = worksheet.getCell(currentRow, currentCol + 1);
+      emptyCell2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
+
+      const normCell = worksheet.getCell(currentRow, currentCol + 2);
+      normCell.value = Number(norm.toFixed(2));
+      normCell.numFmt = '0.00"%"';
+      normCell.font = { bold: true, color: { argb: headerTextColor } };
+      normCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      normCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
+
+      currentCol += 3;
+    });
+
+    // Generate and download
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const startLabel = this.getMonthLabel(this.selectedStartMonth) || 'Start';
+    const endLabel = this.getMonthLabel(this.selectedEndMonth) || 'End';
+    saveAs(blob, `Analytics_KPI_${startLabel}_to_${endLabel}_${this.selectedYear}.xlsx`);
   }
 
   getComputedWeightage(row: KpiRow): string {

@@ -77,6 +77,7 @@ type ApiResponse = {
 };
 
 import { AuthService } from '../../../../services/auth.service';
+import { FilterUtils } from '../../../../utils/filter.utils';
 
 @Component({
   selector: 'app-routine-mtnc',
@@ -135,27 +136,9 @@ export class RoutineMtncComponent implements OnInit {
 
   selectedMonth: number = this.now.getMonth() + 1;   // 1-indexed (1 = January)
   selectedYear: number = this.now.getFullYear();
-
-  readonly monthOptions: { value: number; label: string }[] = [
-    { value: 1, label: 'January' },
-    { value: 2, label: 'February' },
-    { value: 3, label: 'March' },
-    { value: 4, label: 'April' },
-    { value: 5, label: 'May' },
-    { value: 6, label: 'June' },
-    { value: 7, label: 'July' },
-    { value: 8, label: 'August' },
-    { value: 9, label: 'September' },
-    { value: 10, label: 'October' },
-    { value: 11, label: 'November' },
-    { value: 12, label: 'December' }
-  ];
-
-  yearOptions: number[] = [
-    this.now.getFullYear(),
-    this.now.getFullYear() - 1,
-    this.now.getFullYear() - 2
-  ];
+  private periodLockedByUser = false;
+  get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
+  yearOptions: number[] = FilterUtils.generateYearOptions();
 
   /* -------------------- */
 

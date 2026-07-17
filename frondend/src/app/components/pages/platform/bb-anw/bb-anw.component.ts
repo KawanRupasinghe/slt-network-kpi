@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../../services/auth.service';
 import { BbAnwDto, BbAnwService } from '../../../../services/bb-anw.service';
 import { Region, RegionService } from '../../../../services/region.service';
+import { FilterUtils } from '../../../../utils/filter.utils';
 import * as ExcelJS from 'exceljs';
 import { firstValueFrom } from 'rxjs';
 
@@ -114,21 +115,8 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 
 	selectedYear: number = new Date().getFullYear();
 	selectedMonth: number = new Date().getMonth() + 1;
-	yearOptions: number[] = [];
-	readonly monthOptions: Array<{ label: string; value: number }> = [
-		{ value: 1, label: 'January' },
-		{ value: 2, label: 'February' },
-		{ value: 3, label: 'March' },
-		{ value: 4, label: 'April' },
-		{ value: 5, label: 'May' },
-		{ value: 6, label: 'June' },
-		{ value: 7, label: 'July' },
-		{ value: 8, label: 'August' },
-		{ value: 9, label: 'September' },
-		{ value: 10, label: 'October' },
-		{ value: 11, label: 'November' },
-		{ value: 12, label: 'December' },
-	];
+	yearOptions: number[] = FilterUtils.generateYearOptions();
+	get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
 
 	editCell: EditCellState = {
 		rowId: null,
@@ -498,7 +486,6 @@ private updateDropdown3Options(province: string): void {
 	private initializePeriodDefaults(): void {
 		const now = new Date();
 		const currentYear = now.getFullYear();
-		this.yearOptions = [currentYear - 2, currentYear - 1, currentYear];
 		const previous = new Date(currentYear, now.getMonth() - 1, 1);
 		this.selectedYear = previous.getFullYear();
 		this.selectedMonth = previous.getMonth() + 1;
