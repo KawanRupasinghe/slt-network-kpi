@@ -111,7 +111,7 @@
             (change)="onDropdownChange('dropdown4', $any($event.target)?.value || '')">
             <option value="">Select an option</option>
             <option *ngFor="let area of dropdown4Options" [value]="area">
-              {{ optionMapping[area] || area }}
+              {{ area }}
             </option>
           </select>
         </div>
@@ -136,8 +136,7 @@
       <div class="filter-chip">
         <span class="filter-label">RTOM AREA:</span>
         <span class="filter-value">
-          {{ formValues.dropdown4 ? (optionMapping[formValues.dropdown4] || formValues.dropdown4) : 'Select an option'
-          }}
+          {{ formValues.dropdown4 ? formValues.dropdown4 : 'Select an option' }}
         </span>
       </div>
     </div>
@@ -153,7 +152,7 @@
       <div class="card-body p-0">
         <div *ngIf="isEditingAllowed" class="edit-mode-banner">
           <i class="bi bi-pencil-square me-2"></i>
-          Inline editing enabled for {{ optionMapping[formValues.dropdown4] || formValues.dropdown4 }}.
+          Inline editing enabled for {{ formValues.dropdown4 }}.
            Click KPI Value to enter a numeric value and press Enter to save.
         </div>
         <div class="table-responsive" *ngIf="data.length > 0; else noKpiData">
@@ -162,7 +161,7 @@
               <thead class="table-dark">
                 <tr>
                   <th *ngFor="let column of columns">
-                    {{ headerMapping[column] || optionMapping[column] || column }}
+                    {{ headerMapping[column] || column }}
                   </th>
                 </tr>
               </thead>

@@ -8,6 +8,7 @@ import { catchError, map } from 'rxjs/operators';
 import { OtnOp1Service, OtnOpKpi, OtnOp1Metric } from '../../../../services/otn-op1.service';
 import { OtnOp2Service, OtnOp2Metric } from '../../../../services/otn-op2.service';
 import { RegionService, Region } from '../../../../services/region.service';
+import { FilterUtils } from '../../../../utils/filter.utils';
 
 
 
@@ -127,21 +128,8 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 
 	selectedYear: number = new Date().getFullYear();
 	selectedMonth: number = new Date().getMonth() + 1;
-	yearOptions: number[] = [];
-	monthOptions: { value: number; label: string }[] = [
-		{ value: 1, label: 'January' },
-		{ value: 2, label: 'February' },
-		{ value: 3, label: 'March' },
-		{ value: 4, label: 'April' },
-		{ value: 5, label: 'May' },
-		{ value: 6, label: 'June' },
-		{ value: 7, label: 'July' },
-		{ value: 8, label: 'August' },
-		{ value: 9, label: 'September' },
-		{ value: 10, label: 'October' },
-		{ value: 11, label: 'November' },
-		{ value: 12, label: 'December' },
-	];
+	yearOptions: number[] = FilterUtils.generateYearOptions();
+	get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
 
 	editCell: EditCellState = {
 		rowId: null,
@@ -192,12 +180,8 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 ngOnInit(): void {
 		this.buildFriendlyMap();
 		
-		// Initialize year options (last 3 years)
-		const currentYear = new Date().getFullYear();
-		this.yearOptions = [currentYear - 2, currentYear - 1, currentYear];
-		
 		// Set default to previous month
-		const prevMonth = new Date(currentYear, new Date().getMonth() - 1, 1);
+		const prevMonth = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
 		this.selectedYear = prevMonth.getFullYear();
 		this.selectedMonth = prevMonth.getMonth() + 1;
 		

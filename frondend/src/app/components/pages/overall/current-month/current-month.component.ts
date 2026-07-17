@@ -20,6 +20,7 @@ import { Region as RegionApi, RegionService } from '../../../../services/region.
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import * as XLSX from 'xlsx';
 import { ToastrService } from 'ngx-toastr';
+import { FilterUtils } from '../../../../utils/filter.utils';
 
 type Region = {
   id: number;
@@ -102,7 +103,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
 
   selectedMonth: number;
   selectedYear: number;
-  monthOptions: { value: number; label: string }[] = [];
+  get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
   yearOptions: number[] = [];
 
   loading = false;
@@ -160,24 +161,8 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedMonth = now.getMonth() + 1;
     this.selectedYear = now.getFullYear();
 
-    // Generate month options
-    this.monthOptions = [
-      { value: 1, label: 'January' },
-      { value: 2, label: 'February' },
-      { value: 3, label: 'March' },
-      { value: 4, label: 'April' },
-      { value: 5, label: 'May' },
-      { value: 6, label: 'June' },
-      { value: 7, label: 'July' },
-      { value: 8, label: 'August' },
-      { value: 9, label: 'September' },
-      { value: 10, label: 'October' },
-      { value: 11, label: 'November' },
-      { value: 12, label: 'December' }
-    ];
-
-    // Generate year options (current year first)
-    this.yearOptions = [this.currentYear, this.currentYear - 1, this.currentYear - 2];
+    // Generate year options
+    this.yearOptions = FilterUtils.generateYearOptions();
 
     this.syncDisplayedPeriod();
   }

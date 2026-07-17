@@ -12,6 +12,7 @@ import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, PLATFORM_ID } 
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { FilterUtils } from '../../utils/filter.utils';
 
 
 interface MeterData {
@@ -117,21 +118,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   selectedYear = this.now.getFullYear();
 
 
-  monthOptions: { value: number; label: string }[] = [
-    { value: 1, label: 'January' },
-    { value: 2, label: 'February' },
-    { value: 3, label: 'March' },
-    { value: 4, label: 'April' },
-    { value: 5, label: 'May' },
-    { value: 6, label: 'June' },
-    { value: 7, label: 'July' },
-    { value: 8, label: 'August' },
-    { value: 9, label: 'September' },
-    { value: 10, label: 'October' },
-    { value: 11, label: 'November' },
-    { value: 12, label: 'December' }
-  ];
-  yearOptions: number[] = [this.selectedYear, this.selectedYear - 1, this.selectedYear - 2];
+  get monthOptions(): { label: string; value: number }[] { return FilterUtils.getMonthOptions(this.selectedYear); }
+  yearOptions: number[] = FilterUtils.generateYearOptions();
 
   regions: RegionData[] = [];
   totals: TotalsData = {};
@@ -168,7 +156,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   get currentMonthLabel(): string {
-    const found = this.monthOptions.find((m) => m.value === this.selectedMonth);
+    const found = this.monthOptions.find((m: { label: string; value: number }) => m.value === this.selectedMonth);
     return found ? found.label : '';
   }
 
@@ -186,6 +174,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   onYearChange(year: number): void {
     this.selectedYear = Number(year);
+    const available = this.monthOptions;
+    if (!available.find(m => m.value === this.selectedMonth)) {
+      this.selectedMonth = available[0]?.value ?? this.selectedMonth;
+    }
     this.loadDashboardData();
   }
 

@@ -6,6 +6,7 @@ import * as XLSX from 'xlsx';
 import { ServiceFulfilmentKpiDto, ServiceFulfilmentKpiService, ServiceFulfilmentMetricDto, UpsertServiceFulfilmentMetricRequest } from '../../../../services/service-fulfilment-kpi.service';
 import { RegionService, Region } from '../../../../services/region.service';
 import { AuthService } from '../../../../services/auth.service';
+import { FilterUtils } from '../../../../utils/filter.utils';
 
 interface KpiData {
   _id: { $oid: string } | number;
@@ -101,35 +102,6 @@ export class ServiceFulfilmentComponent implements OnInit {
     kpiValue: 'KPI Value'
   };
 
-  optionMapping: { [key: string]: string } = {
-    CENHK: 'CEN/HK',
-    CENMD: 'CEN/MD',
-    GQKINTB: 'GQ/KI/NTB',
-    NDRM: 'ND/RM',
-    AWHO: 'AW/HO',
-    KONKX: 'KON/KX',
-    KONIX: 'KON/KX',
-    NGWT: 'NG/WT',
-    NGIVT: 'NG/WT',
-    KGKLY: 'KG/KLY',
-    CWPX: 'CW/PX',
-    KYMT: 'KY/MT',
-    GPHTNW: 'GP/HT/NW',
-    ADPR: 'AD/PR',
-    ADIPR: 'AD/PR',
-    BDBWMRG: 'BD/BW/MRG',
-    BDDWMRG: 'BD/BW/MRG',
-    KERN: 'KE/RN',
-    KEIRN: 'KE/RN',
-    EMBHBMH: 'EMB/HB/MH',
-    EMBMBMH: 'EMB/HB/MH',
-    AGGL: 'AG/GL',
-    HRKTPH: 'HR/KT/PH',
-    BCAPKLTC: 'BC/AP/KL/TC',
-    BCJRDKLTC: 'BC/AP/KL/TC',
-    JA: 'JA',
-    KOMLTMBVA: 'KO/MLT/MB/VA'
-  };
 
   metricsRows: ServiceFulfilmentMetricDto[] = [];
   metricsLoading = false;
@@ -138,47 +110,9 @@ export class ServiceFulfilmentComponent implements OnInit {
   selectedMonth = new Date().getMonth() + 1;
   selectedYear = new Date().getFullYear();
   private periodLockedByUser = false;
-  readonly monthOptions = [
-    { value: 1, label: 'January' },
-    { value: 2, label: 'February' },
-    { value: 3, label: 'March' },
-    { value: 4, label: 'April' },
-    { value: 5, label: 'May' },
-    { value: 6, label: 'June' },
-    { value: 7, label: 'July' },
-    { value: 8, label: 'August' },
-    { value: 9, label: 'September' },
-    { value: 10, label: 'October' },
-    { value: 11, label: 'November' },
-    { value: 12, label: 'December' }
-  ];
+  get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
   yearOptions: number[] = [];
 
-  // Region data (simplified for now - in real app, this would come from API)
-  //fallback values
-  regionData: RegionData[] = [
-    { id: 1, region: 'metro', province: 'metro 1', networkEngineer: 'NW/WPC1', lea: 'CEN/HK' },
-    { id: 2, region: 'metro', province: 'metro 1', networkEngineer: 'NW/WPC2', lea: 'CEN/MD' },
-    { id: 3, region: 'metro', province: 'metro 1', networkEngineer: 'NW/WPE', lea: 'KON/KX' },
-    { id: 4, region: 'metro', province: 'metro 2', networkEngineer: 'NW/WP S-W', lea: 'ND/RM' },
-    { id: 5, region: 'metro', province: 'metro 2', networkEngineer: 'NW/WP S-E', lea: 'AW/HO' },
-    { id: 6, region: 'metro', province: 'metro 2', networkEngineer: 'NW/WPE', lea: 'KON/KX' },
-    { id: 7, region: 'Region01', province: 'WPN', networkEngineer: 'NW/WPN', lea: 'NG/WT' },
-    { id: 8, region: 'Region01', province: 'WPN', networkEngineer: 'NW/WP N-E', lea: 'GQ/KI/NTB' },
-    { id: 9, region: 'Region01', province: 'NWP', networkEngineer: 'NW/NWP-E', lea: 'KG/KLY' },
-    { id: 10, region: 'Region01', province: 'NWP', networkEngineer: 'NW/NWP-W', lea: 'CW/PX' },
-    { id: 11, region: 'Region01', province: 'CP', networkEngineer: 'NW/CPN', lea: 'KY/MT' },
-    { id: 12, region: 'Region01', province: 'CP', networkEngineer: 'NW/CPS', lea: 'GP/HT/NW' },
-    { id: 13, region: 'Region02', province: 'SAB & UVA', networkEngineer: 'NW/UVA', lea: 'BD/BW/MRG' },
-    { id: 14, region: 'Region02', province: 'SAB & UVA', networkEngineer: 'NW/SAB', lea: 'KE/RN' },
-    { id: 15, region: 'Region02', province: 'SP', networkEngineer: 'NW/SPE', lea: 'EMB/HB/MH' },
-    { id: 16, region: 'Region02', province: 'SP', networkEngineer: 'NW/SPW', lea: 'AG/GL' },
-    { id: 17, region: 'Region02', province: 'WPS', networkEngineer: 'WPS', lea: 'HR/KT/PH' },
-    { id: 18, region: 'Region03', province: 'EP', networkEngineer: 'NW/EP', lea: 'BC/AP/KL/TC' },
-    { id: 19, region: 'Region03', province: 'NP', networkEngineer: 'NW/NP-1', lea: 'JA' },
-    { id: 20, region: 'Region03', province: 'NP', networkEngineer: 'NW/NP-2', lea: 'KO/MLT/MB/VA' },
-    { id: 6002, region: 'Region 3', province: 'NP', networkEngineer: 'NW/NCP', lea: 'AD/PR' }
-  ];
 
   constructor(
     private toastr: ToastrService,
@@ -187,7 +121,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {
-    this.yearOptions = this.generateYearOptions();
+    this.yearOptions = FilterUtils.generateYearOptions();
   }
 
   toggleRoleSimulation() {
@@ -292,11 +226,11 @@ export class ServiceFulfilmentComponent implements OnInit {
           lea: item.lea ?? item.leacode ?? item.leaCode ?? item.LEA ?? '',
           engName: item.engName ?? item.EngName ?? item.engname ?? ''
         }));
-        this.regionTable = mapped.length ? mapped : [...this.regionData];
+        this.regionTable = mapped;
       },
       error: (err) => {
-        console.error('Failed to fetch region table from API, using local fallback:', err);
-        this.regionTable = [...this.regionData];
+        console.error('Failed to fetch region table from API:', err);
+        this.regionTable = [];
       }
     });
   }
@@ -325,22 +259,12 @@ export class ServiceFulfilmentComponent implements OnInit {
     this.isEditingAllowed = roleAllowsEdit;
   }
 
-  private generateYearOptions(span: number = 10): number[] {
-    const currentYear = new Date().getFullYear();
-    const startYear = currentYear - (span - 1);
-    const years: number[] = [];
-    for (let year = startYear; year <= currentYear; year++) {
-      years.push(year);
-    }
-    return years;
-  }
-
   getUniqueRegions(): string[] {
     return Array.from(new Set(this.regionTable.map(r => r.region))).filter(Boolean);
   }
 
   getMonthLabel(value: number): string {
-    const month = this.monthOptions.find(option => option.value === value);
+    const month = this.monthOptions.find((option: { value: number; label: string }) => option.value === value);
     return month?.label ?? `M${value}`;
   }
 
@@ -666,20 +590,6 @@ export class ServiceFulfilmentComponent implements OnInit {
     const normalized = this.normalizeAreaValue(value);
     if (!normalized) {
       return '';
-    }
-
-    const directMatch = Object.keys(this.optionMapping).find(
-      key => this.normalizeAreaValue(key) === normalized
-    );
-    if (directMatch) {
-      return directMatch;
-    }
-
-    const labelMatch = Object.entries(this.optionMapping).find(
-      ([key, label]) => this.normalizeAreaValue(label) === normalized
-    );
-    if (labelMatch) {
-      return labelMatch[0];
     }
 
     return normalized;
@@ -1020,7 +930,7 @@ export class ServiceFulfilmentComponent implements OnInit {
         this.editingCell = { rowId: null, key: null };
         this.activeEditValue = '';
         this.cdr.detectChanges();
-        this.toastr.success(`Saved ${this.optionMapping[areaCode] || areaCode} metric successfully.`, 'Success');
+        this.toastr.success(`Saved ${areaCode} metric successfully.`, 'Success');
         this.loadMetrics();
       },
       error: (err) => {
@@ -1064,7 +974,7 @@ export class ServiceFulfilmentComponent implements OnInit {
         // Add all columns
         this.getColumnsToRender().forEach(col => {
           const value = this.getCellValue(item, col);
-          row[this.headerMapping[col] || this.optionMapping[col] || col] = 
+          row[this.headerMapping[col] || col] = 
             this.nonEditableColumns.includes(col) ? value : this.formatPercent(value);
         });
         
@@ -1115,17 +1025,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     // Sort area keys for consistent display
     const sortedKeys = Array.from(keys).sort();
     
-    // Filter out any keys that are in optionMapping (these are valid area codes)
-    // or ensure all valid area codes from optionMapping that have data are included
-    const validAreaCodes = Object.keys(this.optionMapping);
     const result = new Set<string>();
-    
-    // Add all keys that match valid area codes
-    sortedKeys.forEach(key => {
-      if (validAreaCodes.includes(key) || validAreaCodes.some(code => this.normalizeAreaValue(code) === this.normalizeAreaValue(key))) {
-        result.add(key);
-      }
-    });
     
     // Also add any keys that have actual data (non-null values)
     this.data.forEach(item => {

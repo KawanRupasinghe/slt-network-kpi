@@ -7,6 +7,7 @@ import * as ExcelJS from 'exceljs';
 import { IpNwOpService, IpNwOpKpiDto, IpNwOpMetricPayload, IpNwOpMetric } from '../../../../services/ip-nw-op.service';
 import { RegionService, Region } from '../../../../services/region.service';
 import { AuthService } from '../../../../services/auth.service';
+import { FilterUtils } from '../../../../utils/filter.utils';
 
 
 const AGED_FAILURE_PLATFORM = 'IP_NW_OP';
@@ -66,6 +67,8 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
   // Month/Year selection (current month default)
   selectedMonth: number = new Date().getMonth() + 1; // 1-12
   selectedYear: number = new Date().getFullYear();
+  get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
+  yearOptions: number[] = FilterUtils.generateYearOptions();
 
   // current month days (recalculated when month/year changes)
   daysInMonth: number = this.getDaysInMonth(this.selectedYear, this.selectedMonth);
