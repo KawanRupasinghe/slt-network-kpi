@@ -128,7 +128,7 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 
 	selectedYear: number = new Date().getFullYear();
 	selectedMonth: number = new Date().getMonth() + 1;
-	yearOptions: number[] = FilterUtils.generateYearOptions();
+	yearOptions: number[] = FilterUtils.generatePlatformYearOptions();
 	get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
 
 	editCell: EditCellState = {

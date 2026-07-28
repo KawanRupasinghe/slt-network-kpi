@@ -138,7 +138,7 @@ export class RoutineMtncComponent implements OnInit {
   selectedYear: number = this.now.getFullYear();
   private periodLockedByUser = false;
   get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
-  yearOptions: number[] = FilterUtils.generateYearOptions();
+  yearOptions: number[] = FilterUtils.generatePlatformYearOptions();
 
   /* -------------------- */
 
@@ -337,7 +337,7 @@ export class RoutineMtncComponent implements OnInit {
       if (platformKey === 'msan') endpoint = 'msan-mtc-data';
       else if (platformKey === 'vpn') endpoint = 'ipnw-mtc-data';
       else if (platformKey === 'slbn') endpoint = 'slbn-mtc-data';
-      
+
       if (endpoint) {
         this.http.patch<{ id: number; isVerified: boolean }>(`${environment.apiUrl}/${endpoint}/${id}/toggle-verified`, {}).subscribe({
           next: (res) => {

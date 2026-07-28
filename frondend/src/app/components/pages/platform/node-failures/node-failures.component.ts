@@ -29,7 +29,7 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
 
   selectedMonth: number = new Date().getMonth() + 1;
   selectedYear: number = new Date().getFullYear();
-  yearOptions: number[] = FilterUtils.generateYearOptions();
+  yearOptions: number[] = FilterUtils.generatePlatformYearOptions();
 
   // Filter state
   formValues = {

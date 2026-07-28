@@ -153,7 +153,7 @@ export class EnterpriseKpiComponent implements OnInit {
     private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {
-    this.yearOptions = FilterUtils.generateYearOptions();
+    this.yearOptions = FilterUtils.generatePlatformYearOptions();
   }
 
   ngOnInit() {
