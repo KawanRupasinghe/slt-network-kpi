@@ -26,6 +26,8 @@ type PlatformDetail = {
   column2?: number | string;
   column3?: number | string;
   Column4?: number | string;
+  cumulativeSched?: number | string;      // <-- ADD THIS
+  cumulativeAchieved?: number | string;   // <-- ADD THIS
   id?: number;
   isVerified?: boolean;
 };
@@ -302,8 +304,6 @@ export class RoutineMtncComponent implements OnInit {
     return record.data[key]?.[field]?.toString() ?? 'No data';
   }
 
-
-
   /*getDetailValue(record: PlatformRecord, column: string, field: 'Column2' | 'Column3'): string {
     const detail = record.details?.find(d => d.Column1 === column);
     const val = detail?.[field];
@@ -325,9 +325,6 @@ export class RoutineMtncComponent implements OnInit {
     );
     return key ? record.data[key]?.id : undefined;
   }
-
-
-
 
   toggleVerified(platformKey: PlatformKey, record: PlatformRecord, column: string): void {
     const id = this.getDetailId(record, column);
@@ -433,8 +430,8 @@ export class RoutineMtncComponent implements OnInit {
   private applyCumulativePercentage(result: PlaceholderMap, entry: PlatformRecord): void {
     PLATFORM_COLUMNS.forEach(column => {
       const detail = entry.data?.[column];
-      const cumSched = Number(detail?.column2) || 0; // CumulativeSched
-      const cumAchieved = Number(detail?.column3) || 0; // CumulativeAchieved
+      const cumSched = Number(detail?.cumulativeSched) || 0;
+      const cumAchieved = Number(detail?.cumulativeAchieved) || 0;
       result[column] = cumSched ? ((cumAchieved / cumSched) * 100).toFixed(2) : '0.00';
     });
   }

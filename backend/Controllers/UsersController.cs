@@ -302,7 +302,7 @@ namespace backend.Controllers
             {
                 var users = await _db.Users
                     .Include(u => u.Role)
-                    .Where(u => u.Role.RoleName == "SuperAdmin" || u.Role.RoleName == "Admin")
+                    .Where(u => u.Role != null && (u.Role.RoleName == "SuperAdmin" || u.Role.RoleName == "Admin"))
                     .ToListAsync();
 
                 var allAccess = await _db.UserPageAccess
