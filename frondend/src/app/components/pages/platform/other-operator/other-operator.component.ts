@@ -153,7 +153,7 @@ export class OtherOperatorComponent implements OnInit {
     private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {
-    this.yearOptions = FilterUtils.generateYearOptions();
+    this.yearOptions = FilterUtils.generatePlatformYearOptions();
   }
 
   ngOnInit() {

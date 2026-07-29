@@ -68,7 +68,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
   selectedMonth: number = new Date().getMonth() + 1; // 1-12
   selectedYear: number = new Date().getFullYear();
   get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
-  yearOptions: number[] = FilterUtils.generateYearOptions();
+  yearOptions: number[] = FilterUtils.generatePlatformYearOptions();
 
   // current month days (recalculated when month/year changes)
   daysInMonth: number = this.getDaysInMonth(this.selectedYear, this.selectedMonth);

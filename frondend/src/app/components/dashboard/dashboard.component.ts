@@ -119,7 +119,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
 
   get monthOptions(): { label: string; value: number }[] { return FilterUtils.getMonthOptions(this.selectedYear); }
-  yearOptions: number[] = FilterUtils.generateYearOptions();
+  yearOptions: number[] = [];
 
   regions: RegionData[] = [];
   totals: TotalsData = {};
@@ -161,6 +161,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.yearOptions = FilterUtils.generateYearOptions();
+    if (!this.yearOptions.includes(this.selectedYear)) {
+      this.selectedYear = this.yearOptions[this.yearOptions.length - 1];
+    }
     this.loadDashboardData();
   }
 

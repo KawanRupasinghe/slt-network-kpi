@@ -93,7 +93,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   activeView: 'table' | 'dashboard' = 'table';
 
   get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
-  yearOptions: number[] = FilterUtils.generateYearOptions();
+  yearOptions: number[] = [];
 
   loading = false;
   error: string | null = null;
@@ -152,8 +152,8 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.analyticsService.getAvailableYears().subscribe({
       next: (years: number[]) => {
-        const generated = FilterUtils.generateYearOptions();
-        this.yearOptions = generated;
+        const availableYears = years.length > 0 ? years : FilterUtils.generateYearOptions();
+        this.yearOptions = availableYears;
         if (!this.yearOptions.includes(this.selectedYear)) {
           this.selectedYear = this.yearOptions[0];
         }

@@ -16,11 +16,22 @@ export class FilterUtils {
 
   static generateYearOptions(): number[] {
     const currentYear = new Date().getFullYear();
-    const startYear = Math.max(currentYear - 1, 2026);
     const years: number[] = [];
-    for (let year = startYear; year <= currentYear; year++) {
+    for (let year = 2026; year <= currentYear; year++) {
       years.push(year);
     }
+    return years;
+  }
+
+  static generatePlatformYearOptions(): number[] {
+    const currentYear = new Date().getFullYear();
+    const years: number[] = [];
+
+    if (currentYear === 2026) {
+      return [2026, 2027];
+    }
+
+    years.push(currentYear - 1, currentYear, currentYear + 1);
     return years;
   }
 
@@ -28,7 +39,9 @@ export class FilterUtils {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
 
-    if (selectedYear === 2026) {
+    // Platform rule: when the selected year is 2026, hide Jan/Feb/Mar.
+    // Ensure this is applied even if caller passes string values.
+    if (Number(selectedYear) === 2026) {
       return FilterUtils.allMonths.filter(m => m.value > 3);
     }
 

@@ -61,7 +61,7 @@ export class OtherKpiComponent implements OnInit {
   pacRows: PowerAndACRecord[] = [];
 
   get monthOptions() { return FilterUtils.getMonthOptions(this.pacYear); }
-  yearOptions: number[] = FilterUtils.generateYearOptions();
+  yearOptions: number[] = FilterUtils.generatePlatformYearOptions();
 
   constructor(
     private regionService: RegionService,
