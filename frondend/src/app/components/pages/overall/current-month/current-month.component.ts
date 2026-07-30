@@ -263,7 +263,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
             region: r.region,
             province: r.province,
             networkEngineer: networkEngineer || '—',
-            lea: lea || '—',
+            lea: lea || networkEngineer || '—',
           };
         });
 

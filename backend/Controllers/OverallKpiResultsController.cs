@@ -95,6 +95,26 @@ namespace backend.Controllers
             return Ok(calculated.Select(ToDto).ToList());
         }
 
+        [HttpPost("calculate-range")]
+        [AllowAnonymous]
+        public async Task<ActionResult<List<OverallKpiResultDto>>> CalculateRange(
+            [FromQuery] int year,
+            [FromQuery] int startMonth,
+            [FromQuery] int endMonth)
+        {
+            if (startMonth < 1 || startMonth > 12 || endMonth < 1 || endMonth > 12 || startMonth > endMonth)
+                return BadRequest("Invalid months.");
+
+            var allResults = new List<OverallKpiResultDto>();
+            for (byte m = (byte)startMonth; m <= (byte)endMonth; m++)
+            {
+                var calculated = await CalculateAndPersistAsync(m, (short)year);
+                allResults.AddRange(calculated.Select(ToDto));
+            }
+
+            return Ok(allResults);
+        }
+
         // =========================================================
         // CORE CALCULATION LOGIC
         // Performs end-to-end KPI aggregation and persistence
@@ -206,7 +226,7 @@ namespace backend.Controllers
             // Normalize area codes, prioritizing RegionData if populated
             var dbRegions = await _db.RegionData.AsNoTracking().ToListAsync();
             var normalizedAreas = dbRegions.Any()
-                ? dbRegions.Select(x => NormalizeArea(x.LeaCode)).Where(x => x != string.Empty).Distinct().ToList()
+                ? dbRegions.Select(x => NormalizeArea(string.IsNullOrWhiteSpace(x.LeaCode) ? x.NetworkEngineer : x.LeaCode)).Where(x => x != string.Empty).Distinct().ToList()
                 : allAreaCodes.Select(a => NormalizeArea(a)).Where(x => x != string.Empty).Distinct().ToList();
 
             // Build designation -> area map from region and maintenance tables
@@ -459,7 +479,8 @@ namespace backend.Controllers
 
                 if (kpi.KeyPerformanceIndicators.Contains("Power", StringComparison.OrdinalIgnoreCase)
                     && (kpi.KeyPerformanceIndicators.Contains("Air", StringComparison.OrdinalIgnoreCase)
-                        || kpi.KeyPerformanceIndicators.Contains("AC", StringComparison.OrdinalIgnoreCase)))
+                        || kpi.KeyPerformanceIndicators.Contains("AC", StringComparison.OrdinalIgnoreCase)
+                        || kpi.KeyPerformanceIndicators.Contains("OC", StringComparison.OrdinalIgnoreCase)))
                 {
                     Console.WriteLine("ENTERED POWER & AC BLOCK");
                     var totalPowerNodes = powerResults.Sum(x => x.NodesCount);
@@ -493,14 +514,37 @@ namespace backend.Controllers
                     continue;
                 }
 
-                if (kpi.KeyPerformanceIndicators.Contains("Telemetry", StringComparison.OrdinalIgnoreCase))
+                if (kpi.KeyPerformanceIndicators.Contains("Tele", StringComparison.OrdinalIgnoreCase)
+                    || kpi.KeyPerformanceIndicators.Contains("Avail", StringComparison.OrdinalIgnoreCase))
                 {
                     Console.WriteLine("ENTERED TELEMETRY BLOCK");
+                    if (telemetryMetrics.Count == 0)
+                    {
+                        results.Add(new OverallKpiResult
+                        {
+                            KpiCode = $"DEBUG-{kpi.Id}",
+                            KpiDefinitionId = kpi.Id,
+                            KpiName = kpi.KeyPerformanceIndicators + " (NO DATA)",
+                            Platform = kpi.Perspectives,
+                            AreaCode = "wpc1",
+                            TargetValue = 100m,
+                            AchievedKpi = 999m,
+                            MaximumPointsPerKpi = 10m,
+                            PointsAchieved = 10m,
+                            Month = month,
+                            Year = year,
+                            CalculatedAt = nowUtc
+                        });
+                        continue;
+                    }
                     var totalTelemetryNodes = (decimal)telemetryMetrics.Sum(x => x.Node_Count ?? 0);
                     foreach (var record in telemetryMetrics)
                     {
                         var designation = record.Designation?.Trim() ?? string.Empty;
-                        designationToArea.TryGetValue(designation, out var areaCode);
+                        if (!designationToArea.TryGetValue(designation, out var areaCode))
+                        {
+                            areaCode = NormalizeArea(designation);
+                        }
                         areaCode ??= string.Empty;
                         if (string.IsNullOrEmpty(areaCode)) continue;
 
@@ -656,10 +700,25 @@ namespace backend.Controllers
                 _db.OverallKpiResults.RemoveRange(existing);
             }
 
-            _db.OverallKpiResults.AddRange(results);
+            var uniqueResults = results
+                .Where(r => !string.IsNullOrWhiteSpace(r.AreaCode))
+                .GroupBy(r => new { r.KpiDefinitionId, r.Year, r.Month, r.AreaCode, r.Platform })
+                .Select(g =>
+                {
+                    var first = g.First();
+                    if (g.Count() == 1) return first;
+
+                    first.AchievedKpi = g.Average(x => x.AchievedKpi);
+                    first.MaximumPointsPerKpi = g.Sum(x => x.MaximumPointsPerKpi);
+                    first.PointsAchieved = g.Sum(x => x.PointsAchieved);
+                    return first;
+                })
+                .ToList();
+
+            _db.OverallKpiResults.AddRange(uniqueResults);
             await _db.SaveChangesAsync();
 
-            return results
+            return uniqueResults
                 .OrderBy(x => x.KpiDefinitionId)
                 .ThenBy(x => x.AreaCode)
                 .ToList();
@@ -948,19 +1007,22 @@ namespace backend.Controllers
             if (normalized == "kpivalue") return string.Empty;
 
             // Map metric area code variations/shorthands to standard normalized LEA codes
-            return normalized switch
-            {
-                "ndfrm" => "ndrm",
-                "ngivt" => "ngwt",
-                "debkymt" => "kymt",
-                "bddwmrg" => "bdbwmrg",
-                "keirn" => "kern",
-                "embmbmh" => "embhbmh",
-                "bcjrdkltc" => "bcapkltc",
-                "adipr" => "adpr",
-                "konix" => "konkx",
-                _ => normalized
-            };
+            // return normalized switch
+            // {
+            //     "ndfrm" => "ndrm",
+            //     "ngivt" => "ngwt",
+            //     "debkymt" => "kymt",
+            //     "bddwmrg" => "bdbwmrg",
+            //     "keirn" => "kern",
+            //     "embmbmh" => "embhbmh",
+            //     "bcjrdkltc" => "bcapkltc",
+            //     "adipr" => "adpr",
+            //     "konix" => "konkx",
+            //     _ => normalized
+            // };
+            // REMOVE the switch statement that translates ndfrm -> ndrm, etc.
+            // Just return the normalized string directly.
+            return normalized;
         }
 
         // =========================================================
@@ -999,6 +1061,7 @@ namespace backend.Controllers
                 .Concat(_db.SlbnMtcData.Select(x => x.Designation))
                 .Concat(_db.TowerMtcData.Select(x => x.Designation))
                 .Concat(_db.Telemetry.Select(x => x.Designation))
+                .Concat(_db.PowerAndAC.Select(x => x.Designation))
                 .Where(x => x != null)
                 .Distinct()
                 .ToList();
@@ -1032,7 +1095,10 @@ namespace backend.Controllers
 
                 if (region != null)
                 {
-                    map[designation] = NormalizeArea(region.LeaCode);
+                    var code = string.IsNullOrWhiteSpace(region.LeaCode)
+                        ? region.NetworkEngineer
+                        : region.LeaCode;
+                    map[designation] = NormalizeArea(code);
                 }
                 else
                 {

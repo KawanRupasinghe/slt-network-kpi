@@ -123,10 +123,10 @@
               <tr *ngFor="let record of getPlatformRecords(config.key); trackBy: trackByMonth">
                 <td>{{ record.month }}</td>
                 <ng-container *ngFor="let column of columns; trackBy: trackByColumn">
-                  <td>{{ getDetailValue(record, column, 'column2') }}</td>
+                  <td>{{ getDetailValue(record, column, 'scheduled') }}</td>
                   <td class="achievement-cell">
-                    {{ getDetailValue(record, column, 'column3') }}
-                    <div class="approval-icon" 
+                    {{ getDetailValue(record, column, 'attended') }}
+                    <div class="approval-icon"
                          *ngIf="getDetailId(record, column)"
                          [ngClass]="getIsVerified(record, column) ? 'approved' : 'unapproved'"
                          (click)="toggleVerified(config.key, record, column)"

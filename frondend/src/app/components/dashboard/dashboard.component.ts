@@ -230,7 +230,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
         const engineerLookup = new Map<string, string>();
         (regions ?? []).forEach((row) => {
-          const code = this.normalizeArea((row as any).leaCode ?? (row as any).LeaCode ?? '');
+          const engName = (row as any).networkEngineer ?? (row as any).NetworkEngineer ?? '';
+          const code = this.normalizeArea((row as any).leaCode ?? (row as any).LeaCode ?? engName);
           const engineer = this.normalizeName((row as any).networkEngineer ?? (row as any).NetworkEngineer ?? '');
           if (code && engineer && !engineerLookup.has(code)) {
             engineerLookup.set(code, engineer);
@@ -249,7 +250,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         const regionMap = new Map<string, Set<string>>();
         (regions ?? []).forEach((row) => {
           const regionName = (row as any).region ?? (row as any).Region ?? 'Unknown';
-          const areaCode = (row as any).leaCode ?? (row as any).LeaCode ?? '';
+          const areaCode = (row as any).leaCode ?? (row as any).LeaCode ?? (row as any).networkEngineer ?? (row as any).NetworkEngineer ?? '';
           if (!areaCode) return;
           const set = regionMap.get(regionName) ?? new Set<string>();
           set.add(areaCode);
@@ -270,7 +271,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           const province = this.normalizeName((row as any).province ?? (row as any).Province ?? '');
           if (province) uniqueProvinces.add(province);
 
-          const leaCode = this.normalizeName((row as any).leaCode ?? (row as any).LeaCode ?? '');
+          const leaCode = this.normalizeName((row as any).leaCode ?? (row as any).LeaCode ?? (row as any).networkEngineer ?? (row as any).NetworkEngineer ?? '');
           if (leaCode) uniqueLeas.add(leaCode);
         });
         this.regionCount = uniqueRegions.size;
