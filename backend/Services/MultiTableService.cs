@@ -36,6 +36,8 @@ namespace backend.Services
                     IsVerified = x.IsVerified,
                     Designation = x.Designation,
                     Month = x.Month,
+                    Scheduled = x.Scheduled ?? 0,
+                    Attended = x.Attended ?? 0,
                     CumulativeSched = x.CumulativeSched,
                     CumulativeAchieved = x.CumulativeAchieved
                 }).ToListAsync();
@@ -54,6 +56,8 @@ namespace backend.Services
                     IsVerified = false, // default (red) until DB/schema includes is_verified for VPN
                     Designation = x.Designation,
                     Month = x.Month,
+                    Scheduled = x.Scheduled ?? 0,
+                    Attended = x.Attended ?? 0,
                     CumulativeSched = x.CumulativeSched,
                     CumulativeAchieved = x.CumulativeAchieved,
                     Year = x.Year
@@ -73,9 +77,6 @@ namespace backend.Services
             return GroupToPlatformRecords(filtered);
         }
 
-
-
-
         public async Task<List<PlatformRecordDto>> FetchSlbnDataAsync(int? year = null, int? month = null)
         {
             var rows = await _context.SlbnMtcData
@@ -86,6 +87,8 @@ namespace backend.Services
                     IsVerified = x.IsVerified,
                     Designation = x.Designation,
                     Month = x.Month,
+                    Scheduled = x.Scheduled ?? 0,
+                    Attended = x.Attended ?? 0,
                     CumulativeSched = x.CumulativeSched,
                     CumulativeAchieved = x.CumulativeAchieved
                 }).ToListAsync();
@@ -103,6 +106,8 @@ namespace backend.Services
                     IsVerified = x.IsVerified,
                     Designation = x.Designation,
                     Month = x.Month,
+                    Scheduled = x.Scheduled ?? 0,
+                    Attended = x.Attended ?? 0,
                     CumulativeSched = x.CumulativeScheduled,
                     CumulativeAchieved = x.CumulativeAttended
                 }).ToListAsync();
@@ -130,8 +135,12 @@ namespace backend.Services
                             {
                                 Id = x.Id,
                                 IsVerified = x.IsVerified,
-                                Column2 = x.CumulativeSched.ToString(),
-                                Column3 = x.CumulativeAchieved.ToString()
+                                Column2 = x.Scheduled,           // Used by the 3 sub-tables
+                                Column3 = x.Attended,            // Used by the 3 sub-tables
+                                Scheduled = x.Scheduled,
+                                Attended = x.Attended,
+                                CumulativeSched = x.CumulativeSched,       // Used by summary table
+                                CumulativeAchieved = x.CumulativeAchieved  // Used by summary table
                             })
                 }).ToList();
         }
@@ -171,6 +180,8 @@ namespace backend.Services
 
             public int CumulativeSched { get; set; }
             public int CumulativeAchieved { get; set; }
+            public int Scheduled { get; set; }
+            public int Attended { get; set; }
         }
 
 

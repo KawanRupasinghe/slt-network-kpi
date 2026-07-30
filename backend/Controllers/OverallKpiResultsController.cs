@@ -939,10 +939,10 @@ namespace backend.Controllers
         // NormalizeArea: For area code matching (compact representation, no spaces)
         // Removes special characters, converts to lowercase for comparison
         // =========================================================
-        private static string NormalizeText(string value)
+        private static string NormalizeText(string? value)
             => Regex.Replace(value ?? string.Empty, "[^A-Za-z0-9]+", " ").Trim().ToLowerInvariant();
 
-        private static string NormalizeArea(string value)
+        private static string NormalizeArea(string? value)
         {
             var normalized = Regex.Replace(value ?? string.Empty, "[^A-Za-z0-9]+", "").ToLowerInvariant();
             if (normalized == "kpivalue") return string.Empty;
