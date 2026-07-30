@@ -38,6 +38,7 @@ namespace backend.Services
                     Month = x.Month,
                     Scheduled = x.Scheduled ?? 0,
                     Attended = x.Attended ?? 0,
+                    
                     CumulativeSched = x.CumulativeSched,
                     CumulativeAchieved = x.CumulativeAchieved
                 }).ToListAsync();
@@ -49,6 +50,7 @@ namespace backend.Services
         {
             // Avoid selecting IsVerified from ipnwmtcdata because DB schema currently doesn't have is_verified column.
             // We fetch required fields and (optionally) filter by year on the client side.
+            
             var rows = await _context.IpnwMtcData
                 .Select(x => new CumulativeRow
                 {
@@ -58,11 +60,14 @@ namespace backend.Services
                     Month = x.Month,
                     Scheduled = x.Scheduled ?? 0,
                     Attended = x.Attended ?? 0,
+                    
                     CumulativeSched = x.CumulativeSched,
                     CumulativeAchieved = x.CumulativeAchieved,
                     Year = x.Year
                 })
                 .ToListAsync();
+
+           
 
             // Client-side filter to avoid DB schema issues (ipnwmtcdata.is_verified may not exist yet).
             var filtered = rows
@@ -77,6 +82,9 @@ namespace backend.Services
             return GroupToPlatformRecords(filtered);
         }
 
+
+
+
         public async Task<List<PlatformRecordDto>> FetchSlbnDataAsync(int? year = null, int? month = null)
         {
             var rows = await _context.SlbnMtcData
@@ -89,6 +97,7 @@ namespace backend.Services
                     Month = x.Month,
                     Scheduled = x.Scheduled ?? 0,
                     Attended = x.Attended ?? 0,
+                    
                     CumulativeSched = x.CumulativeSched,
                     CumulativeAchieved = x.CumulativeAchieved
                 }).ToListAsync();
@@ -135,12 +144,10 @@ namespace backend.Services
                             {
                                 Id = x.Id,
                                 IsVerified = x.IsVerified,
-                                Column2 = x.Scheduled,           // Used by the 3 sub-tables
-                                Column3 = x.Attended,            // Used by the 3 sub-tables
-                                Scheduled = x.Scheduled,
-                                Attended = x.Attended,
-                                CumulativeSched = x.CumulativeSched,       // Used by summary table
-                                CumulativeAchieved = x.CumulativeAchieved  // Used by summary table
+                                Column2 = x.CumulativeSched.ToString(),
+                                Column3 = x.CumulativeAchieved.ToString(),
+                                Scheduled=x.Scheduled.ToString(),
+                                Attended = x.Attended.ToString()
                             })
                 }).ToList();
         }
@@ -180,6 +187,7 @@ namespace backend.Services
 
             public int CumulativeSched { get; set; }
             public int CumulativeAchieved { get; set; }
+
             public int Scheduled { get; set; }
             public int Attended { get; set; }
         }

@@ -26,10 +26,10 @@ type PlatformDetail = {
   column2?: number | string;
   column3?: number | string;
   Column4?: number | string;
-  cumulativeSched?: number | string;      // <-- ADD THIS
-  cumulativeAchieved?: number | string;   // <-- ADD THIS
   id?: number;
   isVerified?: boolean;
+  scheduled?: number | string;
+  attended?: number | string;
 };
 
 type PlatformRecord = {
@@ -290,7 +290,7 @@ export class RoutineMtncComponent implements OnInit {
   getDetailValue(
     record: PlatformRecord,
     column: string,
-    field: 'column2' | 'column3'
+    field: 'scheduled' | 'attended'
   ): string {
 
     if (!record || !record.data) return 'No data';
@@ -303,6 +303,8 @@ export class RoutineMtncComponent implements OnInit {
 
     return record.data[key]?.[field]?.toString() ?? 'No data';
   }
+
+
 
   /*getDetailValue(record: PlatformRecord, column: string, field: 'Column2' | 'Column3'): string {
     const detail = record.details?.find(d => d.Column1 === column);
@@ -326,6 +328,9 @@ export class RoutineMtncComponent implements OnInit {
     return key ? record.data[key]?.id : undefined;
   }
 
+
+
+
   toggleVerified(platformKey: PlatformKey, record: PlatformRecord, column: string): void {
     const id = this.getDetailId(record, column);
     if (id) {
@@ -334,7 +339,7 @@ export class RoutineMtncComponent implements OnInit {
       if (platformKey === 'msan') endpoint = 'msan-mtc-data';
       else if (platformKey === 'vpn') endpoint = 'ipnw-mtc-data';
       else if (platformKey === 'slbn') endpoint = 'slbn-mtc-data';
-
+      
       if (endpoint) {
         this.http.patch<{ id: number; isVerified: boolean }>(`${environment.apiUrl}/${endpoint}/${id}/toggle-verified`, {}).subscribe({
           next: (res) => {
@@ -430,9 +435,13 @@ export class RoutineMtncComponent implements OnInit {
   private applyCumulativePercentage(result: PlaceholderMap, entry: PlatformRecord): void {
     PLATFORM_COLUMNS.forEach(column => {
       const detail = entry.data?.[column];
-      const cumSched = Number(detail?.cumulativeSched) || 0;
-      const cumAchieved = Number(detail?.cumulativeAchieved) || 0;
-      result[column] = cumSched ? ((cumAchieved / cumSched) * 100).toFixed(2) : '0.00';
+      const cumSched = Number(detail?.column2) || 0; // CumulativeSched
+      const cumAchieved = Number(detail?.column3) || 0; // CumulativeAchieved
+
+      result[column] = cumSched
+        ? Math.min((cumAchieved / cumSched) * 100, 100).toFixed(2)
+        : '0.00';
+      //result[column] = cumSched ? ((cumAchieved / cumSched) * 100).toFixed(2) : '0.00';
     });
   }
 

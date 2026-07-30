@@ -223,7 +223,22 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   calculate(): void {
-    this.loadAnalyticsResults();
+    this.loading = true;
+    this.error = null;
+    this.noOverallResults = false;
+
+    const url = `${environment.apiUrl}/overall-kpi-results/calculate-range?year=${this.selectedYear}&startMonth=${this.selectedStartMonth}&endMonth=${this.selectedEndMonth}`;
+    this.http.post(url, {}).subscribe({
+      next: () => {
+        this.loadAnalyticsResults();
+      },
+      error: (err: any) => {
+        console.error('Failed calculating range:', err);
+        this.loading = false;
+        this.error = 'Unable to calculate analytics data.';
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   private loadAnalyticsResults(): void {
