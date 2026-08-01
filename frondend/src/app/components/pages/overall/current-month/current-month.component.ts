@@ -452,7 +452,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
           console.log('Engineers');
           this.engineersFlat.forEach(x => console.log(x.networkEngineer, x.lea));
           const metrics = this.engineersFlat.map((engineer) => {
-            const match = this.findOverallResultForArea(byKpi, engineer.lea);
+            const match = this.findOverallResultForEngineer(byKpi, engineer);
             return {
               achieved: Number(match?.achievedKpi ?? 0),
               maximumPoints: Number(match?.maximumPointsPerKpi ?? 0),
@@ -512,16 +512,13 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  private findOverallResultForArea(rows: OverallKpiResultApi[], areaCode: string): OverallKpiResultApi | undefined {
-    const normalizedTarget = this.normalizeArea(areaCode);
-    const exact = rows.find((x) => this.normalizeArea(x.areaCode) === normalizedTarget);
-    if (exact) return exact;
+  private findOverallResultForEngineer(rows: OverallKpiResultApi[], engineer: Region): OverallKpiResultApi | undefined {
+    const candidates = [engineer.lea, engineer.networkEngineer]
+      .map(value => this.normalizeArea(value))
+      .filter((value, index, arr) => !!value && arr.indexOf(value) === index);
 
-    const partial = rows.find((x) => {
-      const n = this.normalizeArea(x.areaCode);
-      return n.includes(normalizedTarget) || normalizedTarget.includes(n);
-    });
-    return partial;
+    const exact = rows.find((x) => candidates.includes(this.normalizeArea(x.areaCode)));
+    return exact;
   }
 
   private normalizeArea(value: string): string {

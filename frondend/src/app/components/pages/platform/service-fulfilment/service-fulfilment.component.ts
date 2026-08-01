@@ -255,8 +255,10 @@ export class ServiceFulfilmentComponent implements OnInit {
   }
 
   private recomputeEditPermission() {
-    const roleAllowsEdit = this.authService.canEditPage('SERVICE FULFILMENT');
+    // Only platform admins can edit
+    const roleAllowsEdit = this.authService.canEditPage('Service Fulfilment');
     this.isEditingAllowed = roleAllowsEdit;
+    console.log(`[ServiceFulfilment] Editing allowed: ${roleAllowsEdit}`);
   }
 
   getUniqueRegions(): string[] {

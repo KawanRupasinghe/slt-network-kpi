@@ -55,7 +55,7 @@ export class TmActivityPlanComponent implements OnInit {
   private readonly tmActivityService = inject(TmActivityService);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  pageTitle = 'Tower Maintenance';
+  pageTitle = 'Tower Maintainance';
   headers: string[] = [];
   towerSums: TowerSums = {};
   calculatedValues: string[] = [];

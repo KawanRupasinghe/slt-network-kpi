@@ -29,7 +29,7 @@ export class AdminServiceFulfilmentComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   // Header
-  pageTitle = 'Service Fulfillment';
+  pageTitle = 'Service Fulfilment';
 
 
   // Form

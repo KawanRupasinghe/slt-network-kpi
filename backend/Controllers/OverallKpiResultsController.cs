@@ -223,14 +223,21 @@ namespace backend.Controllers
                 .Where(x => x.Trim() != string.Empty)
                 .Select(x => x.Trim()));
 
-            // Normalize area codes, prioritizing RegionData if populated
             var dbRegions = await _db.RegionData.AsNoTracking().ToListAsync();
-            var normalizedAreas = dbRegions.Any()
-                ? dbRegions.Select(x => NormalizeArea(string.IsNullOrWhiteSpace(x.LeaCode) ? x.NetworkEngineer : x.LeaCode)).Where(x => x != string.Empty).Distinct().ToList()
-                : allAreaCodes.Select(a => NormalizeArea(a)).Where(x => x != string.Empty).Distinct().ToList();
+            var officialAreas = dbRegions
+                .Select(x => NormalizeArea(string.IsNullOrWhiteSpace(x.LeaCode) ? x.NetworkEngineer : x.LeaCode))
+                .Where(x => x != string.Empty)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
             // Build designation -> area map from region and maintenance tables
-            var designationToArea = BuildDesignationToAreaMap(dbRegions);
+            var designationToArea = BuildDesignationToAreaMap(dbRegions, officialAreas);
+            var normalizedAreas = officialAreas
+                .Concat(allAreaCodes.Select(a => CanonicalizeArea(a, officialAreas)))
+                .Concat(designationToArea.Values.Select(a => CanonicalizeArea(a, officialAreas)))
+                .Where(x => x != string.Empty)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
             var ipnwResults = await _routineService.GetIpnwPercentagesAsync(
                     year, month, designationToArea);
@@ -351,7 +358,7 @@ namespace backend.Controllers
                     foreach (var record in ipnwResults)
                     {
                         var area = record.NormalizedAreaCode;
-                        var achieved = record.Percentage;
+                        var achieved = Math.Round(Math.Clamp(record.Percentage, 0m, 100m), 4);
                         var nodes = record.NodesCount;
                         var maxPoints = totalIpnwNodes > 0m
                             ? Math.Round((nodes / totalIpnwNodes) * (decimal)kpi.PointsApplicable, 4)
@@ -514,37 +521,18 @@ namespace backend.Controllers
                     continue;
                 }
 
-                if (kpi.KeyPerformanceIndicators.Contains("Tele", StringComparison.OrdinalIgnoreCase)
-                    || kpi.KeyPerformanceIndicators.Contains("Avail", StringComparison.OrdinalIgnoreCase))
+                if (IsTelemetryKpi(kpi.KeyPerformanceIndicators))
                 {
                     Console.WriteLine("ENTERED TELEMETRY BLOCK");
                     if (telemetryMetrics.Count == 0)
                     {
-                        results.Add(new OverallKpiResult
-                        {
-                            KpiCode = $"DEBUG-{kpi.Id}",
-                            KpiDefinitionId = kpi.Id,
-                            KpiName = kpi.KeyPerformanceIndicators + " (NO DATA)",
-                            Platform = kpi.Perspectives,
-                            AreaCode = "wpc1",
-                            TargetValue = 100m,
-                            AchievedKpi = 999m,
-                            MaximumPointsPerKpi = 10m,
-                            PointsAchieved = 10m,
-                            Month = month,
-                            Year = year,
-                            CalculatedAt = nowUtc
-                        });
                         continue;
                     }
                     var totalTelemetryNodes = (decimal)telemetryMetrics.Sum(x => x.Node_Count ?? 0);
                     foreach (var record in telemetryMetrics)
                     {
                         var designation = record.Designation?.Trim() ?? string.Empty;
-                        if (!designationToArea.TryGetValue(designation, out var areaCode))
-                        {
-                            areaCode = NormalizeArea(designation);
-                        }
+                        var areaCode = ResolveMappedAreaCode(designationToArea, designation, officialAreas);
                         areaCode ??= string.Empty;
                         if (string.IsNullOrEmpty(areaCode)) continue;
 
@@ -582,9 +570,13 @@ namespace backend.Controllers
                     : allNamedKpis;
 
                 var matchedKpi = FindBestMatch(kpi.KeyPerformanceIndicators, candidates);
-                // Special handling for Aged Network Failure KPIs
                 if (IsAgedNetworkFailureKpi(kpi.KeyPerformanceIndicators))
                 {
+                    if (!agedFailureMetrics.Any())
+                    {
+                        continue;
+                    }
+
                     foreach (var area in normalizedAreas)
                     {
                         var achieved = CalculateAgedNetworkFailureKpi(agedFailureMetrics, area);
@@ -613,7 +605,12 @@ namespace backend.Controllers
                     continue;
                 }
 
-                var snapshots = BuildAreaSnapshots(matchedKpi, ipMetrics, bbMetrics, otn1Metrics, otn2Metrics, sfMetrics, entMetrics, otherMetrics, enterpriseTargets, daysInMonth);
+                if (matchedKpi == null)
+                {
+                    continue;
+                }
+
+                var snapshots = BuildAreaSnapshots(matchedKpi, ipMetrics, bbMetrics, otn1Metrics, otn2Metrics, sfMetrics, entMetrics, otherMetrics, enterpriseTargets, daysInMonth, officialAreas);
 
                 var areaSnapshots = normalizedAreas
                     .Select(area => (area, snapshot: FindSnapshotForArea(snapshots, NormalizeArea(area))))
@@ -669,28 +666,6 @@ namespace backend.Controllers
                 }
             }
 
-            var overallPercentByArea = results
-                .GroupBy(x => x.AreaCode, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(
-                    g => g.Key,
-                    g =>
-                    {
-                        var totalMax = g.Sum(x => x.MaximumPointsPerKpi);
-                        var totalAchieved = g.Sum(x => x.PointsAchieved);
-                        return totalMax > 0m
-                            ? Math.Round((totalAchieved / totalMax) * 100m, 4)
-                            : 0m;
-                    },
-                    StringComparer.OrdinalIgnoreCase);
-
-            foreach (var row in results)
-            {
-                if (overallPercentByArea.TryGetValue(row.AreaCode, out var percent))
-                {
-                    row.OverallKpiValuePercent = percent;
-                }
-            }
-
             var existing = await _db.OverallKpiResults
                 .Where(x => x.Month == month && x.Year == year)
                 .ToListAsync();
@@ -708,12 +683,37 @@ namespace backend.Controllers
                     var first = g.First();
                     if (g.Count() == 1) return first;
 
-                    first.AchievedKpi = g.Average(x => x.AchievedKpi);
-                    first.MaximumPointsPerKpi = g.Sum(x => x.MaximumPointsPerKpi);
+                    var totalMax = g.Sum(x => x.MaximumPointsPerKpi);
+                    first.MaximumPointsPerKpi = totalMax;
                     first.PointsAchieved = g.Sum(x => x.PointsAchieved);
+                    first.AchievedKpi = totalMax > 0m
+                        ? Math.Round(g.Sum(x => x.AchievedKpi * x.MaximumPointsPerKpi) / totalMax, 4)
+                        : Math.Round(g.Average(x => x.AchievedKpi), 4);
                     return first;
                 })
                 .ToList();
+
+            var overallPercentByArea = uniqueResults
+                .GroupBy(x => x.AreaCode, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    g => g.Key,
+                    g =>
+                    {
+                        var totalMax = g.Sum(x => x.MaximumPointsPerKpi);
+                        var totalAchieved = g.Sum(x => x.PointsAchieved);
+                        return totalMax > 0m
+                            ? Math.Round((totalAchieved / totalMax) * 100m, 4)
+                            : 0m;
+                    },
+                    StringComparer.OrdinalIgnoreCase);
+
+            foreach (var row in uniqueResults)
+            {
+                if (overallPercentByArea.TryGetValue(row.AreaCode, out var percent))
+                {
+                    row.OverallKpiValuePercent = percent;
+                }
+            }
 
             _db.OverallKpiResults.AddRange(uniqueResults);
             await _db.SaveChangesAsync();
@@ -743,7 +743,8 @@ namespace backend.Controllers
             List<EnterpriseKpiMetric> entMetrics,
             List<OtherOperatorKpiMetric> otherMetrics,
             IReadOnlyDictionary<int, decimal> enterpriseTargets,
-            int daysInMonth)
+            int daysInMonth,
+            IReadOnlyCollection<string> officialAreas)
         {
             var result = new Dictionary<string, AreaSnapshot>();
             if (matchedKpi == null) return result;
@@ -752,7 +753,7 @@ namespace backend.Controllers
             {
                 foreach (var row in ipMetrics.Where(x => x.IpNwOpKpiId == matchedKpi.Id))
                 {
-                    var area = NormalizeArea(row.AreaCode);
+                    var area = CanonicalizeArea(row.AreaCode, officialAreas);
                     if (area == string.Empty) continue;
                     var nodeWeight = GetIpNodeWeight(row, daysInMonth);
                     var achieved = CalculateAvailability(row.TotalMinutes, row.UnavailableMinutes, nodeWeight, daysInMonth);
@@ -765,7 +766,7 @@ namespace backend.Controllers
             {
                 foreach (var row in bbMetrics.Where(x => x.BbAnwKpiId == matchedKpi.Id))
                 {
-                    var area = NormalizeArea(row.NodeCode);
+                    var area = CanonicalizeArea(row.NodeCode, officialAreas);
                     if (area == string.Empty) continue;
                     var achieved = CalculateAvailability(row.TotalMinutes, row.UnavailableMinutes, row.TotalNodes, daysInMonth);
                     result[area] = new AreaSnapshot(achieved, row.TotalNodes ?? 0);
@@ -777,7 +778,7 @@ namespace backend.Controllers
             {
                 foreach (var row in otn1Metrics.Where(x => x.OtnOp1Id == matchedKpi.Id))
                 {
-                    var area = NormalizeArea(row.Site);
+                    var area = CanonicalizeArea(row.Site, officialAreas);
                     if (area == string.Empty) continue;
                     var achieved = CalculateAvailability(row.TotalMinutes, row.UnavailableMinutes, row.TotalNodes, daysInMonth);
                     result[area] = new AreaSnapshot(achieved, row.TotalNodes);
@@ -789,7 +790,7 @@ namespace backend.Controllers
             {
                 foreach (var row in otn2Metrics.Where(x => x.OtnOp2Id == matchedKpi.Id))
                 {
-                    var area = NormalizeArea(row.Site);
+                    var area = CanonicalizeArea(row.Site, officialAreas);
                     if (area == string.Empty) continue;
                     var achieved = CalculateSlaRatio(row.TotalFailedLinks, row.LinksSlaNotViolated);
                     result[area] = new AreaSnapshot(achieved, row.TotalFailedLinks);
@@ -801,7 +802,7 @@ namespace backend.Controllers
             {
                 foreach (var row in entMetrics.Where(x => x.EnterpriseKpiId == matchedKpi.Id))
                 {
-                    var area = NormalizeArea(row.AreaCode);
+                    var area = CanonicalizeArea(row.AreaCode, officialAreas);
                     if (area == string.Empty) continue;
 
                     var achieved = Math.Round(Math.Clamp(row.KpiValue ?? 0m, 0m, 100m), 4);
@@ -815,7 +816,7 @@ namespace backend.Controllers
             {
                 foreach (var row in otherMetrics.Where(x => x.OtherOperatorKpiId == matchedKpi.Id))
                 {
-                    var area = NormalizeArea(row.Site);
+                    var area = CanonicalizeArea(row.Site, officialAreas);
                     if (area == string.Empty) continue;
 
                     var achieved = Math.Round(Math.Clamp(row.KpiValue ?? 0m, 0m, 100m), 4);
@@ -827,7 +828,7 @@ namespace backend.Controllers
 
             foreach (var row in sfMetrics.Where(x => x.ServiceFulfilmentKpiId == matchedKpi.Id))
             {
-                var area = NormalizeArea(row.AreaCode);
+                var area = CanonicalizeArea(row.AreaCode, officialAreas);
                 if (area == string.Empty) continue;
                 var achieved = Math.Clamp(row.KpiValue ?? 0m, 0m, 100m);
                 result[area] = new AreaSnapshot(achieved, 0);
@@ -913,13 +914,7 @@ namespace backend.Controllers
                 if (snapshots.TryGetValue("cenhk", out var s3)) return s3;
             }
 
-            var partial = snapshots
-                .Where(kv => kv.Key.Contains(normalizedArea) || normalizedArea.Contains(kv.Key))
-                .OrderByDescending(kv => CommonPrefixLength(kv.Key, normalizedArea))
-                .Select(kv => (AreaSnapshot?)kv.Value)
-                .FirstOrDefault();
-
-            return partial;
+            return null;
         }
 
         // =========================================================
@@ -992,6 +987,9 @@ namespace backend.Controllers
             return Math.Clamp(row.KpiValue ?? 0m, 0m, 100m);
         }
 
+        private static bool IsTelemetryKpi(string? kpiName)
+            => (kpiName ?? string.Empty).Contains("Telemetry", StringComparison.OrdinalIgnoreCase);
+
         // =========================================================
         // TEXT NORMALIZATION HELPERS
         // NormalizeText: For KPI name matching (preserves spaces for tokenization)
@@ -1025,6 +1023,30 @@ namespace backend.Controllers
             return normalized;
         }
 
+        private static string CanonicalizeArea(string? value, IReadOnlyCollection<string>? officialAreas)
+        {
+            var normalized = NormalizeArea(value);
+            if (normalized == string.Empty) return string.Empty;
+            if (officialAreas == null || officialAreas.Count == 0) return normalized;
+
+            var exact = officialAreas.FirstOrDefault(area => area.Equals(normalized, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrEmpty(exact)) return exact;
+
+            var trailingSegment = Regex.Split(value ?? string.Empty, @"[/\\\-\s]+")
+                .Select(NormalizeArea)
+                .Where(x => x != string.Empty)
+                .OrderByDescending(x => x.Length)
+                .FirstOrDefault();
+
+            if (!string.IsNullOrEmpty(trailingSegment))
+            {
+                exact = officialAreas.FirstOrDefault(area => area.Equals(trailingSegment, StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrEmpty(exact)) return exact;
+            }
+
+            return normalized;
+        }
+
         // =========================================================
         // TOKENIZATION FOR MATCHING
         // Splits normalized text into meaningful word tokens
@@ -1051,7 +1073,70 @@ namespace backend.Controllers
                     .ToArray());
         }
 
-        private Dictionary<string, string> BuildDesignationToAreaMap(List<RegionData> dbRegions)
+        private static string StripDesignationSuffix(string value)
+        {
+            var designation = value?.Trim() ?? string.Empty;
+            if (designation == string.Empty) return string.Empty;
+
+            var idx = designation.IndexOf('(');
+            return idx >= 0
+                ? designation[..idx].Trim()
+                : designation;
+        }
+
+        private static string ResolveAreaCodeFromDesignation(string designation, List<RegionData> dbRegions, IReadOnlyCollection<string> officialAreas)
+        {
+            var baseDesignation = StripDesignationSuffix(designation);
+            if (baseDesignation == string.Empty) return string.Empty;
+
+            var normalizedDesignation = NormalizeDesignation(baseDesignation);
+            var region = dbRegions.FirstOrDefault(r =>
+            {
+                var engineerDesignation = StripDesignationSuffix(r.NetworkEngineer ?? string.Empty);
+                return NormalizeDesignation(engineerDesignation) == normalizedDesignation;
+            });
+
+            if (region != null)
+            {
+                var regionCode = string.IsNullOrWhiteSpace(region.LeaCode)
+                    ? region.NetworkEngineer
+                    : region.LeaCode;
+                return CanonicalizeArea(regionCode, officialAreas);
+            }
+
+            return CanonicalizeArea(baseDesignation, officialAreas);
+        }
+
+        private static string ResolveMappedAreaCode(
+            IReadOnlyDictionary<string, string> designationToArea,
+            string designation,
+            IReadOnlyCollection<string> officialAreas)
+        {
+            if (designationToArea.TryGetValue(designation, out var direct) && !string.IsNullOrWhiteSpace(direct))
+            {
+                return CanonicalizeArea(direct, officialAreas);
+            }
+
+            var baseDesignation = StripDesignationSuffix(designation);
+            if (baseDesignation != designation
+                && designationToArea.TryGetValue(baseDesignation, out var fromBase)
+                && !string.IsNullOrWhiteSpace(fromBase))
+            {
+                return CanonicalizeArea(fromBase, officialAreas);
+            }
+
+            var normalizedDesignation = NormalizeArea(baseDesignation);
+            if (normalizedDesignation != string.Empty
+                && designationToArea.TryGetValue(normalizedDesignation, out var fromNormalized)
+                && !string.IsNullOrWhiteSpace(fromNormalized))
+            {
+                return CanonicalizeArea(fromNormalized, officialAreas);
+            }
+
+            return CanonicalizeArea(baseDesignation, officialAreas);
+        }
+
+        private Dictionary<string, string> BuildDesignationToAreaMap(List<RegionData> dbRegions, IReadOnlyCollection<string> officialAreas)
         {
             var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -1072,38 +1157,17 @@ namespace backend.Controllers
                 if (string.IsNullOrEmpty(designation))
                     continue;
 
-                // Remove name part from designation if present, e.g. "NW/WPC1(Manjula)" -> "NW/WPC1"
-                var baseDesignation = designation.Contains('(')
-                    ? designation[..designation.IndexOf('(')].Trim()
-                    : designation;
-
-                var normalizedDesignation = NormalizeDesignation(baseDesignation);
-
-                var region = dbRegions.FirstOrDefault(r =>
+                var baseDesignation = StripDesignationSuffix(designation);
+                var resolvedArea = ResolveAreaCodeFromDesignation(designation, dbRegions, officialAreas);
+                if (resolvedArea == string.Empty)
                 {
-                    var engineer = r.NetworkEngineer ?? "";
-
-                    // remove name part "(Manjula)"
-                    var engineerDesignation =
-                        engineer.Contains('(')
-                        ? engineer[..engineer.IndexOf('(')]
-                        : engineer;
-
-                    return NormalizeDesignation(engineerDesignation)
-                            == normalizedDesignation;
-                });
-
-                if (region != null)
-                {
-                    var code = string.IsNullOrWhiteSpace(region.LeaCode)
-                        ? region.NetworkEngineer
-                        : region.LeaCode;
-                    map[designation] = NormalizeArea(code);
+                    Console.WriteLine($"No RegionData/LEA match for designation [{designation}] (base: [{baseDesignation}])");
+                    continue;
                 }
-                else
-                {
-                    Console.WriteLine($"No RegionData match for designation [{designation}] (base: [{baseDesignation}])");
-                }
+
+                map[designation] = resolvedArea;
+                map[baseDesignation] = resolvedArea;
+                map[NormalizeArea(baseDesignation)] = resolvedArea;
             }
 
             return map;
