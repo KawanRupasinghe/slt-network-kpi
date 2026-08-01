@@ -136,7 +136,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {
     const now = new Date();
     this.selectedYear = now.getFullYear();
-    this.selectedStartMonth = 1;
+    this.selectedStartMonth = now.getMonth() + 1;
     this.selectedEndMonth = now.getMonth() + 1;
 
 
@@ -157,11 +157,11 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
         if (!this.yearOptions.includes(this.selectedYear)) {
           this.selectedYear = this.yearOptions[0];
         }
-        this.loadRegions();
+        this.loadAvailableMonthsAndData();
       },
       error: (err: any) => {
         this.yearOptions = FilterUtils.generateYearOptions();
-        this.loadRegions();
+        this.loadAvailableMonthsAndData();
       }
     });
   }
@@ -190,24 +190,21 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onYearChange(year: number): void {
     this.selectedYear = Number(year);
-    const available = this.getAvailableMonths(this.selectedYear);
-    if (!available.find(m => m.value === this.selectedStartMonth)) {
-      this.selectedStartMonth = available[0]?.value ?? this.selectedStartMonth;
-    }
-    if (!available.find(m => m.value === this.selectedEndMonth)) {
-      this.selectedEndMonth = available[available.length - 1]?.value ?? this.selectedEndMonth;
-    }
+    this.loadAvailableMonthsAndData();
+  }
+
+  onStartMonthChange(month: number): void {
+    this.selectedStartMonth = Number(month);
     if (this.selectedStartMonth > this.selectedEndMonth) {
       this.selectedEndMonth = this.selectedStartMonth;
     }
   }
 
-  onStartMonthChange(month: number): void {
-    this.selectedStartMonth = Number(month);
-  }
-
   onEndMonthChange(month: number): void {
     this.selectedEndMonth = Number(month);
+    if (this.selectedEndMonth < this.selectedStartMonth) {
+      this.selectedStartMonth = this.selectedEndMonth;
+    }
   }
 
   setActiveView(view: 'table' | 'dashboard'): void {
@@ -220,6 +217,46 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   getMonthLabel(monthValue: number): string {
     return this.monthOptions.find(m => m.value === monthValue)?.label || '';
+  }
+
+  private loadAvailableMonthsAndData(): void {
+    this.analyticsService.getAvailableMonths(this.selectedYear).subscribe({
+      next: (months: number[]) => {
+        this.applyAvailableMonths(months);
+        this.loadRegions();
+      },
+      error: () => {
+        this.applyAvailableMonths([]);
+        this.loadRegions();
+      }
+    });
+  }
+
+  private applyAvailableMonths(months: number[]): void {
+    const validMonths = this.getAvailableMonths(this.selectedYear).map(m => m.value);
+    const availableMonths = months
+      .map(month => Number(month))
+      .filter(month => validMonths.includes(month))
+      .sort((a, b) => a - b);
+
+    if (availableMonths.length > 0) {
+      const latestMonth = availableMonths[availableMonths.length - 1];
+      this.selectedStartMonth = latestMonth;
+      this.selectedEndMonth = latestMonth;
+      return;
+    }
+
+    if (!validMonths.find(month => month === this.selectedStartMonth)) {
+      this.selectedStartMonth = validMonths[0] ?? this.selectedStartMonth;
+    }
+
+    if (!validMonths.find(month => month === this.selectedEndMonth)) {
+      this.selectedEndMonth = validMonths[validMonths.length - 1] ?? this.selectedEndMonth;
+    }
+
+    if (this.selectedStartMonth > this.selectedEndMonth) {
+      this.selectedEndMonth = this.selectedStartMonth;
+    }
   }
 
   calculate(): void {
@@ -261,24 +298,16 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
           if (!results || results.length === 0) {
             this.noOverallResults = true;
           } else {
-            // We need a quick way to find the engineer index by area code (lea)
-            const normalizeArea = (value: string) => (value ?? '').replace(/[^A-Za-z0-9]/g, '').toLowerCase();
-            const leaToIndex = new Map<string, number>();
-            this.engineersFlat.forEach((eng, idx) => {
-               leaToIndex.set(normalizeArea(eng.lea), idx);
-            });
-            // Map API results
             results.forEach((apiResult: any) => {
-               const row = this.kpiRows.find(r => r.id === apiResult.kpiDefinitionId);
-               if (row) {
-                  const idx = leaToIndex.get(normalizeArea(apiResult.areaCode));
-                  if (idx !== undefined) {
-                     row.metrics[idx].achieved = apiResult.achievedKpi;
-                     row.metrics[idx].maximumPoints = apiResult.maximumPointsPerKpi;
-                     row.metrics[idx].pointsAchieved = apiResult.pointsAchieved;
-                     // OverallKpiValuePercent remains as returned by the backend (currently 0)
-                  }
-               }
+              const row = this.kpiRows.find(r => r.id === apiResult.kpiDefinitionId);
+              if (!row) return;
+
+              const idx = this.findEngineerIndexByArea(apiResult.areaCode);
+              if (idx === undefined) return;
+
+              row.metrics[idx].achieved = apiResult.achievedKpi;
+              row.metrics[idx].maximumPoints = apiResult.maximumPointsPerKpi;
+              row.metrics[idx].pointsAchieved = apiResult.pointsAchieved;
             });
           }
 
@@ -432,10 +461,7 @@ return {
         this.computeTotals();
         this.buildDashboardGroups();
         this.scheduleRowSync();
-
-        this.noOverallResults = false;
-        this.loading = false;
-        this.cdr.detectChanges();
+        this.loadAnalyticsResults();
       },
       error: (err: any) => {
         console.error('Failed loading final table KPI rows:', err);
@@ -450,6 +476,26 @@ return {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  private findEngineerIndexByArea(areaCode: string): number | undefined {
+    const normalizedTarget = this.normalizeArea(areaCode);
+    if (!normalizedTarget) return undefined;
+
+    const exactIndex = this.engineersFlat.findIndex(eng =>
+      this.getEngineerAreaCandidates(eng).some(candidate => candidate === normalizedTarget)
+    );
+    return exactIndex >= 0 ? exactIndex : undefined;
+  }
+
+  private getEngineerAreaCandidates(engineer: Region): string[] {
+    return [engineer.lea, engineer.networkEngineer]
+      .map(value => this.normalizeArea(value))
+      .filter((value, index, arr) => !!value && arr.indexOf(value) === index);
+  }
+
+  private normalizeArea(value: string | null | undefined): string {
+    return (value ?? '').replace(/[^A-Za-z0-9]/g, '').toLowerCase();
   }
 
   private computeTotals(): void {

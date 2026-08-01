@@ -43,17 +43,16 @@ export class UserRegistrationComponent implements OnInit {
   isLoading = false;
 
   availablePages = [
-    'SERVICE FULFILMENT',
+    'Service Fulfilment',
     'IP NW OP',
-    'BB ANW',
+    'Wireline Access NW',
     'OTN OP',
     'Other Operator',
-    'ROUTINE MTNC',
-    'TOWER MTCE ACHIEVEMENT',
+    'Routine Maintenance',
+    'Tower Maintainance',
     'Enterprise KPI',
     'Other Operator KPI',
-    'Other KPI',
-    'Aged Network Failures'
+    'Other KPI'
   ];
 
   constructor(private userService: UserService) { }

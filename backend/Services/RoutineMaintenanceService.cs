@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using backend.Data;
 using Microsoft.EntityFrameworkCore;
@@ -71,7 +72,7 @@ namespace backend.Services
 
                 var percent = CalculatePercentage(sched, achieved);
 
-                designationToArea.TryGetValue(designation, out var areaCode);
+                var areaCode = ResolveAreaCode(designationToArea, designation);
                 areaCode ??= string.Empty;
 
                 results.Add(new RoutineMaintenanceResult(designation, areaCode, percent, sched));
@@ -130,7 +131,7 @@ namespace backend.Services
 
                 var percent = CalculatePercentage(sched, achieved);
 
-                designationToArea.TryGetValue(designation, out var areaCode);
+                var areaCode = ResolveAreaCode(designationToArea, designation);
                 areaCode ??= string.Empty;
 
                 results.Add(new RoutineMaintenanceResult(designation, areaCode, percent, sched));
@@ -192,7 +193,7 @@ namespace backend.Services
 
                 var percent = CalculatePercentage(sched, achieved);
 
-                designationToArea.TryGetValue(designation, out var areaCode);
+                var areaCode = ResolveAreaCode(designationToArea, designation);
                 areaCode ??= string.Empty;
 
                 results.Add(new RoutineMaintenanceResult(designation, areaCode, percent, sched));
@@ -207,7 +208,47 @@ namespace backend.Services
             decimal achieved)
         {
             if (sched == 0m) return 0m;
-            return decimal.Round((achieved / sched) * 100m, 2);
+            return decimal.Round(Math.Clamp((achieved / sched) * 100m, 0m, 100m), 2);
         }
+
+        private static string ResolveAreaCode(IReadOnlyDictionary<string, string> designationToArea, string designation)
+        {
+            if (designationToArea.TryGetValue(designation, out var direct) && !string.IsNullOrWhiteSpace(direct))
+            {
+                return direct;
+            }
+
+            var baseDesignation = StripDesignationSuffix(designation);
+            if (baseDesignation != designation
+                && designationToArea.TryGetValue(baseDesignation, out var fromBase)
+                && !string.IsNullOrWhiteSpace(fromBase))
+            {
+                return fromBase;
+            }
+
+            var normalizedDesignation = NormalizeLookupKey(baseDesignation);
+            if (normalizedDesignation != string.Empty
+                && designationToArea.TryGetValue(normalizedDesignation, out var fromNormalized)
+                && !string.IsNullOrWhiteSpace(fromNormalized))
+            {
+                return fromNormalized;
+            }
+
+            return string.Empty;
+        }
+
+        private static string StripDesignationSuffix(string value)
+        {
+            var designation = value?.Trim() ?? string.Empty;
+            if (designation == string.Empty) return string.Empty;
+
+            var idx = designation.IndexOf('(');
+            return idx >= 0
+                ? designation[..idx].Trim()
+                : designation;
+        }
+
+        private static string NormalizeLookupKey(string value)
+            => Regex.Replace(value ?? string.Empty, "[^A-Za-z0-9]+", "").ToLowerInvariant();
     }
 }

@@ -34,4 +34,9 @@ export class AnalyticsService {
   getAvailableYears(): Observable<number[]> {
     return this.http.get<number[]>(`${this.apiBase}/years`);
   }
+
+  getAvailableMonths(year: number): Observable<number[]> {
+    const params = new HttpParams().set('year', year.toString());
+    return this.http.get<number[]>(`${this.apiBase}/months`, { params });
+  }
 }

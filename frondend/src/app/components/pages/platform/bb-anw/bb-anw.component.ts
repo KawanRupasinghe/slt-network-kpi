@@ -267,7 +267,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 			this.isEditingAllowed = this.devRoleOverride === 'padmin';
 			return;
 		}
-		this.isEditingAllowed = this.authService.canEditPage('BB ANW');
+		this.isEditingAllowed = this.authService.canEditPage('Wireline Access NW');
 	}
 
 	toggleRoleOverride(): void {

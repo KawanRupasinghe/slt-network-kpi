@@ -94,7 +94,7 @@ export class RoutineMtncComponent implements OnInit {
   private readonly authService = inject(AuthService);
 
   get canEditMetrics(): boolean {
-    return this.authService.canEditPage('ROUTINE MTNC');
+    return this.authService.canEditPage('Routine Maintenance');
   }
 
   pageTitle = 'Routine Maintenance';

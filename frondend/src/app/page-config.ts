@@ -60,9 +60,9 @@ export const platformNavOptions: NavOption[] = [
     title: 'Platform KPI — OTN OP'
   },
   {
-    label: 'Tower Maintenance',
+    label: 'Tower Maintainance',
     path: 'platform/tm-activity-plan',
-    title: 'Platform KPI — Tower Maintenance'
+    title: 'Platform KPI — Tower Maintainance'
   },
   {
     label: 'Routine Maintenance',
@@ -131,9 +131,9 @@ export const adminNavOptions: NavOption[] = [
     title: 'Admin — Other Operator'
   },
   {
-    label: 'Tower Maintenance',
+    label: 'Tower Maintainance',
     path: 'admin/tm-activity-plan',
-    title: 'Admin — Tower Maintenance'
+    title: 'Admin — Tower Maintainance'
   },
   {
     label: 'Routine Maintenance',

@@ -41,7 +41,7 @@ export class TowerMtncComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  pageTitle = 'Tower Maintenance';
+  pageTitle = 'Tower Maintainance';
   records: ActivityRecord[] = [];
   editingId: number | null = null;
   loading = false;
