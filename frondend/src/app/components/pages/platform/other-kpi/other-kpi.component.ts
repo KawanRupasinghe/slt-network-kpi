@@ -6,6 +6,7 @@ import { TelemetryService } from '../../../../services/telemetry.service';
 import { PowerAndACService, PowerAndACRecord } from '../../../../services/power-and-ac.service';
 import { AuthService } from '../../../../services/auth.service';
 import { FilterUtils } from '../../../../utils/filter.utils';
+import { formatEngineerDisplay } from '../../../../utils/region-display.utils';
 
 
 
@@ -24,6 +25,7 @@ interface AreaRow {
   region: string;        // R-GM
   province: string;      // P-DGM
   networkEngineer: string;
+  engName?: string;
   percentage: number;
   node_Count: number | null;
   isEditing?: boolean;
@@ -110,6 +112,7 @@ export class OtherKpiComponent implements OnInit {
         const temp: Record<string, AreaRow> = {};
         list.forEach((item: any) => {
           const ne: string = (item.networkengineer ?? item.networkEngineer ?? item.NetworkEngineer ?? '').trim();
+          const engName: string = (item.engName ?? item.EngName ?? item.engname ?? '').trim();
           const lea: string = (item.leacode ?? item.leaCode ?? item.lea ?? '').trim();
           if (!ne) return;
           if (!temp[ne]) {
@@ -119,7 +122,8 @@ export class OtherKpiComponent implements OnInit {
               friendlyName: AREA_MAPPING[leaNorm] || lea.toUpperCase() || ne,
               region: item.region ?? item.Region ?? '',
               province: item.province ?? item.Province ?? '',
-              networkEngineer: ne,
+              networkEngineer: formatEngineerDisplay(ne, engName),
+              engName,
               percentage: 0,
               node_Count: null,
             };

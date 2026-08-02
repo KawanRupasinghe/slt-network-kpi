@@ -12,6 +12,7 @@ import { AuthService } from '../../../../services/auth.service';
 import { BbAnwDto, BbAnwService } from '../../../../services/bb-anw.service';
 import { Region, RegionService } from '../../../../services/region.service';
 import { FilterUtils } from '../../../../utils/filter.utils';
+import { buildEngineerDisplayMap, mapRegionRecords } from '../../../../utils/region-display.utils';
 import * as ExcelJS from 'exceljs';
 import { firstValueFrom } from 'rxjs';
 
@@ -53,29 +54,6 @@ interface EditCellState {
 	value: string;
 }
 
-const LOCAL_REGION_TABLE: RegionRow[] = [
-	{ region: 'Region 3', province: 'NP', networkEngineer: 'NW/NP-2', lea: 'KOMLTMBVA' },
-	{ region: 'Region 3', province: 'NP', networkEngineer: 'NW/NP-1', lea: 'JA' },
-	{ region: 'Region 3', province: 'EP', networkEngineer: 'NW/EP', lea: 'BCAPKLTC' },
-	{ region: 'Region 2', province: 'WPS & SP', networkEngineer: 'NW/WPS', lea: 'HRKTPH' },
-	{ region: 'Region 2', province: 'WPS & SP', networkEngineer: 'NW/SPW', lea: 'AGGL' },
-	{ region: 'Region 2', province: 'WPS & SP', networkEngineer: 'NW/SPE', lea: 'EMBMBMH' },
-	{ region: 'Region 2', province: 'SAB & UVA', networkEngineer: 'NW/SAB', lea: 'KERN' },
-	{ region: 'Region 2', province: 'SAB & UVA', networkEngineer: 'NW/UVA', lea: 'BDBWMRG' },
-	{ region: 'Region 1', province: 'CP & NCP', networkEngineer: 'NW/NCP', lea: 'ADPR' },
-	{ region: 'Region 1', province: 'CP & NCP', networkEngineer: 'NW/CPS', lea: 'GPHTNW' },
-	{ region: 'Region 1', province: 'CP & NCP', networkEngineer: 'NW/CPN', lea: 'DBKYMT' },
-	{ region: 'Region 1', province: 'WPN & NWP', networkEngineer: 'NW/NWPW', lea: 'CWPX' },
-	{ region: 'Region 1', province: 'WPN & NWP', networkEngineer: 'NW/NWPE', lea: 'KGKLY' },
-	{ region: 'Region 1', province: 'WPN & NWP', networkEngineer: 'NW/WPN', lea: 'NGWT' },
-	{ region: 'Metro', province: 'Metro 2', networkEngineer: 'NWWPE', lea: 'KONKX' },
-	{ region: 'Metro', province: 'Metro 2', networkEngineer: 'NWWPSE', lea: 'AWHO' },
-	{ region: 'Metro', province: 'Metro 2', networkEngineer: 'NWWPSW', lea: 'NDRM' },
-	{ region: 'Metro', province: 'Metro 1', networkEngineer: 'NWWPNE', lea: 'GQKINTB' },
-	{ region: 'Metro', province: 'Metro 1', networkEngineer: 'NWWPC-2 (CEN/HK/MD)', lea: 'CENHKMD' },
-	{ region: 'Metro', province: 'Metro 1', networkEngineer: 'NWWPC-1 (CEN/HK/MD)', lea: 'CENHKMD1' },
-];
-
 @Component({
 	selector: 'app-bb-anw',
 	standalone: true,
@@ -89,7 +67,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 
 	data: BbAnwEntry[] = [];
 	private allEntries: BbAnwEntry[] = [];
-	regionTable: RegionRow[] = [...LOCAL_REGION_TABLE];
+	regionTable: RegionRow[] = [];
 	adminRows: BbAnwDto[] = [];
 
 	loading = true;
@@ -283,21 +261,13 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 	loadRegionTable(): void {
 		this.regionService.getAll().subscribe({
 			next: (res: Region[] | any[]) => {
-				const source = Array.isArray(res) ? res : [];
-				const mapped: RegionRow[] = source.map((item: any) => ({
-					region: item.region ?? item.Region ?? '',
-					province: item.province ?? item.Province ?? '',
-					networkEngineer:
-						item.networkEngineer ?? item.networkengineer ?? item.NetworkEngineer ?? '',
-					lea: item.lea ?? item.leacode ?? item.leaCode ?? item.LEA ?? '',
-					engName: item.engName ?? item.EngName ?? item.engname ?? ''
-				}));
-				this.regionTable = mapped.length ? mapped : [...LOCAL_REGION_TABLE];
+				this.regionTable = mapRegionRecords(res) as RegionRow[];
 				this.initializeFilters();
 			},
 			error: (err) => {
-				console.error('Failed to fetch region table from API, using local fallback:', err);
-				this.regionTable = [...LOCAL_REGION_TABLE];
+				console.error('Failed to fetch region table from API:', err);
+				this.regionTable = [];
+				this.showToast('danger', 'Failed to load region data. Filters are unavailable until regiondata is reachable.');
 				this.initializeFilters();
 			},
 		});
@@ -447,11 +417,7 @@ private updateDropdown3Options(province: string): void {
 			)
 		);
 		
-		this.engineerNameMap = {};
-		this.dropdown3Options.forEach(eng => {
-			const regionRec = this.regionTable.find(x => x.networkEngineer === eng && x.engName);
-			this.engineerNameMap[eng] = regionRec?.engName ? `${eng} [${regionRec.engName}]` : eng;
-		});
+		this.engineerNameMap = buildEngineerDisplayMap(this.regionTable, this.dropdown3Options);
 	}
 
 	private updateDropdown4Options(engineer: string): void {

@@ -19,6 +19,7 @@ import { environment } from '../../../../environments/environment';
 import { AnalyticsService } from '../../../services/analytics.service';
 import { FilterUtils } from '../../../utils/filter.utils';
 import { Region as RegionApi, RegionService } from '../../../services/region.service';
+import { formatEngineerDisplay } from '../../../utils/region-display.utils';
 
 type Region = {
   id: number;
@@ -583,12 +584,7 @@ getDashboardProgressPercent(percent: number): number {
 }
 
   getEngineerHeaderLabel(eng: Region): string {
-    const ne = eng.networkEngineer ?? '';
-    const name = eng.engName ?? '';
-    const lea = eng.lea ?? '';
-
-    const parts = [`${ne} - ${name}`.trim()];
-    return `${parts[0]} (${lea})`.replace(/\s+/g, ' ').trim();
+    return formatEngineerDisplay(eng.networkEngineer, eng.engName);
   }
 
   private scheduleRowSync(): void {
@@ -825,7 +821,7 @@ getDashboardProgressPercent(percent: number): number {
     this.engineersFlat.forEach(eng => {
       const startCol = currentCol;
       const engCell = worksheet.getCell(currentRow, startCol);
-      engCell.value = this.getEngineerHeaderLabel(eng);
+      engCell.value = `${this.getEngineerHeaderLabel(eng)}\n(${eng.lea})`;
       engCell.font = { bold: true, color: { argb: headerTextColor }, size: 10 };
       engCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
       engCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };

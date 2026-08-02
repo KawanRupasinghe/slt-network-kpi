@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { FilterUtils } from '../../utils/filter.utils';
+import { formatEngineerDisplay } from '../../utils/region-display.utils';
 
 
 interface MeterData {
@@ -36,6 +37,7 @@ type RegionApi = {
   province: string;
   networkEngineer: string;
   leaCode: string;
+  engName?: string;
 };
 
 type RtomAreaApi = {
@@ -230,9 +232,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
         const engineerLookup = new Map<string, string>();
         (regions ?? []).forEach((row) => {
-          const engName = (row as any).networkEngineer ?? (row as any).NetworkEngineer ?? '';
-          const code = this.normalizeArea((row as any).leaCode ?? (row as any).LeaCode ?? engName);
-          const engineer = this.normalizeName((row as any).networkEngineer ?? (row as any).NetworkEngineer ?? '');
+          const networkEngineer = (row as any).networkEngineer ?? (row as any).NetworkEngineer ?? '';
+          const engName = (row as any).engName ?? (row as any).EngName ?? (row as any).engname ?? '';
+          const code = this.normalizeArea((row as any).leaCode ?? (row as any).LeaCode ?? networkEngineer);
+          const engineer = formatEngineerDisplay(networkEngineer, engName);
           if (code && engineer && !engineerLookup.has(code)) {
             engineerLookup.set(code, engineer);
           }
@@ -366,14 +369,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   getEngineerForMeter(meter: MeterData): string {
     const key = this.normalizeArea(meter.code);
-    const raw = meter.engineer || this.engineerLookup.get(key) || '—';
-    if (raw && raw !== '—') {
-      const parenIndex = raw.indexOf('(');
-      if (parenIndex !== -1) {
-        return raw.substring(0, parenIndex).trim();
-      }
-    }
-    return raw;
+    return meter.engineer || this.engineerLookup.get(key) || '—';
   }
 
   getCircularProgressBackground(meter: MeterData, meters: MeterData[]): string {
@@ -439,7 +435,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     );
     console.log('📍 Matching region found:', matchingRegion);
 
-    const networkEngineer = matchingRegion?.networkEngineer ?? '—';
+    const networkEngineer = formatEngineerDisplay(
+      matchingRegion?.networkEngineer,
+      (matchingRegion as any)?.engName ?? (matchingRegion as any)?.EngName ?? (matchingRegion as any)?.engname
+    );
     const province = matchingRegion?.province ?? '—';
     const regionName = matchingRegion?.region ?? region.title;
     const leaCode = matchingRegion?.leaCode ?? meter.code;
@@ -481,7 +480,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const key = this.normalizeArea(meter.code);
     const fullEngineer = meter.engineer || this.engineerLookup.get(key) || networkEngineer || '—';
     const areaDisplay = meter.label || meter.code;
-    const compositeDisplay = fullEngineer && fullEngineer !== '—' ? `${fullEngineer} (${areaDisplay})` : areaDisplay;
+    const compositeDisplay = areaDisplay;
     const networkEngineerValue = fullEngineer !== '—' ? fullEngineer : networkEngineer;
     this.selectedDetails = {
       region: regionName,

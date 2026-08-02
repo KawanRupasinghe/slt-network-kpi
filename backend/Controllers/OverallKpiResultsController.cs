@@ -450,7 +450,7 @@ namespace backend.Controllers
                     continue;
                 }
 
-                if (kpi.KeyPerformanceIndicators.Equals("Operation & Maintenance of SLT towers and tower premises", StringComparison.OrdinalIgnoreCase))
+                if (IsTowerMaintenanceKpi(kpi))
                 {
                     Console.WriteLine("ENTERED TOWER BLOCK");
                     var totalTowerNodes = towerResults.Sum(x => x.NodesCount);
@@ -989,6 +989,14 @@ namespace backend.Controllers
 
         private static bool IsTelemetryKpi(string? kpiName)
             => (kpiName ?? string.Empty).Contains("Telemetry", StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsTowerMaintenanceKpi(KpiDefinition kpi)
+        {
+            var normalizedName = NormalizeText(kpi.KeyPerformanceIndicators);
+            var normalizedCategory = NormalizeText(kpi.Category);
+            return (normalizedName.Contains("tower") || normalizedCategory.Contains("tower"))
+                && normalizedName.Contains("maintenance");
+        }
 
         // =========================================================
         // TEXT NORMALIZATION HELPERS
