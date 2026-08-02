@@ -56,7 +56,7 @@
                   <th>KPI</th>
                   <th>Target</th>
                   <th>Category</th>
-                  <th *ngFor="let header of headers; trackBy: trackByHeader">{{ header }}</th>
+                  <th *ngFor="let header of headers; trackBy: trackByHeader">{{ getHeaderDisplay(header) }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -104,7 +104,7 @@
               <thead>
                 <tr>
                   <th rowspan="2">Month</th>
-                  <th *ngFor="let header of headers; trackBy: trackByHeader" colspan="2">{{ header }}</th>
+                  <th *ngFor="let header of headers; trackBy: trackByHeader" colspan="2">{{ getHeaderDisplay(header) }}</th>
                 </tr>
                 <tr>
                   <ng-container *ngFor="let header of headers; trackBy: trackByHeader">
@@ -130,7 +130,7 @@
                            *ngIf="getDetailId(entry, header)"
                            [ngClass]="getIsVerified(entry, header) ? 'approved' : 'unapproved'"
                            (click)="toggleVerified(entry, header)"
-                           title="Click to toggle approval">
+                           [title]="canEditMetrics ? 'Click to toggle approval' : 'Verification status'">
                         <i class="bi bi-check" *ngIf="getIsVerified(entry, header)"></i>
                         <i class="bi bi-x" *ngIf="!getIsVerified(entry, header)"></i>
                       </div>

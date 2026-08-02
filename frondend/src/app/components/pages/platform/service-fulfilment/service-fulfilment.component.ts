@@ -7,6 +7,7 @@ import { ServiceFulfilmentKpiDto, ServiceFulfilmentKpiService, ServiceFulfilment
 import { RegionService, Region } from '../../../../services/region.service';
 import { AuthService } from '../../../../services/auth.service';
 import { FilterUtils } from '../../../../utils/filter.utils';
+import { buildEngineerDisplayMap, mapRegionRecords } from '../../../../utils/region-display.utils';
 
 interface KpiData {
   _id: { $oid: string } | number;
@@ -218,15 +219,7 @@ export class ServiceFulfilmentComponent implements OnInit {
   loadRegionTable() {
     this.regionService.getAll().subscribe({
       next: (res: Region[] | any[]) => {
-        const source = Array.isArray(res) ? res : [];
-        const mapped: RegionData[] = source.map((item: any) => ({
-          region: item.region ?? item.Region ?? '',
-          province: item.province ?? item.Province ?? '',
-          networkEngineer: item.networkEngineer ?? item.networkengineer ?? item.NetworkEngineer ?? '',
-          lea: item.lea ?? item.leacode ?? item.leaCode ?? item.LEA ?? '',
-          engName: item.engName ?? item.EngName ?? item.engname ?? ''
-        }));
-        this.regionTable = mapped;
+        this.regionTable = mapRegionRecords(res) as RegionData[];
       },
       error: (err) => {
         console.error('Failed to fetch region table from API:', err);
@@ -661,11 +654,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     ).filter(Boolean);
     this.dropdown3Options = engineers;
     
-    this.engineerNameMap = {};
-    this.dropdown3Options.forEach(eng => {
-      const regionRec = this.regionTable.find(x => x.networkEngineer === eng && x.engName);
-      this.engineerNameMap[eng] = regionRec?.engName ? `${eng} [${regionRec.engName}]` : eng;
-    });
+    this.engineerNameMap = buildEngineerDisplayMap(this.regionTable, this.dropdown3Options);
 
     this.formValues.dropdown3 = '';
     this.dropdown4Options = [];

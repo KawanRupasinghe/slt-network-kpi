@@ -12,6 +12,7 @@ import {
 import { RegionService, Region } from '../../../../services/region.service';
 import { AuthService } from '../../../../services/auth.service';
 import { FilterUtils } from '../../../../utils/filter.utils';
+import { buildEngineerDisplayMap, mapRegionRecords } from '../../../../utils/region-display.utils';
 
 interface KpiData {
   _id: { $oid: string } | number;
@@ -122,30 +123,6 @@ export class OtherOperatorComponent implements OnInit {
   get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
   yearOptions: number[] = [];
 
-  regionData: RegionData[] = [
-    { id: 1, region: 'metro', province: 'metro 1', networkEngineer: 'NW/WPC1', lea: 'CEN/HK' },
-    { id: 2, region: 'metro', province: 'metro 1', networkEngineer: 'NW/WPC2', lea: 'CEN/MD' },
-    { id: 3, region: 'metro', province: 'metro 1', networkEngineer: 'NW/WPE', lea: 'KON/KX' },
-    { id: 4, region: 'metro', province: 'metro 2', networkEngineer: 'NW/WP S-W', lea: 'ND/RM' },
-    { id: 5, region: 'metro', province: 'metro 2', networkEngineer: 'NW/WP S-E', lea: 'AW/HO' },
-    { id: 6, region: 'metro', province: 'metro 2', networkEngineer: 'NW/WPE', lea: 'KON/KX' },
-    { id: 7, region: 'Region01', province: 'WPN', networkEngineer: 'NW/WPN', lea: 'NG/WT' },
-    { id: 8, region: 'Region01', province: 'WPN', networkEngineer: 'NW/WP N-E', lea: 'GQ/KI/NTB' },
-    { id: 9, region: 'Region01', province: 'NWP', networkEngineer: 'NW/NWP-E', lea: 'KG/KLY' },
-    { id: 10, region: 'Region01', province: 'NWP', networkEngineer: 'NW/NWP-W', lea: 'CW/PX' },
-    { id: 11, region: 'Region01', province: 'CP', networkEngineer: 'NW/CPN', lea: 'KY/MT' },
-    { id: 12, region: 'Region01', province: 'CP', networkEngineer: 'NW/CPS', lea: 'GP/HT/NW' },
-    { id: 13, region: 'Region02', province: 'SAB & UVA', networkEngineer: 'NW/UVA', lea: 'BD/BW/MRG' },
-    { id: 14, region: 'Region02', province: 'SAB & UVA', networkEngineer: 'NW/SAB', lea: 'KE/RN' },
-    { id: 15, region: 'Region02', province: 'SP', networkEngineer: 'NW/SPE', lea: 'EMB/HB/MH' },
-    { id: 16, region: 'Region02', province: 'SP', networkEngineer: 'NW/SPW', lea: 'AG/GL' },
-    { id: 17, region: 'Region02', province: 'WPS', networkEngineer: 'WPS', lea: 'HR/KT/PH' },
-    { id: 18, region: 'Region03', province: 'EP', networkEngineer: 'NW/EP', lea: 'BC/AP/KL/TC' },
-    { id: 19, region: 'Region03', province: 'NP', networkEngineer: 'NW/NP-1', lea: 'JA' },
-    { id: 20, region: 'Region03', province: 'NP', networkEngineer: 'NW/NP-2', lea: 'KO/MLT/MB/VA' },
-    { id: 6002, region: 'Region 3', province: 'NP', networkEngineer: 'NW/NCP', lea: 'AD/PR' }
-  ];
-
   constructor(
     private toastr: ToastrService,
     private otherOperatorKpiService: OtherOperatorKpiPlatformService,
@@ -168,21 +145,7 @@ export class OtherOperatorComponent implements OnInit {
     this.otherOperatorKpiService.getAll().subscribe({
       next: (kpis) => {
         const rows = Array.isArray(kpis) ? this.decorateAdminRows(kpis) : [];
-
-        // Presentation-only order: calculations use KPI Id/FK mappings, not UI index/order.
-        const preferredOrder = new Map<number, number>([
-          [2, 1], // Repeated Fault Index
-          [1, 2], // Fault Clearance Rate < 4 hrs
-          [4, 3], // Fault Clearance Rate < 8 hrs
-          [3, 4]  // Fault Rate
-        ]);
-
-        this.adminKpiRows = [...rows].sort((a, b) => {
-          const ra = preferredOrder.get(Number((a as any).id)) ?? Number.MAX_SAFE_INTEGER;
-          const rb = preferredOrder.get(Number((b as any).id)) ?? Number.MAX_SAFE_INTEGER;
-          if (ra !== rb) return ra - rb;
-          return Number((a as any).id) - Number((b as any).id);
-        });
+        this.adminKpiRows = rows;
 
         this.syncSelectedPeriodFromData(rows);
         this.rebuildKpiMatrix();
@@ -244,19 +207,12 @@ export class OtherOperatorComponent implements OnInit {
   loadRegionTable() {
     this.regionService.getAll().subscribe({
       next: (res: Region[] | any[]) => {
-        const source = Array.isArray(res) ? res : [];
-        const mapped: RegionData[] = source.map((item: any) => ({
-          region: item.region ?? item.Region ?? '',
-          province: item.province ?? item.Province ?? '',
-          networkEngineer: item.networkEngineer ?? item.networkengineer ?? item.NetworkEngineer ?? '',
-          lea: item.lea ?? item.leacode ?? item.leaCode ?? item.LEA ?? '',
-          engName: item.engName ?? item.EngName ?? item.engname ?? ''
-        }));
-        this.regionTable = mapped.length ? mapped : [...this.regionData];
+        this.regionTable = mapRegionRecords(res) as RegionData[];
       },
       error: (err) => {
-        console.error('Failed to fetch region table from API, using local fallback:', err);
-        this.regionTable = [...this.regionData];
+        console.error('Failed to fetch region table from API:', err);
+        this.regionTable = [];
+        this.toastr.error('Region data could not be loaded. Filters are unavailable until regiondata is reachable.', 'Region Data');
       }
     });
   }
@@ -521,11 +477,7 @@ export class OtherOperatorComponent implements OnInit {
     const engineers = Array.from(new Set(this.regionTable.filter(x => x.region === this.formValues.dropdown1 && x.province === this.formValues.dropdown2).map(x => x.networkEngineer))).filter(Boolean);
     this.dropdown3Options = engineers;
     
-    this.engineerNameMap = {};
-    this.dropdown3Options.forEach(eng => {
-      const regionRec = this.regionTable.find(x => x.networkEngineer === eng && x.engName);
-      this.engineerNameMap[eng] = regionRec?.engName ? `${eng} [${regionRec.engName}]` : eng;
-    });
+    this.engineerNameMap = buildEngineerDisplayMap(this.regionTable, this.dropdown3Options);
 
     this.formValues.dropdown3 = '';
     this.dropdown4Options = []; this.formValues.dropdown4 = '';

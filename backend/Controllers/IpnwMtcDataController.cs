@@ -37,13 +37,21 @@ namespace backend.Controllers
             var authResult = await _authorizationService.AuthorizeAsync(User, PageId, "EditPlatformKpiPolicy");
             if (!authResult.Succeeded) return Forbid();
 
-            var entity = await _db.IpnwMtcData.FirstOrDefaultAsync(x => x.Id == id);
+            var entity = await _db.IpnwMtcData
+                .AsNoTracking()
+                .Where(x => x.Id == id)
+                .Select(x => new { x.Id, x.IsVerified })
+                .FirstOrDefaultAsync();
             if (entity == null) return NotFound();
 
-            entity.IsVerified = !entity.IsVerified;
-            await _db.SaveChangesAsync();
+            var newValue = !entity.IsVerified;
+
+            await _db.Database.ExecuteSqlRawAsync(
+                "UPDATE dbo.ipnwmtcdata SET [is_verified] = @p0 WHERE [id] = @p1",
+                newValue,
+                id);
             
-            return Ok(new { id = entity.Id, isVerified = entity.IsVerified });
+            return Ok(new { id = entity.Id, isVerified = newValue });
         }
     }
 }

@@ -21,6 +21,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import * as XLSX from 'xlsx';
 import { ToastrService } from 'ngx-toastr';
 import { FilterUtils } from '../../../../utils/filter.utils';
+import { formatEngineerDisplay } from '../../../../utils/region-display.utils';
 
 type Region = {
   id: number;
@@ -28,6 +29,7 @@ type Region = {
   province: string;
   networkEngineer: string;
   lea: string;
+  engName?: string;
 };
 //kpi rows from backend with metrics initialized to 0 (until we fetch results)
 interface KpiMetric {
@@ -264,6 +266,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
             province: r.province,
             networkEngineer: networkEngineer || '—',
             lea: lea || networkEngineer || '—',
+            engName: (r as any).engName ?? (r as any).EngName ?? (r as any)['EngName'] ?? (r as any)['engName'] ?? undefined,
           };
         });
 
@@ -523,6 +526,10 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private normalizeArea(value: string): string {
     return (value ?? '').replace(/[^A-Za-z0-9]/g, '').toLowerCase();
+  }
+
+  getEngineerHeaderLabel(eng: Region): string {
+    return formatEngineerDisplay(eng.networkEngineer, eng.engName);
   }
 
   private computeTotals(): void {
@@ -804,7 +811,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     this.engineersFlat.forEach(eng => {
       const startCol = currentCol;
       const engCell = worksheet.getCell(currentRow, startCol);
-      engCell.value = `${eng.networkEngineer}\n(${eng.lea})`;
+      engCell.value = `${this.getEngineerHeaderLabel(eng)}\n(${eng.lea})`;
       engCell.font = { bold: true, color: { argb: headerTextColor }, size: 10 };
       engCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
       engCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };

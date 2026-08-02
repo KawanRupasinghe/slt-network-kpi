@@ -1,0 +1,93 @@
+
+[NWKPI].[dbo].[Page]:
+PageId	PageCode	PageName	CreatedAt
+1	IP_NW_OP	IP NW OP	2026-02-17 08:54:48.1866667
+2	SERVICE_FULFILMENT	Service Fulfilment	2026-02-17 08:54:48.1866667
+3	BB_ANW	Wireline Access NW	2026-02-17 08:54:48.1866667
+4	OTN_OP	OTN OP	2026-02-17 08:54:48.1866667
+5	TM_ACTIVITY_PLAN	Other Operator	2026-02-17 08:54:48.1866667
+6	ROUTINE_MTNC	Routine Maintenance	2026-02-17 08:54:48.1866667
+7	TOWER_MTCE_ACHIEVEMENT	Tower Maintainance	2026-02-17 08:54:48.1866667
+8	ENTERPRISE_KPI	Enterprise KPI	2026-06-01 04:08:17.2317337
+9	OTHER_OPERATOR_KPI	Other Operator KPI	2026-06-01 04:08:17.2317474
+10	OTHER_KPI	Other KPI	2026-06-01 04:08:17.2317480
+11	AGED_NETWORK_FAILURES	Aged Network Failures	2026-06-15 04:35:08.3966667
+
+[NWKPI].[dbo].[UserPageAccess]:
+UserId	PageId
+1013	4
+2027	2
+2030	4
+2031	10
+2032	8
+2033	9
+2035	11
+2040	10
+2043	1
+2044	3
+2045	2
+2046	7
+2047	6
+
+NWKPI].[dbo].[regiondata]:
+id	region	province	network_engineer	lea_code	EngName
+1	metro	metro 1	WPC1	HK	Manjula
+2	metro	metro 1	WPC2	CEN/MD	Ruwan
+3	metro	metro 1	WPE	KON/KX	Indika
+4	metro	metro 2	WP S-W	ND/RM	Karunananda
+5	metro	metro 2	WP S-E	AW/HO	Vishwajith
+7	Region01	WPN	WPN	NG/WT	Lansakkara
+8	Region01	WPN	WP N-E	GQ/KI/NTB	Kamal
+9	Region01	NWP	NWP-E	KG/KLY	Thilini
+10	Region01	NWP	NWP-W	CW/PX	Thilanga
+11	Region01	CP	CPN	KY/MT	Manora
+12	Region01	CP	CPS	GP/HT/NW	Iranga
+13	Region02	SAB & UVA	UVA	BD/BW/MRG	Roshan
+14	Region02	SAB & UVA	SAB	KE/RN	Chintaka
+15	Region02	SP	SPE	EMB/HB/MH	Thilina
+16	Region02	SP	SPW	AG/GL	Wasantha
+17	Region02	WPS	WPS	HR/KT/PH	Lalin
+18	Region03	EP	EP	BC/AP/KL/TC	Kishanthan
+19	Region03	NP	NP-1	JA	Nandakumaran
+20	Region03	NP	NP-2	KO/MLT/MB/VA	Puveehan
+6002	Region03	NP	NCP	AD/PR	Dileepa
+7003	Region03	EP	EP-TC	TC	Cover up NP-2
+7004	Region03	EP	EP-PR	PR	Cover up NCP
+
+[NWKPI].[dbo].[rtom_area_lookup]:
+ID	area_code	display_name
+1	cenhk	CEN/HK
+2	cenmd	CEN/MD
+3	gqkintb	GQ/KI/NTB
+4	ndrm	ND/RM
+5	awho	AW/HO
+6	konix	KON/KX
+7	ngivt	NG/WT
+8	kgkly	KG/KLY
+9	cwpx	CW/PX
+10	kymt	KY/MT
+11	gphtnw	GP/HT/NW
+12	adipr	AD/PR
+13	bddwmrg	BD/BW/MRG
+14	keirn	KE/RN
+15	embmbmh	EMB/HB/MH
+16	aggl	AG/GL
+17	hrktph	HR/KT/PH
+18	bcjrdkltc	BC/AP/KL/TC
+19	ja	JA
+20	komltmbva	KO/MLT/MB/VA
+
+[NWKPI].[dbo].[PlatformKpiAssignment]:
+AssignmentId	UserId	PageId	AssignedAt
+2042	2031	10	2026-06-01 05:36:07.7559770
+2043	2032	8	2026-06-01 05:39:36.1513289
+2048	2033	9	2026-06-08 16:44:17.7554042
+2049	2035	11	2026-06-15 04:45:13.6668965
+2054	2040	10	2026-07-02 08:14:47.1199393
+2056	2030	4	2026-07-18 21:30:59.6158315
+2057	1013	4	2026-07-18 21:31:13.1662196
+2058	2043	1	2026-07-18 21:32:11.2851187
+2061	2045	2	2026-07-18 21:34:49.7629851
+2062	2044	3	2026-07-31 06:43:17.5255600
+2064	2046	7	2026-08-02 15:58:10.8959685
+2065	2047	6	2026-08-02 16:12:28.9891530

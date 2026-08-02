@@ -450,7 +450,7 @@ namespace backend.Controllers
                     continue;
                 }
 
-                if (kpi.KeyPerformanceIndicators.Equals("Operation & Maintenance of SLT towers and tower premises", StringComparison.OrdinalIgnoreCase))
+                if (IsTowerMaintenanceKpi(kpi))
                 {
                     Console.WriteLine("ENTERED TOWER BLOCK");
                     var totalTowerNodes = towerResults.Sum(x => x.NodesCount);
@@ -484,10 +484,7 @@ namespace backend.Controllers
                     continue;
                 }
 
-                if (kpi.KeyPerformanceIndicators.Contains("Power", StringComparison.OrdinalIgnoreCase)
-                    && (kpi.KeyPerformanceIndicators.Contains("Air", StringComparison.OrdinalIgnoreCase)
-                        || kpi.KeyPerformanceIndicators.Contains("AC", StringComparison.OrdinalIgnoreCase)
-                        || kpi.KeyPerformanceIndicators.Contains("OC", StringComparison.OrdinalIgnoreCase)))
+                if (IsPowerAndAcKpi(kpi.KeyPerformanceIndicators))
                 {
                     Console.WriteLine("ENTERED POWER & AC BLOCK");
                     var totalPowerNodes = powerResults.Sum(x => x.NodesCount);
@@ -989,6 +986,24 @@ namespace backend.Controllers
 
         private static bool IsTelemetryKpi(string? kpiName)
             => (kpiName ?? string.Empty).Contains("Telemetry", StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsPowerAndAcKpi(string? kpiName)
+        {
+            var normalized = NormalizeArea(kpiName);
+            return normalized.Contains("power")
+                && (normalized.Contains("air")
+                    || normalized.Contains("ac")
+                    || normalized.Contains("oc")
+                    || normalized.Contains("airconditioning"));
+        }
+
+        private static bool IsTowerMaintenanceKpi(KpiDefinition kpi)
+        {
+            var normalizedName = NormalizeText(kpi.KeyPerformanceIndicators);
+            var normalizedCategory = NormalizeText(kpi.Category);
+            return (normalizedName.Contains("tower") || normalizedCategory.Contains("tower"))
+                && normalizedName.Contains("maintenance");
+        }
 
         // =========================================================
         // TEXT NORMALIZATION HELPERS

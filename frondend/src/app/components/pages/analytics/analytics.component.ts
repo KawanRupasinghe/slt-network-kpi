@@ -19,6 +19,7 @@ import { environment } from '../../../../environments/environment';
 import { AnalyticsService } from '../../../services/analytics.service';
 import { FilterUtils } from '../../../utils/filter.utils';
 import { Region as RegionApi, RegionService } from '../../../services/region.service';
+import { formatEngineerDisplay } from '../../../utils/region-display.utils';
 
 type Region = {
   id: number;
@@ -150,20 +151,14 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.analyticsService.getAvailableYears().subscribe({
-      next: (years: number[]) => {
-        const availableYears = years.length > 0 ? years : FilterUtils.generateYearOptions();
-        this.yearOptions = availableYears;
-        if (!this.yearOptions.includes(this.selectedYear)) {
-          this.selectedYear = this.yearOptions[0];
-        }
-        this.loadAvailableMonthsAndData();
-      },
-      error: (err: any) => {
-        this.yearOptions = FilterUtils.generateYearOptions();
-        this.loadAvailableMonthsAndData();
-      }
-    });
+    this.yearOptions = FilterUtils.generatePlatformYearOptions();
+    if (!this.yearOptions.includes(this.selectedYear)) {
+      this.selectedYear = this.yearOptions.includes(new Date().getFullYear())
+        ? new Date().getFullYear()
+        : this.yearOptions[0];
+    }
+    this.applyAvailableMonths([]);
+    this.loadAvailableMonthsAndData();
   }
 
   ngAfterViewInit(): void {
@@ -232,26 +227,18 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  private applyAvailableMonths(months: number[]): void {
+  private applyAvailableMonths(_months: number[]): void {
     const validMonths = this.getAvailableMonths(this.selectedYear).map(m => m.value);
-    const availableMonths = months
-      .map(month => Number(month))
-      .filter(month => validMonths.includes(month))
-      .sort((a, b) => a - b);
-
-    if (availableMonths.length > 0) {
-      const latestMonth = availableMonths[availableMonths.length - 1];
-      this.selectedStartMonth = latestMonth;
-      this.selectedEndMonth = latestMonth;
-      return;
-    }
+    const currentMonth = new Date().getMonth() + 1;
 
     if (!validMonths.find(month => month === this.selectedStartMonth)) {
-      this.selectedStartMonth = validMonths[0] ?? this.selectedStartMonth;
+      this.selectedStartMonth = validMonths.includes(currentMonth)
+        ? currentMonth
+        : validMonths[0] ?? this.selectedStartMonth;
     }
 
     if (!validMonths.find(month => month === this.selectedEndMonth)) {
-      this.selectedEndMonth = validMonths[validMonths.length - 1] ?? this.selectedEndMonth;
+      this.selectedEndMonth = this.selectedStartMonth;
     }
 
     if (this.selectedStartMonth > this.selectedEndMonth) {
@@ -583,12 +570,7 @@ getDashboardProgressPercent(percent: number): number {
 }
 
   getEngineerHeaderLabel(eng: Region): string {
-    const ne = eng.networkEngineer ?? '';
-    const name = eng.engName ?? '';
-    const lea = eng.lea ?? '';
-
-    const parts = [`${ne} - ${name}`.trim()];
-    return `${parts[0]} (${lea})`.replace(/\s+/g, ' ').trim();
+    return formatEngineerDisplay(eng.networkEngineer, eng.engName);
   }
 
   private scheduleRowSync(): void {
@@ -825,7 +807,7 @@ getDashboardProgressPercent(percent: number): number {
     this.engineersFlat.forEach(eng => {
       const startCol = currentCol;
       const engCell = worksheet.getCell(currentRow, startCol);
-      engCell.value = this.getEngineerHeaderLabel(eng);
+      engCell.value = `${this.getEngineerHeaderLabel(eng)}\n(${eng.lea})`;
       engCell.font = { bold: true, color: { argb: headerTextColor }, size: 10 };
       engCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerBgColor } };
       engCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };

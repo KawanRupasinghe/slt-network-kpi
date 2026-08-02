@@ -94,7 +94,9 @@ export class RoutineMtncComponent implements OnInit {
   private readonly authService = inject(AuthService);
 
   get canEditMetrics(): boolean {
-    return this.authService.canEditPage('Routine Maintenance');
+    return this.authService.canEditPage('Routine Maintenance')
+      || this.authService.canEditPage('Routine MTNC')
+      || this.authService.canEditPage('RoutineMtnc');
   }
 
   pageTitle = 'Routine Maintenance';
@@ -332,6 +334,8 @@ export class RoutineMtncComponent implements OnInit {
 
 
   toggleVerified(platformKey: PlatformKey, record: PlatformRecord, column: string): void {
+    if (!this.canEditMetrics) return;
+
     const id = this.getDetailId(record, column);
     if (id) {
       // Determine the correct endpoint based on platformKey

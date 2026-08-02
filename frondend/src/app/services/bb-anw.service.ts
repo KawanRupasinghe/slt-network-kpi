@@ -4,7 +4,7 @@
    Features: CRUD operations for BB ANW KPIs with node-level metrics
 */
 
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -69,9 +69,13 @@ export class BbAnwService {
   // ---------------------------
   // PLATFORM KPI (FULL)
   // ---------------------------
-  /* Get all platform BB ANW KPIs with full details */
-  getAll(): Observable<BbAnwDto[]> {
-    return this.http.get<BbAnwDto[]>(this.apiUrl);
+  /* Get platform BB ANW KPIs with node metrics scoped to the selected period */
+  getAll(month?: number, year?: number): Observable<BbAnwDto[]> {
+    let params = new HttpParams();
+    if (month) params = params.set('month', String(month));
+    if (year) params = params.set('year', String(year));
+
+    return this.http.get<BbAnwDto[]>(this.apiUrl, { params });
   }
 
   /* Get specific BB ANW KPI by ID */

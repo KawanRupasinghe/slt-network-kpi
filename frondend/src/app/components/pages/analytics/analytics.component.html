@@ -155,7 +155,8 @@
               <ng-container *ngFor="let region of regionGroups">
                 <ng-container *ngFor="let province of region.provinces">
                   <th *ngFor="let eng of province.engineers" colspan="3" class="ee-area-header group-margin">
-<div class="nw-engineer">{{ getEngineerHeaderLabel(eng) }}</div>
+                    <div class="nw-engineer">{{ getEngineerHeaderLabel(eng) }}</div>
+                    <div class="rtom-area">({{ eng.lea }})</div>
                   </th>
                 </ng-container>
               </ng-container>
@@ -239,7 +240,7 @@
               <div class="dashboard-engineer-card" *ngFor="let item of provinceGroup.engineers">
                 <div class="dashboard-engineer-header">
                   <div>
-                    <div class="dashboard-engineer-name">{{ item.engineer.networkEngineer }}</div>
+                    <div class="dashboard-engineer-name">{{ getEngineerHeaderLabel(item.engineer) }}</div>
                     <div class="dashboard-engineer-area">({{ item.engineer.lea }})</div>
                   </div>
                   <div class="dashboard-percent-badge" [style.color]="getDashboardColor(item.overallPercent)">
