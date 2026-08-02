@@ -130,7 +130,7 @@
                          *ngIf="getDetailId(record, column)"
                          [ngClass]="getIsVerified(record, column) ? 'approved' : 'unapproved'"
                          (click)="toggleVerified(config.key, record, column)"
-                         title="Click to toggle approval">
+                         [title]="canEditMetrics ? 'Click to toggle approval' : 'Verification status'">
                       <i class="bi bi-check" *ngIf="getIsVerified(record, column)"></i>
                       <i class="bi bi-x" *ngIf="!getIsVerified(record, column)"></i>
 

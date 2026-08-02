@@ -60,14 +60,20 @@ namespace backend.Controllers
         // GET: /api/bb-anw
         // Retrieve full KPI records including node data
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] int? month, [FromQuery] int? year)
         {
             var authResult = await _authorizationService.AuthorizeAsync(User, PageId, "ViewPagePolicy");
             if (!authResult.Succeeded) return Forbid();
 
-            var data = await _context.BbAnwKpis
+            var query = _context.BbAnwKpis
                 .AsNoTracking()
-                .Include(x => x.Nodes)
+                .AsQueryable();
+
+            query = month.HasValue && year.HasValue
+                ? query.Include(x => x.Nodes.Where(n => n.Month == month.Value && n.Year == year.Value))
+                : query.Include(x => x.Nodes);
+
+            var data = await query
                 .OrderBy(x => x.Id)
                 .ToListAsync();
 

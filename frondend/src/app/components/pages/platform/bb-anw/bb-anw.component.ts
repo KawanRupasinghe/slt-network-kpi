@@ -277,7 +277,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		this.loading = true;
 		this.error = null;
 
-		this.bbAnwService.getAll().subscribe({
+		this.bbAnwService.getAll(this.selectedMonth, this.selectedYear).subscribe({
 			next: (rows) => {
 				const list = Array.isArray(rows) ? rows : [];
 				this.adminRows = list;
@@ -314,10 +314,12 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		(dto.nodes ?? []).forEach((node) => {
 			const code = this.norm(node.nodeCode);
 			if (!code) return;
+			const meta = this.normalizeNodeMeta(node?.month, node?.year);
+			if (meta.month !== this.selectedMonth || meta.year !== this.selectedYear) return;
 			entry.unavailableMinutes[code] = node.unavailableMinutes ?? null;
 			entry.totalMinutes[code] = node.totalMinutes ?? null;
 			entry.totalNodes[code] = node.totalNodes ?? null;
-			entry.nodeMeta[code] = this.normalizeNodeMeta(node?.month, node?.year);
+			entry.nodeMeta[code] = meta;
 		});
 
 		return entry;
@@ -537,7 +539,7 @@ private updateDropdown3Options(province: string): void {
 
 	onPeriodChange(): void {
 		this.cancelEdit();
-		this.applyPeriodFilter();
+		this.loadData();
 	}
 
 	private calculatePercentage(totalMinutes: any, unavailableMinutes: any, totalNodes: any, meta?: NodeMeta): number {

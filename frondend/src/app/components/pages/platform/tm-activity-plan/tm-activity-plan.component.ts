@@ -6,7 +6,16 @@ import * as ExcelJS from 'exceljs';
 import { of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
+import { AuthService } from '../../../../services/auth.service';
+import { Region, RegionService } from '../../../../services/region.service';
 import { TmActivityService } from '../../../../services/tm-activity.service';
+import { FilterUtils } from '../../../../utils/filter.utils';
+import {
+  buildEngineerDisplayMap,
+  formatEngineerDisplay,
+  mapRegionRecords,
+  normalizeLookupKey
+} from '../../../../utils/region-display.utils';
 
 type ProcessedDetail = {
   Column1: string;
@@ -54,6 +63,8 @@ export class TmActivityPlanComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly tmActivityService = inject(TmActivityService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly authService = inject(AuthService);
+  private readonly regionService = inject(RegionService);
 
   pageTitle = 'Tower Maintainance';
   headers: string[] = [];
@@ -64,6 +75,13 @@ export class TmActivityPlanComponent implements OnInit {
   loading = false;
   errorMessage = '';
   readonly tableTitles = TABLE_TITLES;
+  engineerNameMap: Record<string, string> = {};
+
+  get canEditMetrics(): boolean {
+    return this.authService.canEditPage('Tower Maintainance')
+      || this.authService.canEditPage('Tower Maintenance')
+      || this.authService.canEditPage('TM Activity Plan');
+  }
 
   /* ===================== FILTER STATE ===================== */
 
@@ -72,26 +90,9 @@ export class TmActivityPlanComponent implements OnInit {
   selectedMonth: number = this.now.getMonth() + 1;
   selectedYear: number  = this.now.getFullYear();
 
-  readonly monthOptions: { value: number; label: string }[] = [
-    { value:  1, label: 'January'   },
-    { value:  2, label: 'February'  },
-    { value:  3, label: 'March'     },
-    { value:  4, label: 'April'     },
-    { value:  5, label: 'May'       },
-    { value:  6, label: 'June'      },
-    { value:  7, label: 'July'      },
-    { value:  8, label: 'August'    },
-    { value:  9, label: 'September' },
-    { value: 10, label: 'October'   },
-    { value: 11, label: 'November'  },
-    { value: 12, label: 'December'  }
-  ];
+  get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
 
-  yearOptions: number[] = [
-    this.now.getFullYear(),
-    this.now.getFullYear() - 1,
-    this.now.getFullYear() - 2
-  ];
+  yearOptions: number[] = FilterUtils.generatePlatformYearOptions();
 
   /* ===================== FILTER HANDLERS ===================== */
 
@@ -110,6 +111,7 @@ export class TmActivityPlanComponent implements OnInit {
   /* ------------------------------------------------- */
 
   ngOnInit(): void {
+    this.loadEngineerNames();
     this.fetchData();
   }
 
@@ -246,6 +248,10 @@ export class TmActivityPlanComponent implements OnInit {
     return detail?.id;
   }
 
+  getHeaderDisplay(header: string): string {
+    return this.engineerNameMap[header] ?? this.engineerNameMap[normalizeLookupKey(header)] ?? header;
+  }
+
   /**
    * Returns the detail id for the Strategic KPI Overview main table cell.
    * The main table mirrors the selected month; colIndex maps to this.headers[colIndex].
@@ -372,8 +378,15 @@ export class TmActivityPlanComponent implements OnInit {
   }
 
   toggleVerified(entry: ProcessedRecord, header: string): void {
+    if (!this.canEditMetrics) return;
     const detail = entry.details.find(item => item.Column1 === header);
-    if (detail && detail.id) {
+    if (detail?.id) {
+      this.toggleDetailVerified(detail);
+    }
+  }
+
+  private toggleDetailVerified(detail: ProcessedDetail): void {
+    if (detail.id) {
       this.http.patch<{ id: number; isVerified: boolean }>(`${environment.apiUrl}/tower-mtc-data/${detail.id}/toggle-verified`, {}).subscribe({
         next: (res) => {
           detail.isVerified = res.isVerified;
@@ -384,5 +397,36 @@ export class TmActivityPlanComponent implements OnInit {
         }
       });
     }
+  }
+
+  private loadEngineerNames(): void {
+    this.regionService.getAll().subscribe({
+      next: (res: Region[] | any[]) => {
+        const rows = mapRegionRecords(res);
+        const byEngineer = buildEngineerDisplayMap(rows);
+        const nextMap: Record<string, string> = {};
+
+        Object.entries(byEngineer).forEach(([engineer, display]) => {
+          nextMap[engineer] = display;
+          nextMap[normalizeLookupKey(engineer)] = display;
+        });
+
+        rows.forEach((row) => {
+          const display = formatEngineerDisplay(row.networkEngineer, row.engName);
+          [row.lea, row.lea ? `NW/${row.lea}` : '', row.networkEngineer].forEach((key) => {
+            if (!key) return;
+            nextMap[key] = display;
+            nextMap[normalizeLookupKey(key)] = display;
+          });
+        });
+
+        this.engineerNameMap = nextMap;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Failed to fetch region table for TM Activity headers:', err);
+        this.engineerNameMap = {};
+      }
+    });
   }
 }
