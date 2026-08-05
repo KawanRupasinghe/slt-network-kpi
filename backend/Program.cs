@@ -117,9 +117,8 @@ using (var scope = app.Services.CreateScope())
             new backend.Models.Page { PageId = 2, PageCode = "SERVICE_FULFILMENT", PageName = "Service Fulfilment" },
             new backend.Models.Page { PageId = 3, PageCode = "BB_ANW", PageName = "Wireline Access NW" },
             new backend.Models.Page { PageId = 4, PageCode = "OTN_OP", PageName = "OTN OP" },
-            new backend.Models.Page { PageId = 5, PageCode = "TM_ACTIVITY", PageName = "Other Operator" },
             new backend.Models.Page { PageId = 6, PageCode = "ROUTINE_MTNC", PageName = "Routine Maintenance" },
-            new backend.Models.Page { PageId = 7, PageCode = "TOWER_MTCE", PageName = "Tower Maintainance" },
+            new backend.Models.Page { PageId = 7, PageCode = "TOWER_MTCE_ACHIEVEMENT", PageName = "Tower Maintainance" },
             new backend.Models.Page { PageId = 8, PageCode = "ENTERPRISE_KPI", PageName = "Enterprise KPI" },
             new backend.Models.Page { PageId = 9, PageCode = "OTHER_OPERATOR_KPI", PageName = "Other Operator KPI" },
             new backend.Models.Page { PageId = 10, PageCode = "OTHER_KPI", PageName = "Other KPI" }
@@ -158,9 +157,11 @@ using (var scope = app.Services.CreateScope())
                     foreach (var seed in pageSeeds)
                     {
                         var dbPage = existingPages.FirstOrDefault(p => p.PageId == seed.PageId);
-                        if (dbPage != null && dbPage.PageName != seed.PageName)
+                        if (dbPage != null &&
+                            (dbPage.PageName != seed.PageName || dbPage.PageCode != seed.PageCode))
                         {
                             dbPage.PageName = seed.PageName;
+                            dbPage.PageCode = seed.PageCode;
                             updated = true;
                         }
                     }
@@ -184,9 +185,11 @@ using (var scope = app.Services.CreateScope())
             foreach (var seed in pageSeeds)
             {
                 var dbPage = existingPages.FirstOrDefault(p => p.PageId == seed.PageId);
-                if (dbPage != null && dbPage.PageName != seed.PageName)
+                if (dbPage != null &&
+                    (dbPage.PageName != seed.PageName || dbPage.PageCode != seed.PageCode))
                 {
                     dbPage.PageName = seed.PageName;
+                    dbPage.PageCode = seed.PageCode;
                     updated = true;
                 }
             }

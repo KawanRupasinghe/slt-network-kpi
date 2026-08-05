@@ -79,7 +79,13 @@ type ApiResponse = {
 };
 
 import { AuthService } from '../../../../services/auth.service';
+import { Region, RegionService } from '../../../../services/region.service';
 import { FilterUtils } from '../../../../utils/filter.utils';
+import {
+  buildEngineerDisplayLookupMap,
+  mapRegionRecords,
+  normalizeLookupKey
+} from '../../../../utils/region-display.utils';
 
 @Component({
   selector: 'app-routine-mtnc',
@@ -92,6 +98,7 @@ export class RoutineMtncComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly authService = inject(AuthService);
+  private readonly regionService = inject(RegionService);
 
   get canEditMetrics(): boolean {
     return this.authService.canEditPage('Routine Maintenance')
@@ -104,6 +111,7 @@ export class RoutineMtncComponent implements OnInit {
 
   readonly columns = PLATFORM_COLUMNS;
   readonly combinedTableStaticColumns = 4;
+  engineerNameMap: Record<string, string> = {};
 
   readonly platformConfigs: PlatformTableConfig[] = [
     { key: 'msan', title: 'MSAN Data Table', monthsLimit: 6 },
@@ -147,6 +155,7 @@ export class RoutineMtncComponent implements OnInit {
   /* -------------------- */
 
   ngOnInit(): void {
+    this.loadEngineerNames();
     this.fetchData();
   }
 
@@ -249,7 +258,7 @@ export class RoutineMtncComponent implements OnInit {
     const headers = [
       'KPI', 'Target', 'Category',
       'Responsible DGM',
-      ...this.columns
+      ...this.columns.map(column => this.getColumnDisplay(column))
     ];
 
     worksheet.addRow(headers);
@@ -286,6 +295,12 @@ export class RoutineMtncComponent implements OnInit {
   formatPlaceholderValue(platformKey: PlatformKey | null, column: string): string {
     if (!platformKey) return 'No data';
     return `${this.placeholderMap[platformKey]?.[column] ?? '0.00'}%`;
+  }
+
+  getColumnDisplay(column: string): string {
+    return this.engineerNameMap[column]
+      ?? this.engineerNameMap[normalizeLookupKey(column)]
+      ?? column;
   }
 
 
@@ -481,5 +496,18 @@ export class RoutineMtncComponent implements OnInit {
 
   private setError(msg: string): void {
     if (!this.errorMessage) this.errorMessage = msg;
+  }
+
+  private loadEngineerNames(): void {
+    this.regionService.getAll().subscribe({
+      next: (res: Region[] | any[]) => {
+        this.engineerNameMap = buildEngineerDisplayLookupMap(mapRegionRecords(res));
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Failed to fetch region table for Routine Maintenance headers:', err);
+        this.engineerNameMap = {};
+      }
+    });
   }
 }

@@ -58,7 +58,7 @@
                 <th>Target</th>
                 <th>Category</th>
                 <th>Responsible DGM</th>
-                <th *ngFor="let column of columns; trackBy: trackByColumn">{{ column }}</th>
+                <th *ngFor="let column of columns; trackBy: trackByColumn">{{ getColumnDisplay(column) }}</th>
               </tr>
             </thead>
             <tbody>
@@ -104,7 +104,7 @@
             <thead>
               <tr>
                 <th rowspan="2">Month</th>
-                <th *ngFor="let column of columns; trackBy: trackByColumn" colspan="2">{{ column }}</th>
+                <th *ngFor="let column of columns; trackBy: trackByColumn" colspan="2">{{ getColumnDisplay(column) }}</th>
               </tr>
               <tr>
                 <ng-container *ngFor="let column of columns; trackBy: trackByColumn">

@@ -15,6 +15,11 @@ import { CreateUserDto, UpdateUserDto, User, UserService } from '../../../../ser
 
 /* ========== USER REGISTRATION COMPONENT ========== */
 
+interface PageOption {
+  pageId: number;
+  name: string;
+}
+
 @Component({
   selector: 'app-user-registration',
   standalone: true,
@@ -31,6 +36,7 @@ export class UserRegistrationComponent implements OnInit {
   formData: CreateUserDto = {
     serviceId: '',
     name: '',
+    pageIds: [],
     pages: [],
     role: 'User', // Default to User
     isActive: true
@@ -42,17 +48,16 @@ export class UserRegistrationComponent implements OnInit {
   editingUser: User | null = null;
   isLoading = false;
 
-  availablePages = [
-    'Service Fulfilment',
-    'IP NW OP',
-    'Wireline Access NW',
-    'OTN OP',
-    'Other Operator',
-    'Routine Maintenance',
-    'Tower Maintainance',
-    'Enterprise KPI',
-    'Other Operator KPI',
-    'Other KPI'
+  availablePages: PageOption[] = [
+    { pageId: 1, name: 'IP NW OP' },
+    { pageId: 2, name: 'Service Fulfilment' },
+    { pageId: 3, name: 'Wireline Access NW' },
+    { pageId: 4, name: 'OTN OP' },
+    { pageId: 6, name: 'Routine Maintenance' },
+    { pageId: 7, name: 'Tower Maintainance' },
+    { pageId: 8, name: 'Enterprise KPI' },
+    { pageId: 9, name: 'Other Operator KPI' },
+    { pageId: 10, name: 'Other KPI' }
   ];
 
   constructor(private userService: UserService) { }
@@ -78,18 +83,30 @@ export class UserRegistrationComponent implements OnInit {
     });
   }
 
-  handlePageChange(page: string) {
+  handlePageChange(page: PageOption) {
     // For PlatformAdmin enforce single selection; for others allow multi
     if (this.formData.role === 'PlatformAdmin') {
-      this.formData.pages = [page];
+      this.formData.pageIds = [page.pageId];
     } else {
-      const index = this.formData.pages.indexOf(page);
+      const index = this.formData.pageIds.indexOf(page.pageId);
       if (index > -1) {
-        this.formData.pages.splice(index, 1);
+        this.formData.pageIds.splice(index, 1);
       } else {
-        this.formData.pages.push(page);
+        this.formData.pageIds.push(page.pageId);
       }
     }
+    this.syncSelectedPageNames();
+  }
+
+  handleRoleChange() {
+    if (this.formData.role === 'PlatformAdmin' && this.formData.pageIds.length > 1) {
+      this.formData.pageIds = [this.formData.pageIds[0]];
+      this.syncSelectedPageNames();
+    }
+  }
+
+  isPageSelected(pageId: number): boolean {
+    return this.formData.pageIds.includes(pageId);
   }
 
   handleSubmit(event: Event) {
@@ -115,6 +132,7 @@ export class UserRegistrationComponent implements OnInit {
         name: this.formData.name,
         role: this.formData.role,
         isActive: this.formData.isActive,
+        pageIds: this.formData.pageIds,
         pages: this.formData.pages
       };
 
@@ -135,7 +153,13 @@ export class UserRegistrationComponent implements OnInit {
         }
       });
     } else {
-      this.userService.createUser(this.formData).subscribe({
+      const createData: CreateUserDto = {
+        ...this.formData,
+        pageIds: this.formData.pageIds,
+        pages: this.formData.pages
+      };
+
+      this.userService.createUser(createData).subscribe({
         next: (newUser: User) => {
           this.success = 'User created successfully';
           this.users.push(newUser);
@@ -154,18 +178,22 @@ export class UserRegistrationComponent implements OnInit {
   }
 
   handleEdit(user: User) {
+    const pageIds = user.pageIds?.length ? [...user.pageIds] : this.getPageIdsFromNames(user.pages);
+
     this.editingUser = user;
     this.formData = {
       serviceId: user.serviceId,
       name: user.name,
-      pages: [...user.pages],
+      pageIds,
+      pages: this.getPageNamesFromIds(pageIds),
       role: user.role,
       isActive: user.isActive
     };
 
     // Enforce single selection UI for PlatformAdmin
-    if (this.formData.role === 'PlatformAdmin' && this.formData.pages.length > 1) {
-      this.formData.pages = [this.formData.pages[0]];
+    if (this.formData.role === 'PlatformAdmin' && this.formData.pageIds.length > 1) {
+      this.formData.pageIds = [this.formData.pageIds[0]];
+      this.syncSelectedPageNames();
     }
 
     setTimeout(() => {
@@ -206,6 +234,7 @@ export class UserRegistrationComponent implements OnInit {
     this.formData = {
       serviceId: '',
       name: '',
+      pageIds: [],
       pages: [],
       role: 'User',
       isActive: true
@@ -229,15 +258,40 @@ export class UserRegistrationComponent implements OnInit {
   fillBasicTestData() {
     this.formData.name = 'Test User';
     this.formData.serviceId = (10000 + this.users.length).toString();
-    this.formData.pages = this.availablePages.length ? [this.availablePages[0]] : [];
+    this.formData.pageIds = this.availablePages.length ? [this.availablePages[0].pageId] : [];
+    this.syncSelectedPageNames();
   }
 
   selectAllPages() {
-    this.formData.pages = [...this.availablePages];
+    this.formData.pageIds = this.formData.role === 'PlatformAdmin'
+      ? (this.availablePages.length ? [this.availablePages[0].pageId] : [])
+      : this.availablePages.map(page => page.pageId);
+    this.syncSelectedPageNames();
   }
 
   clearPages() {
-    this.formData.pages = [];
+    this.formData.pageIds = [];
+    this.syncSelectedPageNames();
+  }
+
+  private syncSelectedPageNames() {
+    this.formData.pages = this.getPageNamesFromIds(this.formData.pageIds);
+  }
+
+  private getPageNamesFromIds(pageIds: number[]): string[] {
+    return pageIds
+      .map(pageId => this.availablePages.find(page => page.pageId === pageId)?.name)
+      .filter((name): name is string => !!name);
+  }
+
+  private getPageIdsFromNames(pageNames: string[] = []): number[] {
+    return pageNames
+      .map(pageName => this.availablePages.find(page => this.normalizePageName(page.name) === this.normalizePageName(pageName))?.pageId)
+      .filter((pageId): pageId is number => pageId !== undefined);
+  }
+
+  private normalizePageName(pageName: string): string {
+    return pageName.toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 
   testBackendConnection() {

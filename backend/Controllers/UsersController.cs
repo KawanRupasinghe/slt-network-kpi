@@ -26,6 +26,8 @@ namespace backend.Controllers
     {
         // Database context
         private readonly AppDbContext _db;
+        private static readonly HashSet<int> AssignablePageIds = new() { 1, 2, 3, 4, 6, 7, 8, 9, 10 };
+        private static readonly byte[] AssignablePageIdBytes = AssignablePageIds.Select(pageId => (byte)pageId).ToArray();
 
         // Inject database context
         public UsersController(AppDbContext db)
@@ -52,20 +54,32 @@ namespace backend.Controllers
                     .ToListAsync();
 
                 // Map database entities to DTO objects
-                var result = users.Select(u => new UserDto
+                var result = users.Select(u =>
                 {
-                    UserId = u.UserId,
-                    ServiceId = u.ServiceId,
-                    Name = u.Name,
-                    Role = u.Role?.RoleName ?? "",
-                    IsActive = u.IsActive,
-                    LastLogin = u.LastLogin,
-                    CreatedAt = u.CreatedAt,
-                    UpdatedAt = u.UpdatedAt,
-                    Pages = allAccess
+                    var userAccess = allAccess
                         .Where(a => a.UserId == u.UserId)
-                        .Select(a => a.Page?.PageName ?? "")
-                        .ToList()
+                        .Where(a => AssignablePageIds.Contains(a.PageId))
+                        .ToList();
+
+                    return new UserDto
+                    {
+                        UserId = u.UserId,
+                        ServiceId = u.ServiceId,
+                        Name = u.Name,
+                        Role = u.Role?.RoleName ?? "",
+                        IsActive = u.IsActive,
+                        LastLogin = u.LastLogin,
+                        CreatedAt = u.CreatedAt,
+                        UpdatedAt = u.UpdatedAt,
+                        Pages = userAccess
+                            .Select(a => a.Page?.PageName ?? "")
+                            .Where(pageName => !string.IsNullOrWhiteSpace(pageName))
+                            .ToList(),
+                        PageIds = userAccess
+                            .Select(a => (int)a.PageId)
+                            .Distinct()
+                            .ToList()
+                    };
                 }).ToList();
 
                 return Ok(result);
@@ -92,9 +106,10 @@ namespace backend.Controllers
                 if (user == null) return NotFound();
 
                 // Retrieve page access for the user
-                var pages = await _db.UserPageAccess
+                var pageAccess = await _db.UserPageAccess
+                    .Include(upa => upa.Page)
                     .Where(upa => upa.UserId == id)
-                    .Select(upa => upa.Page != null ? upa.Page.PageName : "")
+                    .Where(upa => AssignablePageIdBytes.Contains(upa.PageId))
                     .ToListAsync();
 
                 return new UserDto
@@ -107,7 +122,14 @@ namespace backend.Controllers
                     LastLogin = user.LastLogin,
                     CreatedAt = user.CreatedAt,
                     UpdatedAt = user.UpdatedAt,
-                    Pages = pages
+                    Pages = pageAccess
+                        .Select(upa => upa.Page?.PageName ?? "")
+                        .Where(pageName => !string.IsNullOrWhiteSpace(pageName))
+                        .ToList(),
+                    PageIds = pageAccess
+                        .Select(upa => (int)upa.PageId)
+                        .Distinct()
+                        .ToList()
                 };
             }
             catch (Exception ex)
@@ -147,27 +169,24 @@ namespace backend.Controllers
                 _db.Users.Add(user);
                 await _db.SaveChangesAsync();
 
+                var pageIds = await ResolvePageIdsAsync(dto.PageIds, dto.Pages);
+
                 // Assign page access permissions if provided
-                if (dto.Pages != null && dto.Pages.Any())
+                foreach (var pageId in pageIds)
                 {
-                    foreach (var pageName in dto.Pages)
+                    _db.UserPageAccess.Add(new UserPageAccess
                     {
-                        var page = await FindPageByLooseMatch(pageName);
-                        if (page != null)
-                        {
-                            _db.UserPageAccess.Add(new UserPageAccess
-                            {
-                                UserId = user.UserId,
-                                PageId = page.PageId
-                            });
-                        }
-                    }
+                        UserId = user.UserId,
+                        PageId = pageId
+                    });
                 }
 
                 // Synchronize platform KPI assignments for PlatformAdmin users
-                await SyncPlatformAssignments(user.UserId, role.RoleName, dto.Pages);
+                await SyncPlatformAssignments(user.UserId, role.RoleName, pageIds);
 
                 await _db.SaveChangesAsync();
+
+                var pageNames = await GetPageNamesAsync(pageIds);
 
                 return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, new UserDto
                 {
@@ -176,7 +195,8 @@ namespace backend.Controllers
                     Name = user.Name,
                     Role = role.RoleName,
                     IsActive = user.IsActive,
-                    Pages = dto.Pages ?? new List<string>(),
+                    Pages = pageNames,
+                    PageIds = pageIds.Select(pageId => (int)pageId).ToList(),
                     CreatedAt = user.CreatedAt
                 });
             }
@@ -214,23 +234,24 @@ namespace backend.Controllers
 
                 user.UpdatedAt = DateTime.UtcNow;
 
+                var pageAccessProvided = dto.PageIds != null || dto.Pages != null;
+                List<byte>? pageIdsForAssignments = null;
+
                 // Update page access if provided
-                if (dto.Pages != null)
+                if (pageAccessProvided)
                 {
+                    pageIdsForAssignments = await ResolvePageIdsAsync(dto.PageIds, dto.Pages);
+
                     var existing = _db.UserPageAccess.Where(x => x.UserId == id);
                     _db.UserPageAccess.RemoveRange(existing);
 
-                    foreach (var pageName in dto.Pages)
+                    foreach (var pageId in pageIdsForAssignments)
                     {
-                        var page = await FindPageByLooseMatch(pageName);
-                        if (page != null)
+                        _db.UserPageAccess.Add(new UserPageAccess
                         {
-                            _db.UserPageAccess.Add(new UserPageAccess
-                            {
-                                UserId = user.UserId,
-                                PageId = page.PageId
-                            });
-                        }
+                            UserId = user.UserId,
+                            PageId = pageId
+                        });
                     }
                 }
 
@@ -240,25 +261,18 @@ namespace backend.Controllers
                     .Select(r => r.RoleName)
                     .FirstOrDefaultAsync()) ?? string.Empty;
 
-                List<string>? pagesForAssignments = null;
-
-                if (dto.Pages != null)
+                if (pageIdsForAssignments == null &&
+                    string.Equals(finalRoleName, "PlatformAdmin", StringComparison.OrdinalIgnoreCase))
                 {
-                    pagesForAssignments = dto.Pages;
-                }
-                else if (string.Equals(finalRoleName, "PlatformAdmin", StringComparison.OrdinalIgnoreCase))
-                {
-                    pagesForAssignments = await _db.UserPageAccess
+                    pageIdsForAssignments = await _db.UserPageAccess
                         .Where(x => x.UserId == id)
-                        .Join(_db.Pages,
-                              upa => upa.PageId,
-                              p => p.PageId,
-                              (upa, p) => p.PageName)
+                        .Where(x => AssignablePageIdBytes.Contains(x.PageId))
+                        .Select(x => x.PageId)
                         .ToListAsync();
                 }
 
                 // Synchronize platform assignments
-                await SyncPlatformAssignments(user.UserId, finalRoleName, pagesForAssignments);
+                await SyncPlatformAssignments(user.UserId, finalRoleName, pageIdsForAssignments);
 
                 await _db.SaveChangesAsync();
 
@@ -309,20 +323,32 @@ namespace backend.Controllers
                     .Include(upa => upa.Page)
                     .ToListAsync();
 
-                var result = users.Select(u => new UserDto
+                var result = users.Select(u =>
                 {
-                    UserId = u.UserId,
-                    ServiceId = u.ServiceId,
-                    Name = u.Name,
-                    Role = u.Role?.RoleName ?? "",
-                    IsActive = u.IsActive,
-                    LastLogin = u.LastLogin,
-                    CreatedAt = u.CreatedAt,
-                    UpdatedAt = u.UpdatedAt,
-                    Pages = allAccess
+                    var userAccess = allAccess
                         .Where(a => a.UserId == u.UserId)
-                        .Select(a => a.Page?.PageName ?? "")
-                        .ToList()
+                        .Where(a => AssignablePageIds.Contains(a.PageId))
+                        .ToList();
+
+                    return new UserDto
+                    {
+                        UserId = u.UserId,
+                        ServiceId = u.ServiceId,
+                        Name = u.Name,
+                        Role = u.Role?.RoleName ?? "",
+                        IsActive = u.IsActive,
+                        LastLogin = u.LastLogin,
+                        CreatedAt = u.CreatedAt,
+                        UpdatedAt = u.UpdatedAt,
+                        Pages = userAccess
+                            .Select(a => a.Page?.PageName ?? "")
+                            .Where(pageName => !string.IsNullOrWhiteSpace(pageName))
+                            .ToList(),
+                        PageIds = userAccess
+                            .Select(a => (int)a.PageId)
+                            .Distinct()
+                            .ToList()
+                    };
                 }).ToList();
 
                 return Ok(result);
@@ -428,7 +454,7 @@ namespace backend.Controllers
         // =========================================================
         // SYNCHRONIZE PLATFORM KPI ASSIGNMENTS
         // =========================================================
-        private async Task SyncPlatformAssignments(int userId, string roleName, List<string>? pageNames)
+        private Task SyncPlatformAssignments(int userId, string roleName, List<byte>? pageIds)
         {
             // Remove existing assignments
             var existingAssignments = _db.PlatformKpiAssignments.Where(x => x.UserId == userId);
@@ -437,38 +463,76 @@ namespace backend.Controllers
             // Only PlatformAdmin users receive assignments
             if (string.IsNullOrWhiteSpace(roleName) ||
                 !string.Equals(roleName, "PlatformAdmin", StringComparison.OrdinalIgnoreCase))
-                return;
+                return Task.CompletedTask;
 
-            if (pageNames == null || !pageNames.Any())
-                return;
+            if (pageIds == null || !pageIds.Any())
+                return Task.CompletedTask;
 
             // Assign only one platform page
+            var pageId = pageIds.FirstOrDefault(id => AssignablePageIds.Contains(id));
+            if (pageId == 0)
+                return Task.CompletedTask;
+
+            _db.PlatformKpiAssignments.Add(new PlatformKpiAssignment
+            {
+                UserId = userId,
+                PageId = pageId
+            });
+
+            return Task.CompletedTask;
+        }
+
+        // =========================================================
+        // RESOLVE PAGE IDS FROM NEW IDS OR LEGACY NAMES
+        // =========================================================
+        private async Task<List<byte>> ResolvePageIdsAsync(List<int>? pageIds, List<string>? pageNames)
+        {
+            if (pageIds != null)
+            {
+                return pageIds
+                    .Where(AssignablePageIds.Contains)
+                    .Distinct()
+                    .Select(pageId => (byte)pageId)
+                    .ToList();
+            }
+
+            if (pageNames == null || !pageNames.Any())
+                return new List<byte>();
+
+            var resolvedIds = new List<byte>();
+
             foreach (var pageName in pageNames)
             {
                 var mappedPageId = MapKnownPageId(pageName);
-
-                if (mappedPageId.HasValue)
+                if (mappedPageId.HasValue && AssignablePageIds.Contains(mappedPageId.Value))
                 {
-                    _db.PlatformKpiAssignments.Add(new PlatformKpiAssignment
-                    {
-                        UserId = userId,
-                        PageId = (byte)mappedPageId.Value
-                    });
-                    break;
+                    resolvedIds.Add((byte)mappedPageId.Value);
+                    continue;
                 }
 
                 var page = await FindPageByLooseMatch(pageName);
-
-                if (page != null)
+                if (page != null && AssignablePageIds.Contains(page.PageId))
                 {
-                    _db.PlatformKpiAssignments.Add(new PlatformKpiAssignment
-                    {
-                        UserId = userId,
-                        PageId = page.PageId
-                    });
-                    break;
+                    resolvedIds.Add(page.PageId);
                 }
             }
+
+            return resolvedIds.Distinct().ToList();
+        }
+
+        // =========================================================
+        // GET PAGE NAMES FOR DTO RESPONSES
+        // =========================================================
+        private async Task<List<string>> GetPageNamesAsync(List<byte> pageIds)
+        {
+            if (!pageIds.Any())
+                return new List<string>();
+
+            return await _db.Pages
+                .Where(page => pageIds.Contains(page.PageId))
+                .OrderBy(page => page.PageId)
+                .Select(page => page.PageName)
+                .ToListAsync();
         }
 
         // =========================================================
@@ -498,8 +562,6 @@ namespace backend.Controllers
                 "bbanw" => 3,
                 "otnop" => 4,
                 "otonop" => 4,
-                "tmactivityplan" => 5,
-                "otheroperator" => 5,
                 "routinemtnc" => 6,
                 "routinemaintenance" => 6,
                 "towermtceachievement" => 7,
@@ -509,7 +571,6 @@ namespace backend.Controllers
                 "enterprisekpi" => 8,
                 "otheroperatorkpi" => 9,
                 "otherkpi" => 10,
-                "agednetworkfailures" => 11,
                 _ => null
             };
         }

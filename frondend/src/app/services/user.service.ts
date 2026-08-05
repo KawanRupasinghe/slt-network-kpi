@@ -25,6 +25,8 @@ export interface User {
   isActive: boolean;
   /* Pages assigned to this user */
   pages: string[];
+  /* Page IDs assigned to this user */
+  pageIds: number[];
   /* Last login timestamp */
   lastLogin?: string;
   /* Account creation timestamp */
@@ -44,7 +46,9 @@ export interface CreateUserDto {
   /* Account active status */
   isActive: boolean;
   /* Pages to assign */
-  pages: string[];
+  pages?: string[];
+  /* Page IDs to assign */
+  pageIds: number[];
 }
 
 /* Payload for updating user */
@@ -59,6 +63,8 @@ export interface UpdateUserDto {
   isActive?: boolean;
   /* Pages (optional update) */
   pages?: string[];
+  /* Page IDs (optional update) */
+  pageIds?: number[];
 }
 
 /* ========== USER SERVICE ========== */

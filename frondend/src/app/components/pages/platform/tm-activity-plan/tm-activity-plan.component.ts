@@ -11,8 +11,7 @@ import { Region, RegionService } from '../../../../services/region.service';
 import { TmActivityService } from '../../../../services/tm-activity.service';
 import { FilterUtils } from '../../../../utils/filter.utils';
 import {
-  buildEngineerDisplayMap,
-  formatEngineerDisplay,
+  buildEngineerDisplayLookupMap,
   mapRegionRecords,
   normalizeLookupKey
 } from '../../../../utils/region-display.utils';
@@ -170,7 +169,7 @@ export class TmActivityPlanComponent implements OnInit {
 
     worksheet.addRow([]);
 
-    const headerRow = worksheet.addRow([...baseColumns, ...this.headers]);
+    const headerRow = worksheet.addRow([...baseColumns, ...this.headers.map(header => this.getHeaderDisplay(header))]);
     this.styleHeaderRow(headerRow);
 
     this.hardcodedTableData.forEach(record => {
@@ -193,7 +192,10 @@ export class TmActivityPlanComponent implements OnInit {
       titleRow.font = { bold: true, size: 12 };
       titleRow.alignment = { horizontal: 'center' };
 
-      const dynamicHeaders = ['Month', ...this.headers.flatMap(h => [`${h} Distribution`, `${h} Achievement`])];
+      const dynamicHeaders = ['Month', ...this.headers.flatMap(h => [
+        `${this.getHeaderDisplay(h)} Distribution`,
+        `${this.getHeaderDisplay(h)} Achievement`
+      ])];
       const dynamicHeaderRow = worksheet.addRow(dynamicHeaders);
       this.styleHeaderRow(dynamicHeaderRow);
 
@@ -402,25 +404,7 @@ export class TmActivityPlanComponent implements OnInit {
   private loadEngineerNames(): void {
     this.regionService.getAll().subscribe({
       next: (res: Region[] | any[]) => {
-        const rows = mapRegionRecords(res);
-        const byEngineer = buildEngineerDisplayMap(rows);
-        const nextMap: Record<string, string> = {};
-
-        Object.entries(byEngineer).forEach(([engineer, display]) => {
-          nextMap[engineer] = display;
-          nextMap[normalizeLookupKey(engineer)] = display;
-        });
-
-        rows.forEach((row) => {
-          const display = formatEngineerDisplay(row.networkEngineer, row.engName);
-          [row.lea, row.lea ? `NW/${row.lea}` : '', row.networkEngineer].forEach((key) => {
-            if (!key) return;
-            nextMap[key] = display;
-            nextMap[normalizeLookupKey(key)] = display;
-          });
-        });
-
-        this.engineerNameMap = nextMap;
+        this.engineerNameMap = buildEngineerDisplayLookupMap(mapRegionRecords(res));
         this.cdr.detectChanges();
       },
       error: (err) => {

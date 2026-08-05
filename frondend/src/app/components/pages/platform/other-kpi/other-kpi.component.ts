@@ -6,7 +6,12 @@ import { TelemetryService } from '../../../../services/telemetry.service';
 import { PowerAndACService, PowerAndACRecord } from '../../../../services/power-and-ac.service';
 import { AuthService } from '../../../../services/auth.service';
 import { FilterUtils } from '../../../../utils/filter.utils';
-import { formatEngineerDisplay } from '../../../../utils/region-display.utils';
+import {
+  buildEngineerDisplayLookupMap,
+  formatEngineerDisplay,
+  mapRegionRecords,
+  normalizeLookupKey
+} from '../../../../utils/region-display.utils';
 
 
 
@@ -61,6 +66,7 @@ export class OtherKpiComponent implements OnInit {
   pacLoading = false;
   pacError: string | null = null;
   pacRows: PowerAndACRecord[] = [];
+  pacEngineerNameMap: Record<string, string> = {};
 
   get monthOptions() { return FilterUtils.getMonthOptions(this.pacYear); }
   yearOptions: number[] = FilterUtils.generatePlatformYearOptions();
@@ -102,26 +108,28 @@ export class OtherKpiComponent implements OnInit {
     this.regionService.getAll().subscribe({
       next: (res: Region[] | any[]) => {
         const list = Array.isArray(res) ? res : [];
+        const regionRows = mapRegionRecords(list);
+        this.pacEngineerNameMap = buildEngineerDisplayLookupMap(regionRows);
 
         // Unique region names for R-GM dropdown
         this.regionOptions = Array.from(
-          new Set(list.map((x: any) => x.region ?? x.Region ?? '').filter(Boolean))
+          new Set(regionRows.map((x) => x.region ?? '').filter(Boolean))
         );
 
         // Build one AreaRow per distinct networkengineer
         const temp: Record<string, AreaRow> = {};
-        list.forEach((item: any) => {
-          const ne: string = (item.networkengineer ?? item.networkEngineer ?? item.NetworkEngineer ?? '').trim();
-          const engName: string = (item.engName ?? item.EngName ?? item.engname ?? '').trim();
-          const lea: string = (item.leacode ?? item.leaCode ?? item.lea ?? '').trim();
+        regionRows.forEach((item) => {
+          const ne: string = (item.networkEngineer ?? '').trim();
+          const engName: string = (item.engName ?? '').trim();
+          const lea: string = (item.lea ?? '').trim();
           if (!ne) return;
           if (!temp[ne]) {
             const leaNorm = this.norm(lea);
             temp[ne] = {
               designation: ne,
               friendlyName: AREA_MAPPING[leaNorm] || lea.toUpperCase() || ne,
-              region: item.region ?? item.Region ?? '',
-              province: item.province ?? item.Province ?? '',
+              region: item.region ?? '',
+              province: item.province ?? '',
               networkEngineer: formatEngineerDisplay(ne, engName),
               engName,
               percentage: 0,
@@ -242,6 +250,12 @@ export class OtherKpiComponent implements OnInit {
   get pacDesignations(): string[] {
     if (!this.pacRows) return [];
     return Array.from(new Set(this.pacRows.map(r => r.designation))).sort();
+  }
+
+  getPacDesignationDisplay(designation: string): string {
+    return this.pacEngineerNameMap[designation]
+      ?? this.pacEngineerNameMap[normalizeLookupKey(designation)]
+      ?? designation;
   }
 
   getPacRecord(designation: string, month: number): PowerAndACRecord | undefined {

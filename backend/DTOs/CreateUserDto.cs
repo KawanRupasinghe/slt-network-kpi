@@ -28,7 +28,10 @@ namespace backend.DTOs
         // Indicates whether the user account is active
         public bool IsActive { get; set; } = true;
         
-        // List of pages or page IDs the user has access to (optional)
+        // List of page names the user has access to (legacy/optional)
         public List<string>? Pages { get; set; }
+
+        // List of page IDs the user has access to
+        public List<int>? PageIds { get; set; }
     }
 }

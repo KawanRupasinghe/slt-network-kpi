@@ -19,6 +19,8 @@ namespace backend.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
+        private static readonly HashSet<byte> AssignablePageIds = new() { 1, 2, 3, 4, 6, 7, 8, 9, 10 };
+
         // Database context for accessing user data
         private readonly AppDbContext _context;
 
@@ -84,12 +86,14 @@ namespace backend.Controllers
             // Retrieve pages user is allowed to access
             var pages = await _context.UserPageAccess
                 .Where(upa => upa.UserId == user.UserId)
+                .Where(upa => AssignablePageIds.Contains(upa.PageId))
                 .Select(upa => upa.Page.PageName)
                 .ToListAsync();
 
             // Retrieve platform KPI page assignments
             var assignedPages = await _context.PlatformKpiAssignments
                 .Where(pka => pka.UserId == user.UserId)
+                .Where(pka => AssignablePageIds.Contains(pka.PageId))
                 .Select(pka => pka.Page.PageName)
                 .ToListAsync();
 
@@ -102,6 +106,7 @@ namespace backend.Controllers
                 {
                     var existingIds = await _context.PlatformKpiAssignments
                         .Where(pka => pka.UserId == user.UserId)
+                        .Where(pka => AssignablePageIds.Contains(pka.PageId))
                         .Select(pka => pka.PageId)
                         .ToListAsync();
 
@@ -121,6 +126,7 @@ namespace backend.Controllers
 
                         assignedPages = await _context.PlatformKpiAssignments
                             .Where(pka => pka.UserId == user.UserId)
+                            .Where(pka => AssignablePageIds.Contains(pka.PageId))
                             .Select(pka => pka.Page.PageName)
                             .ToListAsync();
                     }
@@ -178,8 +184,6 @@ namespace backend.Controllers
                 "bbanw" => (byte)3,
                 "otnop" => (byte)4,
                 "otonop" => (byte)4,
-                "tmactivityplan" => (byte)5,
-                "otheroperator" => (byte)5,
                 "routinemtnc" => (byte)6,
                 "routinemaintenance" => (byte)6,
                 "towermtceachievement" => (byte)7,
