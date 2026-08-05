@@ -18,6 +18,8 @@ namespace backend.Helpers
     // =========================================================
     public class ClaimsTransformation : IClaimsTransformation
     {
+        private static readonly HashSet<byte> AssignablePageIds = new() { 1, 2, 3, 4, 6, 7, 8, 9, 10 };
+
         // Database context for accessing user and assignment data
         private readonly AppDbContext _context;
 
@@ -83,6 +85,7 @@ namespace backend.Helpers
             // Allowed Pages - pages the user can access
             var allowedPages = await _context.UserPageAccess
                 .Where(upa => upa.UserId == user.UserId)
+                .Where(upa => AssignablePageIds.Contains(upa.PageId))
                 .Select(upa => upa.PageId)
                 .ToListAsync();
 
@@ -94,6 +97,7 @@ namespace backend.Helpers
             // Assigned KPI Pages - pages the user can edit (Platform KPI only)
             var assignedKpiPages = await _context.PlatformKpiAssignments
                 .Where(pka => pka.UserId == user.UserId)
+                .Where(pka => AssignablePageIds.Contains(pka.PageId))
                 .Select(pka => pka.PageId)
                 .ToListAsync();
 

@@ -82,6 +82,37 @@ export function buildEngineerDisplayMap(
   }, {} as Record<string, string>);
 }
 
+export function buildEngineerDisplayLookupMap(
+  rows: RegionLookupRow[],
+  engineers?: string[]
+): Record<string, string> {
+  const lookup: Record<string, string> = {};
+
+  Object.entries(buildEngineerDisplayMap(rows, engineers)).forEach(([engineer, display]) => {
+    addDisplayLookup(lookup, engineer, display);
+  });
+
+  rows.forEach((row) => {
+    const display = formatEngineerDisplay(row.networkEngineer, row.engName);
+    [
+      row.networkEngineer,
+      row.lea,
+      row.lea ? `NW/${row.lea}` : ''
+    ].forEach((key) => addDisplayLookup(lookup, key, display));
+  });
+
+  return lookup;
+}
+
+function addDisplayLookup(map: Record<string, string>, key: string | null | undefined, display: string): void {
+  const rawKey = cleanDisplayValue(key);
+  const rawDisplay = cleanDisplayValue(display);
+  if (!rawKey || !rawDisplay) return;
+
+  map[rawKey] = rawDisplay;
+  map[normalizeLookupKey(rawKey)] = rawDisplay;
+}
+
 function cleanDisplayValue(value: string | null | undefined): string {
   const trimmed = String(value ?? '').trim();
   return trimmed === '—' || trimmed === 'â€”' || trimmed === '-' ? '' : trimmed;

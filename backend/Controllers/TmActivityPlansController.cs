@@ -31,7 +31,7 @@ namespace backend.Controllers
         private readonly IAuthorizationService _authorizationService;
 
         // Page identifier used in authorization policies
-        private const int PageId = 5;
+        private const int PageId = 7;
 
         // Inject dependencies
         public TmActivityPlansController(AppDbContext context, IAuthorizationService authorizationService)

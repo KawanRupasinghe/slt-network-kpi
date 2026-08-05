@@ -172,7 +172,7 @@
             <thead class="table-dark">
               <tr>
                 <th rowspan="2" class="align-middle text-center" style="min-width: 120px;">Month</th>
-                <th *ngFor="let desig of pacDesignations" colspan="2" class="text-center">{{ desig }}</th>
+                <th *ngFor="let desig of pacDesignations" colspan="2" class="text-center">{{ getPacDesignationDisplay(desig) }}</th>
               </tr>
               <tr>
                 <ng-container *ngFor="let desig of pacDesignations">
