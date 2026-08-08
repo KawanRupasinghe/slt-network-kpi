@@ -137,6 +137,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 	private friendlyToDbKey: Record<string, string> = {};
 	private filtersInitialized = false;
 
+	// Injects the required dependencies.
 	constructor(
 		private regionService: RegionService,
 		private bbAnwService: BbAnwService,
@@ -158,6 +159,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 
 
 
+	// Cleans up resources such as the permission timer.
 	ngOnDestroy(): void {
 		if (this.permissionTimer) {
 			clearInterval(this.permissionTimer);
@@ -165,28 +167,34 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	// Gets unique region names from the region table.
 	get regions(): string[] {
 		return Array.from(new Set(this.regionTable.map((row) => row.region).filter(Boolean) as string[]));
 	}
 
+	// Gets the normalized selected area key.
 	get selectedKey(): string {
 		return this.formValues.dropdown4 ? this.norm(this.formValues.dropdown4) : '';
 	}
 
+	// Gets the label for the selected area.
 	get selectedAreaLabel(): string | null {
 		const key = this.selectedKey;
 		if (!key) return null;
 		return this.optionMapping[key] ?? key.toUpperCase();
 	}
 
+	// Gets the label for the selected month.
 	get selectedMonthLabel(): string {
 		return this.monthOptions.find((month) => month.value === this.selectedMonth)?.label ?? 'Month';
 	}
 
+	// Checks if area metrics should be shown.
 	get showAreaMetrics(): boolean {
 		return Boolean(this.selectedKey);
 	}
 
+	// Calculates and returns the selected area's availability percentage.
 	getSelectedAvailability(entry: BbAnwEntry): string {
 		const key = this.selectedKey;
 		if (!key) return '--';
@@ -202,6 +210,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		return `${pct.toFixed(2)}%`;
 	}
 
+	// Gets the display string for a specific metric.
 	getMetricDisplay(entry: BbAnwEntry, metric: MetricKey): string {
 		const key = this.selectedKey;
 		if (!key) return '--';
@@ -211,16 +220,19 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		return typeof rawValue === 'number' ? String(rawValue) : `${rawValue}`;
 	}
 
+	// Normalizes a string by removing non-alphanumeric characters and converting to lowercase.
 	private norm(value: string | null | undefined): string {
 		return value ? value.replace(/[^A-Za-z0-9]/g, '').toLowerCase() : '';
 	}
 
+	// Checks if the entry has any data for the given area key.
 	private hasAreaData(entry: BbAnwEntry, key: string): boolean {
 		return [entry.unavailableMinutes, entry.totalMinutes, entry.totalNodes].some(
 			(pool) => pool && pool[key] !== undefined && pool[key] !== null
 		);
 	}
 
+	// Builds a mapping from friendly names to database keys.
 	private buildFriendlyMap(): void {
 		const out: Record<string, string> = {};
 		Object.keys(this.optionMapping).forEach((dbKey) => {
@@ -230,16 +242,19 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		this.friendlyToDbKey = out;
 	}
 
+	// Displays a toast notification.
 	private showToast(type: 'success' | 'danger', text: string): void {
 		const id = this.toastId++;
 		this.toasts.push({ id, type, text });
 		setTimeout(() => this.dismissToast(id), 2800);
 	}
 
+	// Dismisses a specific toast notification.
 	dismissToast(id: number): void {
 		this.toasts = this.toasts.filter((toast) => toast.id !== id);
 	}
 
+	// Refreshes the user's edit permission status.
 	private refreshEditPermission(): void {
 		if (this.devRoleOverride) {
 			this.isEditingAllowed = this.devRoleOverride === 'padmin';
@@ -248,6 +263,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		this.isEditingAllowed = this.authService.canEditPage('Wireline Access NW');
 	}
 
+	// Toggles the developer role override for testing edit permissions.
 	toggleRoleOverride(): void {
 		if (!this.devRoleOverride) this.devRoleOverride = 'padmin';
 		else if (this.devRoleOverride === 'padmin') this.devRoleOverride = 'user';
@@ -258,6 +274,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		this.showToast('success', `Role override: ${label}`);
 	}
 
+	// Loads the region table from the region service.
 	loadRegionTable(): void {
 		this.regionService.getAll().subscribe({
 			next: (res: Region[] | any[]) => {
@@ -273,6 +290,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		});
 	}
 
+	// Loads broadband and access network KPI data for the selected period.
 	loadData(): void {
 		this.loading = true;
 		this.error = null;
@@ -297,6 +315,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		});
 	}
 
+	// Maps dto to entry.
 	private mapDtoToEntry(dto: BbAnwDto, order = 0): BbAnwEntry {
 		const entry: BbAnwEntry = {
 			id: dto.id ?? 0,
@@ -325,6 +344,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		return entry;
 	}
 
+	// Builds a DTO from a local entry object.
 	private buildDtoFromEntry(entry: BbAnwEntry): BbAnwDto {
 		const codes = this.collectNodeCodes(entry);
 		const nodes = codes
@@ -351,6 +371,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		};
 	}
 
+	// Collects all unique node codes from the entry.
 	private collectNodeCodes(entry: BbAnwEntry): string[] {
 		const codes = new Set<string>();
 		Object.keys(entry.unavailableMinutes || {}).forEach((key) => codes.add(key));
@@ -360,15 +381,18 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		return Array.from(codes).filter((code): code is string => Boolean(code));
 	}
 
+	// Ensures node metadata exists and returns it.
 	private ensureNodeMeta(entry: BbAnwEntry, key: string): NodeMeta {
 		if (!entry.nodeMeta[key]) entry.nodeMeta[key] = this.getDefaultNodeMeta();
 		return entry.nodeMeta[key];
 	}
 
+	// Gets the default node metadata for the selected period.
 	private getDefaultNodeMeta(): NodeMeta {
 		return this.normalizeNodeMeta(this.selectedMonth, this.selectedYear);
 	}
 
+	// Normalizes node metadata with fallback to current selected period.
 	private normalizeNodeMeta(month?: number | null, year?: number | null): NodeMeta {
 		const now = new Date();
 		const fallbackMonth = typeof this.selectedMonth === 'number' ? this.selectedMonth : now.getMonth() + 1;
@@ -378,17 +402,20 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		return { month: safeMonth, year: safeYear };
 	}
 
+	// Calculates the number of days in the specified month and year.
 	private getDaysInMonth(month?: number | null, year?: number | null): number {
 		const meta = this.normalizeNodeMeta(month, year);
 		return new Date(meta.year, meta.month, 0).getDate();
 	}
 
+	// Converts a value to a number, returning null if invalid.
 	private toNullableNumber(value: any): number | null {
 		if (value === undefined || value === null || value === '') return null;
 		const numeric = typeof value === 'number' ? value : Number(value);
 		return Number.isFinite(numeric) ? numeric : null;
 	}
 
+	// Updates the province dropdown options based on the selected region.
 	private updateDropdown2Options(region: string): void {
 		if (!region) {
 			this.dropdown2Options = [];
@@ -404,6 +431,7 @@ export class BbAnwComponent implements OnInit, OnDestroy {
 		);
 	}
 
+	// Updates the engineer dropdown options based on the selected province.
 private updateDropdown3Options(province: string): void {
 
 		if (!province || !this.formValues.dropdown1) {
@@ -422,6 +450,7 @@ private updateDropdown3Options(province: string): void {
 		this.engineerNameMap = buildEngineerDisplayMap(this.regionTable, this.dropdown3Options);
 	}
 
+	// Updates the LEA dropdown options based on the selected engineer.
 	private updateDropdown4Options(engineer: string): void {
 		if (!engineer || !this.formValues.dropdown1 || !this.formValues.dropdown2) {
 			this.dropdown4Options = [];
@@ -443,6 +472,7 @@ private updateDropdown3Options(province: string): void {
 		this.dropdown4Options = Array.from(new Set(leas));
 	}
 
+	// Initializes all filter dropdowns.
 	private initializeFilters(): void {
 		this.formValues = { dropdown1: '', dropdown2: '', dropdown3: '', dropdown4: '' };
 		this.dropdown2Options = [];
@@ -451,6 +481,7 @@ private updateDropdown3Options(province: string): void {
 		this.filtersInitialized = true;
 	}
 
+	// Initializes default selected month and year to the previous month.
 	private initializePeriodDefaults(): void {
 		const now = new Date();
 		const currentYear = now.getFullYear();
@@ -460,6 +491,7 @@ private updateDropdown3Options(province: string): void {
 		this.applyPeriodFilter();
 	}
 
+	// Applies period filtering to the allEntries list.
 	private applyPeriodFilter(): void {
 		if (!this.allEntries.length) {
 			this.data = [];
@@ -471,6 +503,7 @@ private updateDropdown3Options(province: string): void {
 		this.data = this.allEntries.map((entry) => this.createPeriodScopedEntry(entry, month, year));
 	}
 
+	// Creates a new entry scoped to the specified period.
 	private createPeriodScopedEntry(entry: BbAnwEntry, month: number, year: number): BbAnwEntry {
 		const filteredUnavailable: Dict<number | null> = {};
 		const filteredTotal: Dict<number | null> = {};
@@ -504,6 +537,7 @@ private updateDropdown3Options(province: string): void {
 		};
 	}
 
+	// Handles changes to any of the dropdown filters.
 	onDropdownChange(name: 'dropdown1' | 'dropdown2' | 'dropdown3' | 'dropdown4', value: string): void {
 
 		if (name === 'dropdown1') {
@@ -537,11 +571,13 @@ private updateDropdown3Options(province: string): void {
 		this.cancelEdit();
 	}
 
+	// Handles changes to the selected period by reloading data.
 	onPeriodChange(): void {
 		this.cancelEdit();
 		this.loadData();
 	}
 
+	// Calculates the availability percentage.
 	private calculatePercentage(totalMinutes: any, unavailableMinutes: any, totalNodes: any, meta?: NodeMeta): number {
 		const tm = Number(totalMinutes) || 0;
 		const um = Number(unavailableMinutes) || 0;
@@ -556,6 +592,7 @@ private updateDropdown3Options(province: string): void {
 		return Math.max(0, Math.min(100, pct));
 	}
 
+	// Starts editing a specific metric cell.
 	startEdit(entry: BbAnwEntry, key: MetricKey): void {
 		if (key === 'totalMinutes') return; // computed
 		if (!this.isEditingAllowed || !this.selectedKey || this.cellSaving) return;
@@ -569,10 +606,12 @@ private updateDropdown3Options(province: string): void {
 		};
 	}
 
+	// Handles input changes while editing a cell.
 	onEditInput(value: string): void {
 		this.editCell = { ...this.editCell, value };
 	}
 
+	// Finalizes and saves the edited cell value.
 	async doneEdit(): Promise<void> {
 		if (this.editCell.rowId === null || !this.editCell.key) return;
 
@@ -604,6 +643,7 @@ private updateDropdown3Options(province: string): void {
 		}
 	}
 
+	// Finds an entry and updates its metric value in the local state.
 	private findAndUpdateEntry(parentKey: MetricKey, childKey: string, newValue: string): BbAnwEntry | null {
 		if (parentKey === 'totalMinutes') return null;
 		let filteredEntry: BbAnwEntry | null = null;
@@ -660,15 +700,18 @@ private updateDropdown3Options(province: string): void {
 		return this.allEntries.find((entry) => entry.id === targetId) ?? null;
 	}
 
+	// Checks if a specific cell is currently being edited.
 	isEditingCell(entry: BbAnwEntry, key: MetricKey): boolean {
 		if (!this.selectedKey) return false;
 		return this.editCell.rowId === entry.id && this.editCell.key === `${key}.${this.selectedKey}`;
 	}
 
+	// Cancels the current cell edit.
 	cancelEdit(): void {
 		this.editCell = { rowId: null, key: null, value: '' };
 	}
 
+	// Generates and exports the KPI data to an Excel file.
 	async exportToExcel(): Promise<void> {
 		const workbook = new ExcelJS.Workbook();
 		const worksheet = workbook.addWorksheet('BB & ANW KPI');

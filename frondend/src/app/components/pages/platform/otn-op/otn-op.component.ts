@@ -146,6 +146,7 @@ export class OtnOpComponent implements OnInit, OnDestroy {
 	private friendlyToDbKey: Record<string, string> = {};
 	private filtersInitialized = false;
 
+	// Injects the required dependencies.
 	constructor(
 		private otnOp1Service: OtnOp1Service,
 		private otnOp2Service: OtnOp2Service,
@@ -479,6 +480,7 @@ ngOnInit(): void {
 			.sort((a, b) => a.id - b.id);
 	}
 
+	// Maps otn op1 record.
 	private mapOtnOp1Record(record: OtnOpKpi, metrics?: any): OtnOp1Entry {
 		// Extract metrics into dictionaries keyed by area/site
 		const totalMinutes: Dict<any> = {};
@@ -519,6 +521,7 @@ ngOnInit(): void {
 		return entry;
 	}
 
+	// Maps otn op2 record.
 	private mapOtnOp2Record(record: OtnOpKpi, metrics?: any): OtnOp2Entry {
 		// Extract metrics into dictionaries keyed by area/site
 		const totalFailedLinks: Dict<any> = {};

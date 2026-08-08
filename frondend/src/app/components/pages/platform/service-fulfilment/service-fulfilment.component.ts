@@ -115,6 +115,7 @@ export class ServiceFulfilmentComponent implements OnInit {
   yearOptions: number[] = [];
 
 
+  // Injects the required dependencies.
   constructor(
     private toastr: ToastrService,
     private serviceFulfilmentKpiService: ServiceFulfilmentKpiService,
@@ -125,6 +126,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     this.yearOptions = FilterUtils.generatePlatformYearOptions();
   }
 
+  // Toggles role simulation.
   toggleRoleSimulation() {
     this.userRole = this.userRole === 'PlatformAdmin' ? 'User' : 'PlatformAdmin';
     this.recomputeEditPermission();
@@ -134,6 +136,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     );
   }
 
+  // Loads the initial component state.
   ngOnInit() {
     this.loadRegionTable();
     this.loadData();
@@ -141,6 +144,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     this.setupEditPermissionCheck();
   }
 
+  // Loads data for the current view.
   loadData() {
     this.loading = true;
     this.serviceFulfilmentKpiService.getAll().subscribe({
@@ -161,6 +165,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     });
   }
 
+  // Loads metric data for the selected period.
   loadMetrics() {
     const month = Number(this.selectedMonth);
     const year = Number(this.selectedYear);
@@ -216,6 +221,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     });
   }
 
+  // Loads the region table data.
   loadRegionTable() {
     this.regionService.getAll().subscribe({
       next: (res: Region[] | any[]) => {
@@ -228,11 +234,13 @@ export class ServiceFulfilmentComponent implements OnInit {
     });
   }
 
+  // Checks the current user role.
   checkUserRole() {
     this.userRole = this.authService.getRole() ?? 'User';
     this.recomputeEditPermission();
   }
 
+  // Sets up edit permission checks.
   setupEditPermissionCheck() {
     this.checkEditPermission();
     // Check permission every minute
@@ -247,6 +255,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     return this.isEditingAllowed;
   }
 
+  // Recomputes edit permission.
   private recomputeEditPermission() {
     // Only platform admins can edit
     const roleAllowsEdit = this.authService.canEditPage('Service Fulfilment');
@@ -254,15 +263,18 @@ export class ServiceFulfilmentComponent implements OnInit {
     console.log(`[ServiceFulfilment] Editing allowed: ${roleAllowsEdit}`);
   }
 
+  // Returns a unique list of regions extracted from the region table.
   getUniqueRegions(): string[] {
     return Array.from(new Set(this.regionTable.map(r => r.region))).filter(Boolean);
   }
 
+  // Resolves the string label for a given month number.
   getMonthLabel(value: number): string {
     const month = this.monthOptions.find((option: { value: number; label: string }) => option.value === value);
     return month?.label ?? `M${value}`;
   }
 
+  // Decorates raw KPI admin rows with a resolved display order.
   private decorateAdminRows(rows: ServiceFulfilmentKpiDto[]): AdminKpiRow[] {
     return rows.map((kpi, index) => ({
       ...kpi,
@@ -270,6 +282,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     }));
   }
 
+  // Determines the display order based on KPI properties or a fallback index.
   private resolveDisplayOrder(kpi?: ServiceFulfilmentKpiDto | null, fallbackIndex: number = 0): number {
     if (kpi?.displayOrder && kpi.displayOrder > 0) {
       return kpi.displayOrder;
@@ -283,6 +296,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     return fallbackIndex + 1;
   }
 
+  // Converts an ID to a string key format, returning null if empty.
   private getIdKey(id?: number | string | null): string | null {
     if (id === null || id === undefined || id === '') {
       return null;
@@ -290,6 +304,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     return String(id);
   }
 
+  // Parses a numeric ID from a given numeric or string source.
   private resolveNumericId(id?: number | string | null): number | undefined {
     if (typeof id === 'number') {
       return id;
@@ -303,6 +318,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     return undefined;
   }
 
+  // Reconstructs a row identifier into an object or number.
   private buildRowId(sourceId: number | string | undefined, fallback: number): { $oid: string } | number {
     if (typeof sourceId === 'number') {
       return sourceId;
@@ -313,6 +329,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     return fallback;
   }
 
+  // Resolves the numeric KPI identifier from a given KPI data row.
   private resolveKpiIdentifier(row: KpiData): number | null {
     if (typeof row.kpiId === 'number') {
       return row.kpiId;
@@ -329,6 +346,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     return null;
   }
 
+  // Rebuilds the data matrix, populating base rows and overlaying metrics if applicable.
   private rebuildKpiMatrix() {
     if (!this.formValues.dropdown4) {
       this.data = this.buildBaseKpiDataFromAdmin();
@@ -348,6 +366,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     console.log('Service Fulfilment: Columns refreshed', { visibleColumns: this.visibleColumns.length, columns: this.visibleColumns });
   }
 
+  // Constructs the default base structure for the KPI rows directly from admin definition.
   private buildBaseKpiDataFromAdmin(): KpiData[] {
     if (!this.adminKpiRows.length) {
       return [];
@@ -374,6 +393,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     });
   }
 
+  // Automatically syncs the selected month and year filters based on the latest available row data.
   private syncSelectedPeriodFromData(rows: ServiceFulfilmentKpiDto[]) {
     if (this.periodLockedByUser || !rows || !rows.length) {
       console.log('Service Fulfilment: Period sync skipped', { 
@@ -519,6 +539,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     return value ? value.replace(/[^A-Za-z0-9]/g, '').toUpperCase() : '';
   }
 
+  // Constructs a unique match key for aligning metrics with master rows.
   private getRowMatchKey(source: Partial<KpiData | AdminKpiRow | ServiceFulfilmentMetricDto> | null | undefined): string | null {
     if (!source) {
       return null;
@@ -541,6 +562,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     return null;
   }
 
+  // Builds a new KPI data row using information directly from a metric DTO.
   private createRowFromMetric(metric: ServiceFulfilmentMetricDto, fallbackOrder: number): KpiData {
     const numericId = this.resolveNumericId(metric.id);
     return {
@@ -559,6 +581,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     };
   }
 
+  // Applies metric value to row.
   private applyMetricValueToRow(row: KpiData, metric: ServiceFulfilmentMetricDto) {
     const areaCode = metric.area ? metric.area.trim().toUpperCase() : '';
     const areaKey = this.normalizeAreaKey(areaCode);
@@ -581,6 +604,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     }
   }
 
+  // Resolves the normalized area code from a given value.
   private resolveAreaCode(value?: string | null): string {
     const normalized = this.normalizeAreaValue(value);
     if (!normalized) {
@@ -590,11 +614,13 @@ export class ServiceFulfilmentComponent implements OnInit {
     return normalized;
   }
 
+  // Normalizes an area string to serve as a consistent dictionary key.
   private normalizeAreaKey(area?: string | null): string {
     const resolved = this.resolveAreaCode(area);
     return resolved || 'UNKNOWN';
   }
 
+  // Formats a weightage string/number to always include a percent sign.
   private formatWeightageValue(value?: number | string | null): string {
     if (value === undefined || value === null) {
       return '';
@@ -606,6 +632,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     return clean.endsWith('%') ? clean : `${clean}%`;
   }
 
+  // Resolves the string value for defined OLA details.
   private resolveDefinedOlaValue(source?: Partial<ServiceFulfilmentKpiDto> | Partial<ServiceFulfilmentMetricDto> | null): string {
     if (!source) {
       return '';
@@ -614,6 +641,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     return typeof raw === 'string' ? raw : '';
   }
 
+  // Updates the second dropdown's options (provinces) based on the first dropdown's selected region.
   updateDropdown2Options() {
     if (!this.formValues.dropdown1) {
       this.dropdown2Options = [];
@@ -636,6 +664,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     this.visibleColumns = [...this.baseColumns];
   }
 
+  // Updates the third dropdown's options (engineers) based on the selected province.
   updateDropdown3Options() {
     if (!this.formValues.dropdown2 || !this.formValues.dropdown1) {
       this.dropdown3Options = [];
@@ -662,6 +691,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     this.visibleColumns = [...this.baseColumns];
   }
 
+  // Updates the fourth dropdown's options (LEAs) based on the selected network engineer.
   updateDropdown4Options() {
     if (!this.formValues.dropdown3 || !this.formValues.dropdown1 || !this.formValues.dropdown2) {
       this.dropdown4Options = [];
@@ -686,10 +716,12 @@ export class ServiceFulfilmentComponent implements OnInit {
     this.recomputeEditPermission();
   }
 
+  // Updates visible columns.
   updateVisibleColumns() {
     this.refreshColumnsFromData();
   }
 
+  // Handles filter changes.
   onDropdownChange(field: string, value: string) {
     const normalizedValue = field === 'dropdown4' ? this.resolveAreaCode(value) : value;
     (this.formValues as any)[field] = normalizedValue;
@@ -729,11 +761,13 @@ export class ServiceFulfilmentComponent implements OnInit {
     }
   }
 
+  // Handles period changes.
   onPeriodChange() {
     this.periodLockedByUser = true;
     this.loadMetrics();
   }
 
+  // Resets the area filter and reloads data/metrics to represent the broader selection.
   resetAreaFilter() {
     if (!this.formValues.dropdown4) {
       return;
@@ -744,6 +778,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     this.recomputeEditPermission();
   }
 
+  // Formats any given string or number into a standard percentage representation.
   formatPercent(val: any): string {
     if (val === undefined || val === null || val === '') return '-';
     if (typeof val === 'number') {
@@ -760,6 +795,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     return s.endsWith('%') ? s : `${s}%`;
   }
 
+  // Retrieves the selected area's metric value for the given KPI row.
   private getSelectedAreaMetricValue(item: KpiData): any {
     const selectedAreaKey = this.resolveAreaCode(this.formValues.dropdown4);
     if (!selectedAreaKey) {
@@ -783,6 +819,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     return null;
   }
 
+  // Resolves the display value for a given cell, falling back to various keys if necessary.
   getCellValue(item: KpiData, key: string): any {
     if (key === this.metricColumnKey) {
       return this.getSelectedAreaMetricValue(item);
@@ -831,6 +868,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     return null;
   }
 
+  // Normalizes the row identifier object or primitive to a standard string/number format.
   getRowId(item: KpiData): string | number {
     if (typeof item._id === 'object' && item._id.$oid) {
       return item._id.$oid;
@@ -838,6 +876,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     return item._id as number;
   }
 
+  // Determines if the given cell is currently in edit mode.
   isEditingCell(item: KpiData, key: string): boolean {
     return (
       this.editingCell.rowId === this.getRowId(item) &&
@@ -845,6 +884,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     );
   }
 
+  // Selects metric input.
   selectMetricInput(event: Event) {
     const target = event.target as HTMLInputElement | null;
     if (!target) {
@@ -853,6 +893,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     requestAnimationFrame(() => target.select());
   }
 
+  // Activates edit mode for a specific cell if user has permissions.
   startEdit(item: KpiData, key: string) {
     if (this.nonEditableColumns.includes(key)) {
       return;
@@ -875,11 +916,13 @@ export class ServiceFulfilmentComponent implements OnInit {
     this.activeEditValue = existing === null || existing === undefined ? '' : String(existing);
   }
 
+  // Cancels the current edit.
   cancelEdit() {
     this.editingCell = { rowId: null, key: null };
     this.activeEditValue = '';
   }
 
+  // Persists edits for a specific KPI cell directly to the backend.
   saveEdit(item: KpiData, key: string) {
     if (!this.isEditingAllowed) {
       this.toastr.error('You do not have permission to update this KPI value.', 'Permission Denied');
@@ -933,6 +976,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     });
   }
 
+  // Simulates saving all pending changes globally across the table.
   saveAllChanges() {
     if (!this.isEditingAllowed) {
       this.toastr.error('You do not have permission to edit. Only Platform Admins can edit KPI data.', 'Permission Denied');
@@ -952,6 +996,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     }, 1500);
   }
 
+  // Generates the Excel report.
   generateExcelReport() {
     this.loading = true;
     
@@ -986,6 +1031,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     }, 2000);
   }
 
+  // Determines which columns are currently meant to be rendered dynamically based on filters.
   getColumnsToRender(): string[] {
     if (this.visibleColumns.length) {
       return this.visibleColumns;
@@ -993,6 +1039,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     return [...this.baseColumns];
   }
 
+  // Extracts and aggregates unique area keys dynamically present across the loaded KPI data.
   getAreaKeys(): string[] {
     const keys = new Set<string>();
     this.data.forEach(item => {
@@ -1031,6 +1078,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     return Array.from(result).sort();
   }
 
+  // Configures the dynamic visible columns according to current data availability and filter state.
   private refreshColumnsFromData() {
     if (this.formValues.dropdown4) {
       this.visibleColumns = [...this.baseColumns, this.metricColumnKey];
@@ -1039,6 +1087,7 @@ export class ServiceFulfilmentComponent implements OnInit {
     this.visibleColumns = [...this.baseColumns];
   }
 
+  // Formats the last updated date associated with a KPI data entry.
   getLastUpdated(item: KpiData): string {
     if (item.updatedAt && item.updatedAt.$date) {
       const date = new Date(item.updatedAt.$date);
