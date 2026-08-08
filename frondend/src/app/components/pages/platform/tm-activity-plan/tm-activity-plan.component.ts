@@ -76,6 +76,7 @@ export class TmActivityPlanComponent implements OnInit {
   readonly tableTitles = TABLE_TITLES;
   engineerNameMap: Record<string, string> = {};
 
+  // Checks if the user has permission to edit metrics.
   get canEditMetrics(): boolean {
     return this.authService.canEditPage('Tower Maintainance')
       || this.authService.canEditPage('Tower Maintenance')
@@ -95,6 +96,7 @@ export class TmActivityPlanComponent implements OnInit {
 
   /* ===================== FILTER HANDLERS ===================== */
 
+  // Handles changes to the selected month.
   onMonthChange(month: number): void {
     this.selectedMonth = Number(month);
     // Month only affects Strategic KPI Overview — recalculate without re-fetching
@@ -102,6 +104,7 @@ export class TmActivityPlanComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  // Handles changes to the selected year.
   onYearChange(year: number): void {
     this.selectedYear = Number(year);
     this.fetchData();
@@ -109,11 +112,13 @@ export class TmActivityPlanComponent implements OnInit {
 
   /* ------------------------------------------------- */
 
+  // Initializes the component by loading engineer names and fetching data.
   ngOnInit(): void {
     this.loadEngineerNames();
     this.fetchData();
   }
 
+  // Fetches the TM activity plans and tower data from the server.
   fetchData(): void {
     this.loading = true;
     this.errorMessage = '';
@@ -153,6 +158,7 @@ export class TmActivityPlanComponent implements OnInit {
     });
   }
 
+  // Exports the tower maintenance plan to an Excel file.
   exportToExcel(): void {
     if (!this.headers.length) return;
 
@@ -234,22 +240,26 @@ export class TmActivityPlanComponent implements OnInit {
     });
   }
 
+  // Retrieves the detail value for a specific column and header.
   getDetailValue(entry: ProcessedRecord, header: string, column: 'Column2' | 'Column3'): string {
     const detail = entry.details.find(item => item.Column1 === header);
     const raw = detail ? (detail[column] ?? '') : '';
     return raw === '' ? '-' : String(raw);
   }
 
+  // Checks if a specific detail entry is verified.
   getIsVerified(entry: ProcessedRecord, header: string): boolean {
     const detail = entry.details.find(item => item.Column1 === header);
     return detail?.isVerified ?? false;
   }
 
+  // Retrieves the detail ID for a specific header.
   getDetailId(entry: ProcessedRecord, header: string): number | undefined {
     const detail = entry.details.find(item => item.Column1 === header);
     return detail?.id;
   }
 
+  // Gets the display name for a header (engineer).
   getHeaderDisplay(header: string): string {
     return this.engineerNameMap[header] ?? this.engineerNameMap[normalizeLookupKey(header)] ?? header;
   }
@@ -291,6 +301,7 @@ export class TmActivityPlanComponent implements OnInit {
   trackByHeader = (_: number, header: string) => header;
   trackByMonth = (_: number, record: ProcessedRecord) => record.month;
 
+  // Processes raw data to derive headers, sums, and calculated values.
   private processDerivedData(data: ProcessedRecord[]): void {
     const sorted = this.sortByMonth(data);
     this.headers = this.buildHeaders(sorted);
@@ -298,12 +309,14 @@ export class TmActivityPlanComponent implements OnInit {
     this.calculatedValues = this.calculateFirstTableValues(sorted, this.headers);
   }
 
+  // Sorts the data records by month.
   private sortByMonth(data: ProcessedRecord[]): ProcessedRecord[] {
     return [...data].sort(
       (a, b) => MONTH_ORDER.indexOf(a.month) - MONTH_ORDER.indexOf(b.month)
     );
   }
 
+  // Converts raw API data into the processed record format.
   private convertToProcessedFormat(apiData: any[]): ProcessedRecord[] {
     return (apiData || []).map(item => ({
       month: item.month,
@@ -318,6 +331,7 @@ export class TmActivityPlanComponent implements OnInit {
     }));
   }
 
+  // Builds a list of unique headers from the processed data.
   private buildHeaders(data: ProcessedRecord[]): string[] {
     const unique = new Set<string>();
     data.forEach(entry => entry.details.forEach(detail => {
@@ -326,6 +340,7 @@ export class TmActivityPlanComponent implements OnInit {
     return Array.from(unique);
   }
 
+  // Calculates the total sums for each tower.
   private calculateTowerSums(data: ProcessedRecord[]): TowerSums {
     const sums: TowerSums = {};
     data.slice(0, 3).forEach(entry => {
@@ -339,6 +354,7 @@ export class TmActivityPlanComponent implements OnInit {
 
   // Strategic KPI Overview: use cumulative values (Column2 = CumulativeSched, Column3 = CumulativeAchieved)
   // from the entry matching the selected month
+  // Calculates the cumulative achievement values for the main table.
   private calculateFirstTableValues(data: ProcessedRecord[], headers: string[]): string[] {
     if (!headers.length || !data.length) return [];
 
@@ -355,6 +371,7 @@ export class TmActivityPlanComponent implements OnInit {
     });
   }
 
+  // Applies styling to a header row in the Excel export.
   private styleHeaderRow(row: ExcelJS.Row): void {
     row.eachCell(cell => {
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '0070C0' } };
@@ -364,10 +381,12 @@ export class TmActivityPlanComponent implements OnInit {
     });
   }
 
+  // Adds a border to all cells in an Excel row.
   private addBorder(row: ExcelJS.Row): void {
     row.eachCell(cell => this.addBorderToCell(cell));
   }
 
+  // Adds a thin border to an Excel cell.
   private addBorderToCell(cell: ExcelJS.Cell): void {
     cell.border = {
       top: { style: 'thin' }, left: { style: 'thin' },
@@ -375,10 +394,12 @@ export class TmActivityPlanComponent implements OnInit {
     };
   }
 
+  // Sets the error message if not already set.
   private setError(message: string): void {
     if (!this.errorMessage) this.errorMessage = message;
   }
 
+  // Toggles the verification status of a specific detail entry.
   toggleVerified(entry: ProcessedRecord, header: string): void {
     if (!this.canEditMetrics) return;
     const detail = entry.details.find(item => item.Column1 === header);
@@ -387,6 +408,7 @@ export class TmActivityPlanComponent implements OnInit {
     }
   }
 
+  // Calls the API to toggle the verified status of a detail record.
   private toggleDetailVerified(detail: ProcessedDetail): void {
     if (detail.id) {
       this.http.patch<{ id: number; isVerified: boolean }>(`${environment.apiUrl}/tower-mtc-data/${detail.id}/toggle-verified`, {}).subscribe({
@@ -401,6 +423,7 @@ export class TmActivityPlanComponent implements OnInit {
     }
   }
 
+  // Loads region data to build the engineer name map.
   private loadEngineerNames(): void {
     this.regionService.getAll().subscribe({
       next: (res: Region[] | any[]) => {

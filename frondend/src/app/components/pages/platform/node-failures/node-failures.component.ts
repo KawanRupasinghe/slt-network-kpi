@@ -80,6 +80,7 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
     komltmbva: 'KO / MLT / MB / VA',
   };
 
+  // Injects the required dependencies.
   constructor(
     private regionService: RegionService,
     private authService: AuthService,
@@ -87,6 +88,7 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) {}
 
+  // Initializes the component and loads region data.
   ngOnInit(): void {
     this.loadRegions();
 
@@ -96,6 +98,7 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
     }, 60000);
   }
 
+  // Cleans up resources such as the permission timer.
   ngOnDestroy(): void {
     if (this.permissionTimer) {
       clearInterval(this.permissionTimer);
@@ -103,10 +106,12 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Checks if the user has permission to edit the page.
   get isEditingAllowed(): boolean {
     return this.authService.canEditPage('AGED NETWORK FAILURES');
   }
 
+  // Gets the label for the selected month.
   get monthLabel(): string {
     const labels = [
       'January',
@@ -125,14 +130,17 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
     return labels[this.selectedMonth - 1] || 'Month';
   }
 
+  // Handles changes to the month and year selection.
   onMonthYearChange(): void {
     this.refresh();
   }
 
+  // Handles changes to the selected period.
   onPeriodChange(): void {
     this.refresh();
   }
 
+  // Refreshes the aged network failure data from the server.
   refresh(): void {
     this.loading = true;
     this.error = null;
@@ -179,6 +187,7 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
       });
   }
 
+  // Saves the aged failure data for a specific area.
   saveAgedFailure(row: any): void {
     if (!this.isEditingAllowed) return;
 
@@ -209,6 +218,7 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Displays a toast notification.
   showToast(type: 'success' | 'danger', text: string): void {
     const id = this.toastId++;
     this.toasts.push({ id, type, text });
@@ -216,11 +226,13 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  // Dismisses a specific toast notification.
   dismissToast(id: number): void {
     this.toasts = this.toasts.filter((t) => t.id !== id);
     this.cdr.detectChanges();
   }
 
+  // Loads region data and builds the area list.
   private loadRegions(): void {
     this.loading = true;
     this.regionService.getAll().subscribe({
@@ -262,6 +274,7 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Extracts the engineer's name from a formatted string.
   getEngineerNameOnly(engineer: string): string {
     if (!engineer) return '';
     const match = engineer.match(/\(([^)]+)\)/);
@@ -271,6 +284,7 @@ export class NodeFailuresComponent implements OnInit, OnDestroy {
     return engineer.replace(/^NW\//i, '').replace(/^WPS/i, '');
   }
 
+  // Normalizes a string for comparison.
   private norm(s: any): string {
     return s ? String(s).replace(/[^A-Za-z0-9]/g, '').toLowerCase() : '';
   }

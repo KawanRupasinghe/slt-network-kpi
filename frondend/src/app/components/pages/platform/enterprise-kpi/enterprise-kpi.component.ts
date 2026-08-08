@@ -120,9 +120,11 @@ export class EnterpriseKpiComponent implements OnInit {
   selectedMonth = new Date().getMonth() + 1;
   selectedYear = new Date().getFullYear();
   private periodLockedByUser = false;
+  // Gets the available month options for the selected year.
   get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
   yearOptions: number[] = [];
 
+  // Injects the required dependencies.
   constructor(
     private toastr: ToastrService,
     private enterpriseKpiService: EnterpriseKpiPlatformService,
@@ -133,6 +135,7 @@ export class EnterpriseKpiComponent implements OnInit {
     this.yearOptions = FilterUtils.generatePlatformYearOptions();
   }
 
+  // Loads the initial component state.
   ngOnInit() {
     this.loadRegionTable();
     this.loadData();
@@ -140,6 +143,7 @@ export class EnterpriseKpiComponent implements OnInit {
     this.setupEditPermissionCheck();
   }
 
+  // Loads data for the current view.
   loadData() {
     this.loading = true;
     this.enterpriseKpiService.getAll().subscribe({
@@ -160,6 +164,7 @@ export class EnterpriseKpiComponent implements OnInit {
     });
   }
 
+  // Loads metric data for the selected period.
   loadMetrics() {
     const month = Number(this.selectedMonth);
     const year = Number(this.selectedYear);
@@ -203,6 +208,7 @@ export class EnterpriseKpiComponent implements OnInit {
     });
   }
 
+  // Loads the region table data.
   loadRegionTable() {
     this.regionService.getAll().subscribe({
       next: (res: Region[] | any[]) => {
@@ -216,39 +222,47 @@ export class EnterpriseKpiComponent implements OnInit {
     });
   }
 
+  // Checks the current user role.
   checkUserRole() {
     this.userRole = this.authService.getRole() ?? 'User';
     this.recomputeEditPermission();
   }
 
+  // Sets up edit permission checks.
   setupEditPermissionCheck() {
     this.checkEditPermission();
     setInterval(() => this.checkEditPermission(), 60000);
   }
 
+  // Checks if the user has edit permissions.
   checkEditPermission(): boolean {
     this.recomputeEditPermission();
     return this.isEditingAllowed;
   }
 
+  // Recomputes edit permission.
   private recomputeEditPermission() {
     this.isEditingAllowed = this.authService.canEditPage('ENTERPRISE KPI');
   }
 
 
 
+  // Gets unique region names from the region table.
   getUniqueRegions(): string[] {
     return Array.from(new Set(this.regionTable.map(r => r.region))).filter(Boolean);
   }
 
+  // Gets the label for a specified month value.
   getMonthLabel(value: number): string {
     return this.monthOptions.find(option => option.value === value)?.label ?? `M${value}`;
   }
 
+  // Decorates admin rows with a display order.
   private decorateAdminRows(rows: EnterpriseKpiDto[]): AdminKpiRow[] {
     return rows.map((kpi, index) => ({ ...kpi, displayOrder: this.resolveDisplayOrder(kpi, index) }));
   }
 
+  // Resolves the display order for a KPI.
   private resolveDisplayOrder(kpi?: EnterpriseKpiDto | null, fallbackIndex: number = 0): number {
     if (kpi?.displayOrder && kpi.displayOrder > 0) return kpi.displayOrder;
     const legacyNo = (kpi as any)?.no;
@@ -256,11 +270,13 @@ export class EnterpriseKpiComponent implements OnInit {
     return fallbackIndex + 1;
   }
 
+  // Gets the ID key as a string.
   private getIdKey(id?: number | string | null): string | null {
     if (id === null || id === undefined || id === '') return null;
     return String(id);
   }
 
+  // Resolves a numeric ID from a string or number.
   private resolveNumericId(id?: number | string | null): number | undefined {
     if (typeof id === 'number') return id;
     if (typeof id === 'string') {
@@ -270,12 +286,14 @@ export class EnterpriseKpiComponent implements OnInit {
     return undefined;
   }
 
+  // Builds a row ID object or returns a number.
   private buildRowId(sourceId: number | string | undefined, fallback: number): { $oid: string } | number {
     if (typeof sourceId === 'number') return sourceId;
     if (typeof sourceId === 'string' && sourceId.trim().length) return { $oid: sourceId };
     return fallback;
   }
 
+  // Resolves the KPI identifier for a row.
   private resolveKpiIdentifier(row: KpiData): number | null {
     if (typeof row.kpiId === 'number') return row.kpiId;
     if (typeof row._id === 'number') return row._id;
@@ -286,6 +304,7 @@ export class EnterpriseKpiComponent implements OnInit {
     return null;
   }
 
+  // Rebuilds the KPI matrix based on metrics or base admin rows.
   private rebuildKpiMatrix() {
     if (!this.formValues.dropdown4) {
       this.data = this.buildBaseKpiDataFromAdmin();
@@ -303,6 +322,7 @@ export class EnterpriseKpiComponent implements OnInit {
     this.visibleColumns = [...this.baseColumns, this.metricColumnKey];
   }
 
+  // Builds base KPI data from admin rows.
   private buildBaseKpiDataFromAdmin(): KpiData[] {
     if (!this.adminKpiRows.length) return [];
     return this.adminKpiRows.map((kpi, index) => {
@@ -321,6 +341,7 @@ export class EnterpriseKpiComponent implements OnInit {
     });
   }
 
+  // Syncs the selected period from the loaded data.
   private syncSelectedPeriodFromData(rows: EnterpriseKpiDto[]) {
     if (this.periodLockedByUser || !rows || !rows.length) return;
     const ordered = rows.filter(row => (row as any).month > 0 && (row as any).year > 0).sort((a, b) => {
@@ -333,6 +354,7 @@ export class EnterpriseKpiComponent implements OnInit {
     this.selectedMonth = latest.month;
   }
 
+  // Builds KPI data from a list of metrics.
   private buildKpiDataFromMetrics(metrics: EnterpriseMetricDto[]): KpiData[] {
     const baseRows = this.buildBaseKpiDataFromAdmin();
     if (!metrics || !metrics.length) return baseRows;
@@ -361,6 +383,7 @@ export class EnterpriseKpiComponent implements OnInit {
     return [...baseRows, ...extraRows].sort((a, b) => a.no - b.no);
   }
 
+  // Builds KPI data from metrics as a fallback.
   private buildKpiDataFromMetricsFallback(metrics: EnterpriseMetricDto[]): KpiData[] {
     if (!metrics || !metrics.length) return [];
     const masterById = new Map<string, AdminKpiRow>();
@@ -393,10 +416,12 @@ export class EnterpriseKpiComponent implements OnInit {
     return Array.from(grouped.values()).sort((a, b) => a.no - b.no);
   }
 
+  // Normalizes an area value string.
   private normalizeAreaValue(value?: string | null): string {
     return value ? value.replace(/[^A-Za-z0-9]/g, '').toUpperCase() : '';
   }
 
+  // Gets the match key for a row.
   private getRowMatchKey(source: Partial<KpiData | AdminKpiRow | EnterpriseMetricDto> | null | undefined): string | null {
     if (!source) return null;
     const numericKey = this.resolveNumericId((source as any).kpiId ?? (source as any).id ?? undefined);
@@ -408,6 +433,7 @@ export class EnterpriseKpiComponent implements OnInit {
     return null;
   }
 
+  // Creates a KPI row from a metric.
   private createRowFromMetric(metric: EnterpriseMetricDto, fallbackOrder: number): KpiData {
     const numericId = this.resolveNumericId(metric.id);
     return {
@@ -422,6 +448,7 @@ export class EnterpriseKpiComponent implements OnInit {
     };
   }
 
+  // Applies metric value to row.
   private applyMetricValueToRow(row: KpiData, metric: EnterpriseMetricDto) {
     const areaCode = metric.site ? metric.site.trim().toUpperCase() : '';
     const areaKey = this.normalizeAreaKey(areaCode);
@@ -438,6 +465,7 @@ export class EnterpriseKpiComponent implements OnInit {
     }
   }
 
+  // Resolves an area code.
   private resolveAreaCode(value?: string | null): string {
     const normalized = this.normalizeAreaValue(value);
     if (!normalized) return '';
@@ -448,11 +476,13 @@ export class EnterpriseKpiComponent implements OnInit {
     return normalized;
   }
 
+  // Normalizes an area key.
   private normalizeAreaKey(area?: string | null): string {
     const resolved = this.resolveAreaCode(area);
     return resolved || 'UNKNOWN';
   }
 
+  // Formats a weightage value as a percentage.
   private formatWeightageValue(value?: number | string | null): string {
     if (value === undefined || value === null) return '';
     if (typeof value === 'number') return `${value}%`;
@@ -460,6 +490,7 @@ export class EnterpriseKpiComponent implements OnInit {
     return clean.endsWith('%') ? clean : `${clean}%`;
   }
 
+  // Updates the province dropdown options based on the region.
   updateDropdown2Options() {
     if (!this.formValues.dropdown1) { this.dropdown2Options = []; this.formValues.dropdown2 = ''; return; }
     const provinces = Array.from(new Set(this.regionTable.filter(x => x.region === this.formValues.dropdown1).map(x => x.province))).filter(Boolean);
@@ -470,6 +501,7 @@ export class EnterpriseKpiComponent implements OnInit {
     this.visibleColumns = [...this.baseColumns];
   }
 
+  // Updates the engineer dropdown options based on the province.
   updateDropdown3Options() {
     if (!this.formValues.dropdown2 || !this.formValues.dropdown1) { this.dropdown3Options = []; this.formValues.dropdown3 = ''; return; }
     const engineers = Array.from(new Set(this.regionTable.filter(x => x.region === this.formValues.dropdown1 && x.province === this.formValues.dropdown2).map(x => x.networkEngineer))).filter(Boolean);
@@ -482,6 +514,7 @@ export class EnterpriseKpiComponent implements OnInit {
     this.visibleColumns = [...this.baseColumns];
   }
 
+  // Updates the LEA dropdown options based on the engineer.
   updateDropdown4Options() {
     if (!this.formValues.dropdown3 || !this.formValues.dropdown1 || !this.formValues.dropdown2) {
       this.dropdown4Options = []; this.formValues.dropdown4 = ''; this.loadMetrics(); this.recomputeEditPermission(); return;
@@ -494,8 +527,10 @@ export class EnterpriseKpiComponent implements OnInit {
     this.recomputeEditPermission();
   }
 
+  // Updates visible columns.
   updateVisibleColumns() { this.refreshColumnsFromData(); }
 
+  // Handles filter changes.
   onDropdownChange(field: string, value: string) {
     const normalizedValue = field === 'dropdown4' ? this.resolveAreaCode(value) : value;
     (this.formValues as any)[field] = normalizedValue;
@@ -507,8 +542,10 @@ export class EnterpriseKpiComponent implements OnInit {
     }
   }
 
+  // Handles period changes.
   onPeriodChange() { this.periodLockedByUser = true; this.editingRowId = null; this.rowEditValues = {}; this.loadMetrics(); }
 
+  // Resets the area filter and reloads metrics.
   resetAreaFilter() {
     if (!this.formValues.dropdown4) return;
     this.formValues.dropdown4 = '';
@@ -517,6 +554,7 @@ export class EnterpriseKpiComponent implements OnInit {
     this.recomputeEditPermission();
   }
 
+  // Formats a value as a percentage string.
   formatPercent(val: any): string {
     if (val === undefined || val === null || val === '') return '-';
     if (typeof val === 'number') return `${val.toFixed(2)}%`;
@@ -527,11 +565,13 @@ export class EnterpriseKpiComponent implements OnInit {
     return s.endsWith('%') ? s : `${s}%`;
   }
 
+  // Formats a metric value as a string.
   formatMetricValue(val: any): string {
     if (val === undefined || val === null || val === '') return '-';
     return String(val);
   }
 
+  // Gets the value of a specific cell in a row.
   getCellValue(item: KpiData, key: string): any {
     if (key === this.metricColumnKey) {
       return this.getSelectedAreaMetricValue(item);
@@ -547,10 +587,14 @@ export class EnterpriseKpiComponent implements OnInit {
     return null;
   }
 
+  // Gets the row ID for a given item.
   getRowId(item: KpiData): string | number { return typeof item._id === 'object' && item._id.$oid ? item._id.$oid : item._id as number; }
+  // Checks if a specific cell is currently being edited.
   isEditingCell(item: KpiData, key: string): boolean { return this.editingCell.rowId === this.getRowId(item) && this.editingCell.key === key; }
+  // Selects the text in the metric input field.
   selectMetricInput(event: Event) { const target = event.target as HTMLInputElement | null; if (target) requestAnimationFrame(() => target.select()); }
 
+  // Starts editing a specific metric cell.
   startEdit(item: KpiData, key: string) {
     if (this.nonEditableColumns.includes(key)) return;
     if (!this.isEditingAllowed) {
@@ -570,6 +614,7 @@ export class EnterpriseKpiComponent implements OnInit {
   rowEditValues: { [rowId: string]: { kpiValue: string; section: string } } = {};
   editingRowId: string | number | null = null;
 
+  // Enters row edit mode.
   enterRowEditMode(row: KpiData) {
     if (!this.isEditingAllowed) { this.toastr.info('You do not have edit permission on this page.', 'Edit Disabled'); return; }
     const id = this.getRowId(row);
@@ -581,15 +626,18 @@ export class EnterpriseKpiComponent implements OnInit {
     this.editingRowId = id;
   }
 
+  // Cancels row edit mode.
   cancelRowEditMode() {
     this.editingRowId = null;
     this.rowEditValues = {};
   }
 
+  // Checks if a specific row is currently being edited.
   isEditingRow(row: KpiData): boolean {
     return this.editingRowId !== null && this.editingRowId === this.getRowId(row);
   }
 
+  // Saves the edited row data.
   saveRow(row: KpiData) {
     if (!this.isEditingAllowed) { this.toastr.error('You do not have permission to update KPI values.', 'Permission Denied'); return; }
     const areaCode = this.resolveAreaCode(this.formValues.dropdown4);
@@ -634,6 +682,7 @@ export class EnterpriseKpiComponent implements OnInit {
     });
   }
 
+  // Saves a specific cell edit.
   saveEdit(item: KpiData, key: string) {
     if (!this.isEditingAllowed) { this.toastr.error('You do not have permission to update this KPI value.', 'Permission Denied'); return; }
     const areaCode = this.resolveAreaCode(this.formValues.dropdown4);
@@ -670,8 +719,10 @@ export class EnterpriseKpiComponent implements OnInit {
     });
   }
 
+  // Saves all changes.
   saveAllChanges() { this.toastr.success('✅ All changes have been saved successfully!', 'Success', { timeOut: 2500, progressBar: true }); }
 
+  // Generates the Excel report.
   generateExcelReport() {
     this.loading = true;
     setTimeout(() => {
@@ -696,8 +747,10 @@ export class EnterpriseKpiComponent implements OnInit {
     }, 2000);
   }
 
+  // Gets the columns to render in the table.
   getColumnsToRender(): string[] { return this.visibleColumns.length ? this.visibleColumns : [...this.baseColumns]; }
 
+  // Gets unique area keys from the data.
   getAreaKeys(): string[] {
     const keys = new Set<string>();
     this.data.forEach(item => {
@@ -712,6 +765,7 @@ export class EnterpriseKpiComponent implements OnInit {
     return Array.from(result).sort();
   }
 
+  // Refreshes the visible columns based on data.
   private refreshColumnsFromData() {
     if (this.formValues.dropdown4) {
       this.visibleColumns = [...this.baseColumns, this.metricColumnKey];
@@ -720,6 +774,7 @@ export class EnterpriseKpiComponent implements OnInit {
     this.visibleColumns = [...this.baseColumns];
   }
 
+  // Gets the metric value for the selected area.
   private getSelectedAreaMetricValue(item: KpiData): any {
     const selectedAreaKey = this.resolveAreaCode(this.formValues.dropdown4);
     if (!selectedAreaKey) return null;
@@ -741,6 +796,7 @@ export class EnterpriseKpiComponent implements OnInit {
     return null;
   }
 
+  // Gets the formatted last updated date for a given item.
   getLastUpdated(item: KpiData): string {
     if (item.updatedAt && item.updatedAt.$date) {
       const date = new Date(item.updatedAt.$date);

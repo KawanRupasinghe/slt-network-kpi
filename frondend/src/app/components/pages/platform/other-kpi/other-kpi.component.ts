@@ -71,6 +71,7 @@ export class OtherKpiComponent implements OnInit {
   get monthOptions() { return FilterUtils.getMonthOptions(this.pacYear); }
   yearOptions: number[] = FilterUtils.generatePlatformYearOptions();
 
+  // Injects the required dependencies.
   constructor(
     private regionService: RegionService,
     private telService: TelemetryService,
@@ -79,6 +80,7 @@ export class OtherKpiComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
+  // Initializes the component by checking permissions and loading required data.
   ngOnInit(): void {
     this.isEditingAllowed = this.authService.canEditPage('Other KPI');
     this.loadRegions();
@@ -87,22 +89,26 @@ export class OtherKpiComponent implements OnInit {
 
   // ── Computed ──
 
+  // Gets the label for the selected telemetry month.
   get telMonthLabel(): string {
     return this.monthOptions.find(m => m.value === this.telMonth)?.label ?? '';
   }
 
   // ── Filter handlers ──
 
+  // Handles changes to the telemetry month or year.
   onMonthYearChange(): void {
     this.refresh();
   }
 
+  // Handles changes to the telemetry region.
   onRegionChange(): void {
     this.refresh();
   }
 
   // ── Region + Telemetry loading (same pattern as node-failures) ──
 
+  // Loads region data, builds the area map, and triggers telemetry refresh.
   private loadRegions(): void {
     this.telLoading = true;
     this.regionService.getAll().subscribe({
@@ -148,6 +154,7 @@ export class OtherKpiComponent implements OnInit {
     });
   }
 
+  // Refreshes the telemetry data based on current filters.
   refresh(): void {
     this.telLoading = true;
     this.telError = null;
@@ -191,18 +198,21 @@ export class OtherKpiComponent implements OnInit {
     });
   }
 
+  // Enters edit mode for a specific telemetry row.
   editRow(row: AreaRow): void {
     row.originalPercentage = row.percentage;
     row.originalNodeCount = row.node_Count;
     row.isEditing = true;
   }
 
+  // Cancels editing and restores original values.
   cancelEdit(row: AreaRow): void {
     if (row.originalPercentage !== undefined) row.percentage = row.originalPercentage;
     if (row.originalNodeCount !== undefined) row.node_Count = row.originalNodeCount;
     row.isEditing = false;
   }
 
+  // Saves the updated telemetry data for a specific area.
   saveRow(row: AreaRow): void {
     const payload = {
       designation: row.designation,
@@ -226,10 +236,12 @@ export class OtherKpiComponent implements OnInit {
 
   // ── Power & AC ──
 
+  // Handles changes to the Power & AC year filter.
   onPacYearChange(): void {
     this.loadPowerAndAC();
   }
 
+  // Loads Power & AC data for the selected year.
   loadPowerAndAC(): void {
     this.pacLoading = true;
     this.pacError = null;
@@ -247,27 +259,32 @@ export class OtherKpiComponent implements OnInit {
     });
   }
 
+  // Gets a sorted list of unique Power & AC designations.
   get pacDesignations(): string[] {
     if (!this.pacRows) return [];
     return Array.from(new Set(this.pacRows.map(r => r.designation))).sort();
   }
 
+  // Gets the display name for a given Power & AC designation.
   getPacDesignationDisplay(designation: string): string {
     return this.pacEngineerNameMap[designation]
       ?? this.pacEngineerNameMap[normalizeLookupKey(designation)]
       ?? designation;
   }
 
+  // Gets the Power & AC record for a specific designation and month.
   getPacRecord(designation: string, month: number): PowerAndACRecord | undefined {
     return this.pacRows.find(r => r.designation === designation && r.month === month);
   }
 
+  // Gets the scheduled or achieved value for a Power & AC record.
   getPacValue(designation: string, month: number, type: 'sched' | 'achieved'): string {
     const record = this.getPacRecord(designation, month);
     if (!record) return '—';
     return type === 'sched' ? String(record.cumulative_Sched) : String(record.cumulative_Achieved);
   }
 
+  // Toggles the verification status of a Power & AC record.
   togglePacVerified(designation: string, month: number): void {
     if (!this.isEditingAllowed) {
       return;
@@ -287,10 +304,12 @@ export class OtherKpiComponent implements OnInit {
     }
   }
 
+  // Gets the abbreviated month label for a given month number.
   getMonthLabel(month: number): string {
     return this.monthOptions.find(m => m.value === month)?.label?.substring(0, 3) ?? String(month);
   }
 
+  // Normalizes a string for comparison.
   private norm(s: string): string {
     return s ? s.replace(/[^A-Za-z0-9]/g, '').toLowerCase() : '';
   }

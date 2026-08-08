@@ -100,6 +100,7 @@ export class RoutineMtncComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly regionService = inject(RegionService);
 
+  // Checks if the user is authorized to edit the metrics on the page.
   get canEditMetrics(): boolean {
     return this.authService.canEditPage('Routine Maintenance')
       || this.authService.canEditPage('Routine MTNC')
@@ -154,6 +155,7 @@ export class RoutineMtncComponent implements OnInit {
 
   /* -------------------- */
 
+  // Initializes the component by loading region data and fetching KPI metrics.
   ngOnInit(): void {
     this.loadEngineerNames();
     this.fetchData();
@@ -161,17 +163,20 @@ export class RoutineMtncComponent implements OnInit {
 
   /* ===================== FILTER HANDLERS ===================== */
 
+  // Handles changes to the month dropdown filter.
   onMonthChange(month: number): void {
     this.selectedMonth = Number(month);
     // Request filtered data from backend for selected month and year
     this.fetchData();
   }
 
+  // Handles changes to the year dropdown filter.
   onYearChange(year: number): void {
     this.selectedYear = Number(year);
     this.fetchData();
   }
 
+  // Recalculates placeholders and tower sums based on the latest data.
   private applyFiltersAndRecalculate(): void {
     (['msan', 'vpn', 'slbn'] as PlatformKey[]).forEach(key => {
       this.placeholderMap[key] = this.calculatePlaceholderValues(this.platformDataMap[key], key);
@@ -185,6 +190,7 @@ export class RoutineMtncComponent implements OnInit {
 
   /* ================= GETTERS ================= */
 
+  // Maps the raw routine data into rows with their determined platform keys.
   get maintenanceRows(): MaintenanceRow[] {
     return this.routineData.map(routine => {
       const kpiLower = (routine.kpi ?? '').toLowerCase();
@@ -204,12 +210,14 @@ export class RoutineMtncComponent implements OnInit {
     });
   }
 
+  // Calculates the combined colspan for the table header based on static and dynamic columns.
   get combinedTableColspan(): number {
     return this.combinedTableStaticColumns + this.columns.length;
   }
 
   /* ================= API ================= */
 
+  // Fetches MSAN, VPN, SLBN and Routine KPI data concurrently from the backend API.
   fetchData(): void {
     this.loading = true;
     this.errorMessage = '';
@@ -247,10 +255,12 @@ export class RoutineMtncComponent implements OnInit {
 
   /* ================= TEMPLATE METHODS ================= */
 
+  // Retrieves the loaded records for the specified platform key.
   getPlatformRecords(key: PlatformKey): PlatformRecord[] {
     return this.platformDataMap[key] ?? [];
   }
 
+  // Generates and downloads an Excel report containing the Routine Maintenance KPI data.
   exportToExcel(): void {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Routine Maintenance');
@@ -288,15 +298,18 @@ export class RoutineMtncComponent implements OnInit {
 
   /* ================= HELPERS ================= */
 
+  // Formats a generic string value, defaulting to 'No data' if empty.
   formatRoutineValue(value?: string): string {
     return value?.trim() || 'No data';
   }
 
+  // Formats a calculated placeholder percentage value for a specific column and platform.
   formatPlaceholderValue(platformKey: PlatformKey | null, column: string): string {
     if (!platformKey) return 'No data';
     return `${this.placeholderMap[platformKey]?.[column] ?? '0.00'}%`;
   }
 
+  // Gets the appropriate display name for a column based on the region lookup map.
   getColumnDisplay(column: string): string {
     return this.engineerNameMap[column]
       ?? this.engineerNameMap[normalizeLookupKey(column)]
@@ -304,6 +317,7 @@ export class RoutineMtncComponent implements OnInit {
   }
 
 
+  // Retrieves the detailed scheduled or attended value for a column from a platform record.
   getDetailValue(
     record: PlatformRecord,
     column: string,
@@ -329,6 +343,7 @@ export class RoutineMtncComponent implements OnInit {
     return val === undefined || val === null || val === '' ? 'No data' : String(val);
   }*/
 
+  // Returns whether a given column's data for the record has been verified.
   getIsVerified(record: PlatformRecord, column: string): boolean {
     if (!record || !record.data) return false;
     const key = Object.keys(record.data).find(
@@ -337,6 +352,7 @@ export class RoutineMtncComponent implements OnInit {
     return key ? (record.data[key]?.isVerified ?? false) : false;
   }
 
+  // Retrieves the identifier for the data detail belonging to a specific column.
   getDetailId(record: PlatformRecord, column: string): number | undefined {
     if (!record || !record.data) return undefined;
     const key = Object.keys(record.data).find(
@@ -348,6 +364,7 @@ export class RoutineMtncComponent implements OnInit {
 
 
 
+  // Toggles the verified status for a specific entry and makes an API call to save the change.
   toggleVerified(platformKey: PlatformKey, record: PlatformRecord, column: string): void {
     if (!this.canEditMetrics) return;
 
@@ -358,7 +375,7 @@ export class RoutineMtncComponent implements OnInit {
       if (platformKey === 'msan') endpoint = 'msan-mtc-data';
       else if (platformKey === 'vpn') endpoint = 'ipnw-mtc-data';
       else if (platformKey === 'slbn') endpoint = 'slbn-mtc-data';
-      
+
       if (endpoint) {
         this.http.patch<{ id: number; isVerified: boolean }>(`${environment.apiUrl}/${endpoint}/${id}/toggle-verified`, {}).subscribe({
           next: (res) => {
@@ -378,6 +395,7 @@ export class RoutineMtncComponent implements OnInit {
     }
   }
 
+  // Retrieves the calculated tower sum for a particular platform and column.
   getTowerSum(key: PlatformKey, column: string): number {
     return this.towerSumsMap[key]?.[column] ?? 0;
   }
@@ -389,12 +407,14 @@ export class RoutineMtncComponent implements OnInit {
 
   /* ================= CALCULATIONS ================= */
 
+  // Initializes the placeholder map with default '100.00' percentages for all columns.
   private buildDefaultPlaceholders(): PlaceholderMap {
     const map: PlaceholderMap = {};
     PLATFORM_COLUMNS.forEach(c => (map[c] = '100.00'));
     return map;
   }
 
+  // Computes placeholder percentages based on the platform and its records.
   private calculatePlaceholderValues(data: PlatformRecord[], platform: PlatformKey): PlaceholderMap {
     const result = this.buildDefaultPlaceholders();
     if (!data.length) return result;
@@ -421,6 +441,7 @@ export class RoutineMtncComponent implements OnInit {
     return result;
   }
 
+  // Returns the correct PlatformRecord corresponding to the platform selection for the main table.
   private getTargetEntryForMainTable(platformKey: PlatformKey | null): PlatformRecord | undefined {
     if (!platformKey) return undefined;
     const data = this.platformDataMap[platformKey];
@@ -441,16 +462,19 @@ export class RoutineMtncComponent implements OnInit {
         .find(entry => entry !== undefined);
   }
 
+  // Checks if the active target record has data details for the specified column.
   hasDetailForMainTable(platformKey: PlatformKey | null, column: string): boolean {
     const entry = this.getTargetEntryForMainTable(platformKey);
     return entry ? !!this.getDetailId(entry, column) : false;
   }
 
+  // Checks if the detail in the main table target record has been verified.
   isVerifiedForMainTable(platformKey: PlatformKey | null, column: string): boolean {
     const entry = this.getTargetEntryForMainTable(platformKey);
     return entry ? this.getIsVerified(entry, column) : false;
   }
 
+  // Applies cumulative percentages mapping over the respective columns.
   private applyCumulativePercentage(result: PlaceholderMap, entry: PlatformRecord): void {
     PLATFORM_COLUMNS.forEach(column => {
       const detail = entry.data?.[column];
@@ -464,6 +488,7 @@ export class RoutineMtncComponent implements OnInit {
     });
   }
 
+  // Computes the sums of scheduled tasks for each region from limited records.
   private calculateTowerSums(data: PlatformRecord[], limit: number): TowerSumRecord {
     const sums: TowerSumRecord = {};
 
@@ -477,6 +502,7 @@ export class RoutineMtncComponent implements OnInit {
     return sums;
   }
 
+  // Resolves the period months that are targeted based on the selected platform type.
   private getTargetMonths(platform: PlatformKey): string[] {
     if (platform === 'msan') {
       // Use the half-year that contains the selected month
@@ -494,10 +520,12 @@ export class RoutineMtncComponent implements OnInit {
     return [MONTH_NAMES[startIndex], MONTH_NAMES[startIndex + 1]];
   }
 
+  // Sets the error message if one has not already been populated.
   private setError(msg: string): void {
     if (!this.errorMessage) this.errorMessage = msg;
   }
 
+  // Requests region data from the backend to construct the display name lookup map.
   private loadEngineerNames(): void {
     this.regionService.getAll().subscribe({
       next: (res: Region[] | any[]) => {

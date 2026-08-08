@@ -103,6 +103,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
   private friendlyToDbKey: Record<string, string> = {};
   private filtersInitialized = false;
 
+  // Injects the required dependencies.
   constructor(
     private http: HttpClient,
     private ipNwOpService: IpNwOpService,
@@ -112,6 +113,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
 
   ) { }
 
+  // Initializes the component, loads the region table, and fetches data.
   ngOnInit(): void {
     this.buildFriendlyMap();
     this.loadRegionTable();
@@ -120,10 +122,12 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
   }
 
 
+  // Cleans up resources when the component is destroyed.
   ngOnDestroy(): void {
     // Cleanup if needed
   }
 
+  // Checks if the user is authorized to edit the page.
   get isEditingAllowed(): boolean {
     return this.authService.canEditPage('IP NW OP');
   }
@@ -131,14 +135,17 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
   // -------------------------
   // Helpers
   // -------------------------
+  // Normalizes a string for comparison.
   private norm(s: any): string {
     return s ? String(s).replace(/[^A-Za-z0-9]/g, '').toLowerCase() : '';
   }
 
+  // Calculates the number of days in the specified month and year.
   private getDaysInMonth(year: number, month: number): number {
     return new Date(year, month, 0).getDate();
   }
 
+  // Builds a mapping of friendly names to database keys.
   private buildFriendlyMap(): void {
     const out: Record<string, string> = {};
     Object.keys(this.optionMapping).forEach((dbKey) => {
@@ -148,40 +155,48 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     this.friendlyToDbKey = out;
   }
 
+  // Displays a toast notification.
   private showToast(type: 'success' | 'danger', text: string): void {
     const id = this.toastId++;
     this.toasts.push({ id, type, text });
     setTimeout(() => this.dismissToast(id), 2600);
   }
 
+  // Dismisses a specific toast notification.
   dismissToast(id: number): void {
     this.toasts = this.toasts.filter((t) => t.id !== id);
   }
 
   // Selected RTOM db key (lowercase)
+  // Gets the normalized selected RTOM database key.
   get selectedKey(): string {
     return this.formValues.dropdown4 ? this.norm(this.formValues.dropdown4) : '';
   }
 
   // Regions list
+  // Gets a list of unique regions from the region table.
   get regions(): string[] {
     return Array.from(new Set(this.regionTable.map((r) => r.region).filter(Boolean) as string[]));
   }
 
+  // Checks if an area filter is currently applied.
   get hasAreaFilter(): boolean {
     return !!this.selectedKey;
   }
 
+  // Checks if the user has permission to edit metrics for the selected area.
   get canEditMetrics(): boolean {
     return this.isEditingAllowed && this.hasAreaFilter;
   }
 
+  // Gets the display label for the selected area.
   get selectedAreaLabel(): string {
     const key = this.formValues.dropdown4;
     if (!key) return '';
     return this.optionMapping[key] || key.toUpperCase();
   }
 
+  // Calculates and returns the availability percentage for the selected area.
   getAreaPercentage(entry: IpNwOpKpiDto): string {
     if (!this.selectedKey) return '-';
 
@@ -198,6 +213,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     return Number.isFinite(pct) ? `${pct.toFixed(2)}%` : '-';
   }
 
+  // Gets the value for a specific metric bucket in the selected area.
   getAreaMetric(
     entry: IpNwOpKpiDto,
     bucket: 'total_minutes' | 'unavailable_minutes' | 'total_nodes'
@@ -215,10 +231,12 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     return value === undefined || value === null ? '-' : String(value);
   }
 
+  // Builds a payload object from an entry for API requests.
   private buildPayload(entry: IpNwOpKpiDto): IpNwOpKpiDto {
     return { ...entry };
   }
 
+  // Normalizes a dictionary of metrics, ensuring all values are valid numbers.
   private normalizeMetricDict(
     source?: Record<string, string | number | undefined | null>
   ): Record<string, number | null> {
@@ -238,6 +256,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
   // -------------------------
   // Legacy auth methods removed
 
+  // Loads the region table data and initializes filters.
   loadRegionTable(): void {
     this.regionService.getAll().subscribe({
       next: (res: Region[] | any[]) => {
@@ -253,6 +272,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Loads IP network OP admin data and metrics for the selected period.
   loadData(): void {
     this.loading = true;
     this.error = null;
@@ -278,6 +298,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Builds a list of metrics from the KPI entries for the specified area.
   private buildMetricsFromKpis(entries: IpNwOpKpiDto[], areaKey: string): IpNwOpMetric[] {
     const key = this.norm(areaKey);
     if (!key) return [];
@@ -309,6 +330,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
   // Intentionally no API calls from IP NW OP page.
 
 
+  // Handles changes to the selected month and year, reloading data.
   onMonthYearChange(): void {
     // Update daysInMonth when month/year changes
     this.daysInMonth = this.getDaysInMonth(this.selectedYear, this.selectedMonth);
@@ -322,6 +344,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
   // -------------------------
   // Dropdown cascading
   // -------------------------
+  // Updates the province options based on the selected region.
   private updateDropdown2Options(region: string): void {
     if (!region) {
       this.dropdown2Options = [];
@@ -338,6 +361,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     this.dropdown2Options = provinces;
   }
 
+  // Updates the engineer options based on the selected province.
   private updateDropdown3Options(province: string): void {
     if (!province || !this.formValues.dropdown1) {
       this.dropdown3Options = [];
@@ -356,6 +380,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     this.engineerNameMap = buildEngineerDisplayMap(this.regionTable, this.dropdown3Options);
   }
 
+  // Updates the LEA area options based on the selected engineer.
   private updateDropdown4Options(engineer: string): void {
     if (!engineer || !this.formValues.dropdown1 || !this.formValues.dropdown2) {
       this.dropdown4Options = [];
@@ -379,6 +404,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     this.dropdown4Options = leas;
   }
 
+  // Initializes all filter dropdown values.
   private initializeFilters(): void {
     if (this.filtersInitialized) return;
 
@@ -391,6 +417,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     this.filtersInitialized = true;
   }
 
+  // Handles changes to any of the filter dropdowns.
   onDropdownChange(name: 'dropdown1' | 'dropdown2' | 'dropdown3' | 'dropdown4', value: string): void {
     if (name === 'dropdown1') {
       this.formValues.dropdown1 = value;
@@ -438,6 +465,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
   // -------------------------
   // KPI calculations
   // -------------------------
+  // Calculates the network availability percentage.
   calculatePercentage(totalMinutes: any, unavailableMinutes: any, totalNodes: any): number {
     const tm = Number(totalMinutes) || 0;
     const um = Number(unavailableMinutes) || 0;
@@ -452,6 +480,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
   // -------------------------
   // Editing
   // -------------------------
+  // Starts editing a specific metric cell.
   startEdit(entry: IpNwOpKpiDto, key: 'unavailable_minutes' | 'total_minutes' | 'total_nodes'): void {
     if (!this.canEditMetrics) return;
 
@@ -472,11 +501,13 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     };
   }
 
+  // Handles input changes while editing a metric cell.
   onEditInput(value: string | number | null | undefined): void {
     const normalizedValue = value === null || value === undefined ? '' : String(value);
     this.editCell = { ...this.editCell, value: normalizedValue };
   }
 
+  // Saves the edited metric cell value to the database.
   async doneEdit(): Promise<void> {
     if (!this.canEditMetrics || this.editCell.rowId === null || !this.editCell.key || this.saving) {
       return;
@@ -545,10 +576,12 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Cancels the current edit operation.
   cancelEdit(): void {
     this.editCell = { rowId: null, key: null, value: '' };
   }
 
+  // Checks if a specific cell is currently being edited.
   isCellEditing(
     rowId: number,
     bucket: 'unavailable_minutes' | 'total_minutes' | 'total_nodes'
@@ -557,6 +590,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     return this.editCell.rowId === rowId && this.editCell.key === `${bucket}.${this.selectedKey}`;
   }
 
+  // Handles keyboard events for the editing input field.
   handleEditKey(event: KeyboardEvent): void {
     if (event.key === 'Enter') {
       event.preventDefault();
@@ -573,6 +607,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
   // -------------------------
   // Excel Export (same structure as React)
   // -------------------------
+  // Exports the KPI data and metrics to an Excel file.
   async exportToExcel(): Promise<void> {
     const workbook = new ExcelJS.Workbook();
     const ws = workbook.addWorksheet('Network Availability');
