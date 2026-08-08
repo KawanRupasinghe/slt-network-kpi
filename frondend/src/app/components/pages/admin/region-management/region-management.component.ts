@@ -63,10 +63,12 @@ export class RegionManagementComponent {
   rowEdits: Partial<Region> = {};
 
   ngOnInit(): void {
+    // Load the region list before enabling inline editing or new-record submission.
     this.loadRegions();
   }
 
   loadRegions(): void {
+    // Normalize backend property aliases so older and newer API casing render identically.
     this.regionService.getAll().subscribe({
       next: (data: any[]) => {
         console.log('Raw data from service:', data); // Debug log
@@ -103,12 +105,14 @@ export class RegionManagementComponent {
   /* ================= HEADER / FORM HELPERS ================= */
 
   openForm(): void {
+    // Open a clean add form and clear messages from the previous operation.
     this.showForm = true;
     this.error = '';
     this.success = '';
   }
 
   closeForm(form?: NgForm): void {
+    // Hide the form and reset both the model and any template-driven form state.
     this.showForm = false;
     this.error = '';
     this.success = '';
@@ -116,6 +120,7 @@ export class RegionManagementComponent {
   }
 
   resetForm(form?: NgForm): void {
+    // Restore empty region fields and optionally reset Angular's form validation state.
     this.formData = {
       region: '',
       province: '',
@@ -132,6 +137,7 @@ export class RegionManagementComponent {
   /* ================= ADD REGION (SUBMIT) ================= */
 
   onSubmit(form: NgForm): void {
+    // Validate and trim all fields before creating a new region through the service.
 
     this.error = '';
     this.success = '';
@@ -209,6 +215,7 @@ export class RegionManagementComponent {
   /* ================= SORTING ================= */
 
   requestSort(key: RegionKey): void {
+    // Repeatedly selecting one column toggles its direction; a new column starts ascending.
     if (this.sortKey === key) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
     } else {
@@ -223,6 +230,7 @@ export class RegionManagementComponent {
   }
 
   get sortedRegions(): Region[] {
+    // Sort a copied array so changing the table order does not mutate the source collection.
     const data = [...this.regions];
     if (!this.sortKey) return data;
 
@@ -246,16 +254,19 @@ export class RegionManagementComponent {
   }
 
   startRowEdit(row: Region): void {
+    // Snapshot the row into rowEdits so inline changes can be cancelled safely.
     this.editingRowId = row.id;
     this.rowEdits = { ...row };
   }
 
   cancelRowEdit(): void {
+    // Discard the inline snapshot and leave all persisted row values unchanged.
     this.editingRowId = null;
     this.rowEdits = {};
   }
 
   saveRow(row: Region): void {
+    // Merge edited values with unchanged fields, trim them, and persist the complete region row.
     const updateData = {
       id: row.id,
       region: (this.rowEdits['region'] ?? row.region).toString().trim(),
@@ -288,6 +299,7 @@ export class RegionManagementComponent {
   /* ================= DELETE ROW ================= */
 
   handleDelete(id: number): void {
+    // Confirm deletion, then remove the matching row locally after the API succeeds.
     if (!confirm('Are you sure you want to delete this region entry?')) return;
 
     this.regionService.delete(id).subscribe({

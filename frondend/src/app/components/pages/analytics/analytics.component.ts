@@ -1,3 +1,4 @@
+// Loads monthly KPI snapshots, maps them to regions, and exposes table and grouped dashboard views.
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import {
@@ -88,6 +89,7 @@ type KpiDefinition = {
   styleUrls: ['../overall/current-month/current-month.component.scss'],
 })
 export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
+  // The selected range controls both the persisted-result calculation request and the analytics query.
   selectedYear: number;
   selectedStartMonth: number;
   selectedEndMonth: number;
@@ -129,6 +131,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly rowChangesSub = new Subscription();
   private pendingFrame: number | null = null;
 
+  // Provides API access, region metadata, analytics aggregation, and view-change notifications.
   constructor(
     private http: HttpClient,
     private regionService: RegionService,
@@ -151,6 +154,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Initialize valid year/month filters before loading regions, definitions, and stored results.
     this.yearOptions = FilterUtils.generatePlatformYearOptions();
     if (!this.yearOptions.includes(this.selectedYear)) {
       this.selectedYear = this.yearOptions.includes(new Date().getFullYear())
@@ -162,6 +166,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    // Keep the two side-by-side tables aligned whenever Angular changes their rendered rows.
     this.scheduleRowSync();
 
     this.rowChangesSub.add(
@@ -174,21 +179,25 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Release subscriptions and cancel a queued layout frame when leaving the page.
     this.rowChangesSub.unsubscribe();
     if (this.pendingFrame !== null) cancelAnimationFrame(this.pendingFrame);
   }
 
 @HostListener('window:resize')
   onWindowResize(): void {
+    // Recalculate paired row heights after the viewport changes.
     this.scheduleRowSync();
   }
 
   onYearChange(year: number): void {
+    // A year change can alter the allowed months, so reload the available period and page data.
     this.selectedYear = Number(year);
     this.loadAvailableMonthsAndData();
   }
 
   onStartMonthChange(month: number): void {
+    // Prevent the selected range from becoming inverted when the start month changes.
     this.selectedStartMonth = Number(month);
     if (this.selectedStartMonth > this.selectedEndMonth) {
       this.selectedEndMonth = this.selectedStartMonth;
@@ -196,6 +205,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onEndMonthChange(month: number): void {
+    // Prevent the selected range from becoming inverted when the end month changes.
     this.selectedEndMonth = Number(month);
     if (this.selectedEndMonth < this.selectedStartMonth) {
       this.selectedStartMonth = this.selectedEndMonth;
@@ -203,6 +213,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   setActiveView(view: 'table' | 'dashboard'): void {
+    // Switch presentation only; both views use the same calculated KPI state.
     this.activeView = view;
   }
 
@@ -215,6 +226,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private loadAvailableMonthsAndData(): void {
+    // Ask the API which months have stored data, then load the common region/definition model.
     this.analyticsService.getAvailableMonths(this.selectedYear).subscribe({
       next: (months: number[]) => {
         this.applyAvailableMonths(months);
@@ -228,6 +240,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private applyAvailableMonths(_months: number[]): void {
+    // Keep the selected range compatible with frontend period rules and the current year.
     const validMonths = this.getAvailableMonths(this.selectedYear).map(m => m.value);
     const currentMonth = new Date().getMonth() + 1;
 
@@ -247,6 +260,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   calculate(): void {
+    // Calculate and persist each month in the selected range before reading aggregated analytics.
     this.loading = true;
     this.error = null;
     this.noOverallResults = false;
@@ -266,6 +280,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private loadAnalyticsResults(): void {
+    // Read the persisted range aggregation and distribute each result into its KPI/engineer cell.
     this.loading = true;
     this.error = null;
     this.noOverallResults = false;
@@ -273,7 +288,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.analyticsService.getCumulativeAnalytics(this.selectedYear, this.selectedStartMonth, this.selectedEndMonth)
       .subscribe({
         next: (results: any[]) => {
-          // Reset existing metrics to 0 first
+          // Clear stale cells before applying the latest API response.
           this.kpiRows.forEach(row => {
             row.metrics.forEach((m: any) => {
               m.achieved = 0;
@@ -315,6 +330,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private loadRegions(): void {
+    // Load region metadata first because KPI results are matched to engineers through area codes.
     this.loading = true;
     this.error = null;
 
@@ -362,6 +378,7 @@ return {
   }
 
   private buildRegionGrouping(): void {
+    // Build the region/province hierarchy used by table headers and the dashboard grouping.
     const regionMap = new Map<string, Map<string, Region[]>>();
 
     this.regions.forEach((item) => {
@@ -397,12 +414,13 @@ return {
   }
 
   private loadKpiDefinitions(): void {
+    // Create empty KPI rows from the selected period's definitions, then populate their metrics.
     this.loading = true;
     this.error = null;
     this.noDefinitions = false;
     this.noOverallResults = false;
 
-    // Use selectedEndMonth to fetch definitions, acting as the 'month' for now.
+    // Definitions are requested using the end month because the API exposes a month/year definition query.
     const month = this.selectedEndMonth;
     const year = this.selectedYear;
     const url = `${this.apiBase}?month=${month}&year=${year}`;
@@ -466,6 +484,7 @@ return {
   }
 
   private findEngineerIndexByArea(areaCode: string): number | undefined {
+    // Resolve an API area code to the flat engineer index used by each KPI row's metric array.
     const normalizedTarget = this.normalizeArea(areaCode);
     if (!normalizedTarget) return undefined;
 
@@ -476,16 +495,19 @@ return {
   }
 
   private getEngineerAreaCandidates(engineer: Region): string[] {
+    // Accept either the LEA code or network-engineer code when matching a result to a region.
     return [engineer.lea, engineer.networkEngineer]
       .map(value => this.normalizeArea(value))
       .filter((value, index, arr) => !!value && arr.indexOf(value) === index);
   }
 
   private normalizeArea(value: string | null | undefined): string {
+    // Normalize formatting differences so codes such as NW/ABC and nwabc compare consistently.
     return (value ?? '').replace(/[^A-Za-z0-9]/g, '').toLowerCase();
   }
 
   private computeTotals(): void {
+    // Recompute footer totals and normalized percentages after definitions or metrics change.
     this.weightageSum = this.kpiRows.reduce(
       (sum, row) => sum + (row.weightage ?? 0),
       0
@@ -518,6 +540,7 @@ return {
   }
 
   private buildDashboardGroups(): void {
+    // Convert flat KPI metrics into region/province/engineer cards for Dashboard View.
     const regionMap = new Map<string, Map<string, DashboardEngineerSummary[]>>();
 
     this.engineersFlat.forEach((engineer, index) => {
@@ -559,12 +582,14 @@ return {
   }
 
   getDashboardColor(percent: number): string {
+    // Map the period score to the visual threshold color used by dashboard cards.
     if (percent >= 90) return '#10b981';
     if (percent >= 75) return '#3b82f6';
     if (percent >= 50) return '#f59e0b';
     return '#ef4444';
   }
 
+  // Prevent progress bars from extending beyond their 100% visual range.
 getDashboardProgressPercent(percent: number): number {
   return Math.min(100, percent);
 }
@@ -574,6 +599,7 @@ getDashboardProgressPercent(percent: number): number {
   }
 
   private scheduleRowSync(): void {
+    // Coalesce repeated DOM changes into one animation-frame height synchronization.
     if (!this.leftRowElements || !this.rightRowElements) return;
 
     if (this.pendingFrame !== null) cancelAnimationFrame(this.pendingFrame);
@@ -585,6 +611,7 @@ getDashboardProgressPercent(percent: number): number {
   }
 
   private syncRowHeights(): void {
+    // Give each paired left/right table row the larger rendered height for visual alignment.
     const leftRows = this.leftRowElements.toArray().map((ref) => ref.nativeElement);
     const rightRows = this.rightRowElements.toArray().map((ref) => ref.nativeElement);
 
@@ -606,11 +633,13 @@ getDashboardProgressPercent(percent: number): number {
   }
 
   setHoveredRowIndex(index: number | null): void {
+    // Store the row currently being highlighted by the table interaction.
     this.hoveredRowIndex = index;
     this.cdr.detectChanges();
   }
 
   async exportToExcel(): Promise<void> {
+    // Recreate both analytics tables in an XLSX worksheet, including headers, totals, and formatting.
     if (this.kpiRows.length === 0 || this.noOverallResults) {
       console.warn('No KPI data is available for download for the selected period.');
       return;
@@ -619,14 +648,14 @@ getDashboardProgressPercent(percent: number): number {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Analytics KPI');
 
-    // Define colors matching your UI
+    // Use the same brand and alternating-row colors as the on-screen analytics tables.
     const headerBgColor = '0057A6'; // SLT Blue
     const headerTextColor = 'FFFFFF'; // White
     const altRowBgColor = 'E2EDFF'; // Light blue
     const totalRowBgColor = '02B28C'; // SLT Teal
     const borderColor = 'D1D5DB'; // Gray border
 
-    // Starting column for left table
+    // The left table contains KPI definitions and per-KPI totals.
     let currentCol = 1;
 
     // ===== LEFT TABLE: KPI DEFINITIONS =====
@@ -769,6 +798,7 @@ getDashboardProgressPercent(percent: number): number {
     };
     currentRow++;
 
+    // The right table contains the three metrics for every engineer and area.
     // ===== RIGHT TABLE: REGION PERFORMANCE =====
     currentCol = 8; // Start after left table columns
     currentRow = 1;
@@ -928,7 +958,7 @@ getDashboardProgressPercent(percent: number): number {
       currentCol += 3;
     });
 
-    // Generate and download
+    // Serialize the workbook in memory and trigger a browser download.
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const startLabel = this.getMonthLabel(this.selectedStartMonth) || 'Start';
@@ -937,12 +967,14 @@ getDashboardProgressPercent(percent: number): number {
   }
 
   getComputedWeightage(row: KpiRow): string {
+    // Express this KPI's applicable points as a percentage of the configured total.
     if (this.totalPointsApplicable <= 0) return '0.00%';
     const weightage = (Number(row.pointsApplicable ?? 0) / this.totalPointsApplicable) * 100;
     return `${weightage.toFixed(2)}%`;
   }
 
   getTotalKpiPercentage(row: KpiRow): number {
+    // Convert the row's achieved points into a capped percentage of its applicable points.
     if (!row.metrics || row.metrics.length === 0 || !row.pointsApplicable) return 0;
     const totalPoints = row.metrics.reduce((sum, m) => sum + (m.pointsAchieved ?? 0), 0);
     const cappedPoints = Math.min(totalPoints, row.pointsApplicable);
@@ -950,6 +982,7 @@ getDashboardProgressPercent(percent: number): number {
   }
 
   getKpiRowClass(row: KpiRow): string {
+    // Select a category class so KPI rows receive the matching visual treatment.
     const cat = (row.category ?? '').toLowerCase();
     if (cat.includes('enterprise') || cat.includes('enteprise')) {
       return 'category-enterprise';
@@ -964,11 +997,13 @@ getDashboardProgressPercent(percent: number): number {
   }
 
   getAchievedCellClass(metric: KpiMetric): string {
+    // Mark a metric as achieved when its points meet or exceed its allocated maximum.
     if (!metric || !metric.maximumPoints || metric.maximumPoints <= 0) return '';
     return metric.pointsAchieved >= metric.maximumPoints ? 'target-achieved' : 'target-failed';
   }
 
   formatHeaderLabel(value: string | null | undefined): string {
+    // Format compact API labels such as Region1 into readable table headings.
     if (!value) return '';
     const withSpaces = value.replace(/([a-zA-Z])([0-9])/g, '$1 $2');
     return withSpaces

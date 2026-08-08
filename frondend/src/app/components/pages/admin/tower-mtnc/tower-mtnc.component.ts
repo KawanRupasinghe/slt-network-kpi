@@ -59,10 +59,12 @@ export class TowerMtncComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // Load tower activity-plan definitions when the admin page opens.
     this.fetchData();
   }
 
   fetchData(): void {
+    // Read records and expose a consistent loading/error state to the template.
     this.loading = true;
     this.errorMessage = '';
     this.http
@@ -83,6 +85,7 @@ export class TowerMtncComponent implements OnInit {
   }
 
   onSubmit(): void {
+    // Validate the form, normalize editable fields, and choose add or update.
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -118,6 +121,7 @@ export class TowerMtncComponent implements OnInit {
   }
 
   onEdit(record: ActivityRecord): void {
+    // Copy a selected activity into the form and retain its ID for update requests.
     this.editingId = record.id!;
     this.form.patchValue({
       kpi: record.kpi,
@@ -131,6 +135,7 @@ export class TowerMtncComponent implements OnInit {
   }
 
   onDelete(id: number): void {
+    // Confirm deletion before removing the selected activity-plan record.
     if (!window.confirm('Are you sure you want to delete this item?')) {
       return;
     }
@@ -149,10 +154,12 @@ export class TowerMtncComponent implements OnInit {
   }
 
   onCancelEdit(): void {
+    // Discard unsaved edits and return the form to add mode.
     this.resetForm();
   }
 
   private resetForm(): void {
+    // Clear controls and the edit identifier after save, cancel, or delete.
     this.form.reset({
       kpi: '',
       target: '',

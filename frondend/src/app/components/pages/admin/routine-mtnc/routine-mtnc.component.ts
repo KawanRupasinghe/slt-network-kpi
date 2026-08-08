@@ -64,10 +64,12 @@ export class AdminRoutineMtncComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // Load the routine maintenance definitions when the page opens.
     this.fetchData();
   }
 
   fetchData(): void {
+    // Read, sort, and expose the database records while finalizing the loading indicator.
     this.loading = true;
     this.errorMessage = '';
 
@@ -90,6 +92,7 @@ export class AdminRoutineMtncComponent implements OnInit {
   }
 
   onSubmit(): void {
+    // Validate the form and send normalized fields through the add/update endpoint.
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -128,6 +131,7 @@ export class AdminRoutineMtncComponent implements OnInit {
   }
 
   onEdit(record: RoutineRecord): void {
+    // Populate the form with the selected definition and switch to update labels.
     this.editingId = record._id;
     this.form.patchValue({
       kpi: record.kpi ?? '',
@@ -144,6 +148,7 @@ export class AdminRoutineMtncComponent implements OnInit {
   }
 
   onDelete(id: number): void {
+    // Validate and confirm the record ID before deleting the definition.
     if (!id || id <= 0) {
       this.errorMessage = 'Invalid record id.';
       return;
@@ -169,6 +174,7 @@ export class AdminRoutineMtncComponent implements OnInit {
   }
 
   onCancelEdit(): void {
+    // Return to add mode without persisting the current form values.
     this.resetForm();
     this.formTitle = 'Add KPI';
     this.submitButtonLabel = 'Add KPI';
@@ -176,6 +182,7 @@ export class AdminRoutineMtncComponent implements OnInit {
   }
 
   private resetForm(): void {
+    // Restore blank controls and the default add-operation labels.
     this.form.reset({
       kpi: '',
       target: '',

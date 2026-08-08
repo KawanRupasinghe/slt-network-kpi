@@ -28,17 +28,17 @@ export class AdminServiceFulfilmentComponent implements OnInit {
   private readonly document = inject(DOCUMENT);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  // Header
+  // Page heading shown above the management table.
   pageTitle = 'Service Fulfilment';
 
 
-  // Form
+  // Form state shared by add and edit operations.
   kpiForm!: FormGroup;
   isEditing = false;
   editingId: number | string | null = null;
   showForm = false;
 
-  // Table data
+  // Database rows plus a frontend-only display order.
   kpiList: AdminKpiRow[] = [];
 
   loading = false;
@@ -52,6 +52,7 @@ export class AdminServiceFulfilmentComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    // Create the form with required KPI metadata and the default reporting period.
     this.kpiForm = this.fb.group({
       kpi: ['', Validators.required],
       target: ['', Validators.required],
@@ -70,6 +71,7 @@ export class AdminServiceFulfilmentComponent implements OnInit {
 
   // ================= LOAD =================
   loadKpis(): void {
+    // Load rows and assign a fallback display order when the API omits one.
     this.loading = true;
 
     this.serviceFulfilmentKpiService.getAll().subscribe({
@@ -92,6 +94,7 @@ export class AdminServiceFulfilmentComponent implements OnInit {
 
   // ================= ADD =================
   addNewKpi(): void {
+    // Prepare a clean add state and bring the form into view.
     this.isEditing = false;
     this.editingId = null;
     this.resetForm();
@@ -101,6 +104,7 @@ export class AdminServiceFulfilmentComponent implements OnInit {
 
   // ================= SUBMIT =================
   onSubmit(): void {
+    // Convert form values to the service DTO and select add or update based on edit state.
     if (this.kpiForm.invalid) {
       this.kpiForm.markAllAsTouched();
       return;
@@ -149,6 +153,7 @@ export class AdminServiceFulfilmentComponent implements OnInit {
 
   // ================= EDIT =================
   editKpi(index: number): void {
+    // Load one table row into the form, including compatibility handling for OLA field aliases.
     const kpi = this.kpiList[index];
     this.isEditing = true;
     this.editingId = kpi.id ?? (kpi as any).Id;
@@ -172,6 +177,7 @@ export class AdminServiceFulfilmentComponent implements OnInit {
 
   // ================= DELETE =================
   deleteKpi(index: number): void {
+    // Confirm deletion by the row's backend identifier, then refresh the list.
     const kpi = this.kpiList[index];
     const id = kpi.id ?? (kpi as any).Id;
 
@@ -192,6 +198,7 @@ export class AdminServiceFulfilmentComponent implements OnInit {
 
   // ================= RESET =================
   resetForm(): void {
+    // Clear edit state while retaining the default month/year values.
     this.kpiForm.reset({
       month: this.defaultMonth,
       year: this.defaultYear
@@ -201,6 +208,7 @@ export class AdminServiceFulfilmentComponent implements OnInit {
   }
 
   toggleForm(): void {
+    // Toggle between the visible form and the compact table-only layout.
     if (this.showForm) {
       this.closeForm();
     } else {
@@ -209,11 +217,13 @@ export class AdminServiceFulfilmentComponent implements OnInit {
   }
 
   closeForm(): void {
+    // Hide the form and clear any unsaved edit values.
     this.showForm = false;
     this.resetForm();
   }
 
   private scrollFormIntoView(): void {
+    // Delay scrolling until Angular has rendered the form after the visibility change.
     setTimeout(() => {
       if (!this.showForm) {
         return;
@@ -224,6 +234,7 @@ export class AdminServiceFulfilmentComponent implements OnInit {
   }
 
   private resolveDefinedOlaValue(kpi?: Partial<ServiceFulfilmentKpiDto>): string {
+    // Accept either backend spelling used historically for the defined OLA details field.
     if (!kpi) {
       return '';
     }

@@ -108,6 +108,7 @@ export class FinalTableComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // Determine edit privileges, restore the saved total-points denominator, and load definitions.
     const role = this.authService.getRole();
     this.isAdmin = role === 'Admin' || role === 'SuperAdmin';
     this.form.patchValue({ totalPoints: this.getPersistedTotalPoints() });
@@ -116,6 +117,7 @@ export class FinalTableComponent implements OnInit {
   }
 
   fetchData(): void {
+    // Load and normalize definitions so API casing differences do not affect the template.
     this.loading = true;
     this.errorMessage = '';
 
@@ -144,6 +146,7 @@ export class FinalTableComponent implements OnInit {
   }
 
   onSubmit(): void {
+    // Validate, build a trimmed payload, and choose the create/update endpoint.
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -173,6 +176,7 @@ export class FinalTableComponent implements OnInit {
   }
 
   onEdit(record: KpiDefinition): void {
+    // Populate editable fields while preserving the server-calculated weightage display.
     this.editingId = record.id;
 
     // ✅ patchValue because weightage control is disabled
@@ -201,6 +205,7 @@ export class FinalTableComponent implements OnInit {
   }
 
  onDelete(id: number): void {
+    // Delete a definition and reload the list so backend weightage recalculation is visible.
     if (!window.confirm('Delete this KPI row?')) return;
 
     this.saving = true;
@@ -226,6 +231,7 @@ export class FinalTableComponent implements OnInit {
   }
 
   saveTotalPoints(): void {
+    // Persist the denominator used by future forms and live weightage previews in this browser.
     const totalPoints = Number(this.form.get('totalPoints')?.value ?? 36000);
     if (totalPoints <= 0) {
       this.errorMessage = 'Total Points must be greater than 0.';
@@ -237,6 +243,7 @@ export class FinalTableComponent implements OnInit {
   }
 
   private buildPayload(): UpsertKpiDefinitionRequest {
+    // Convert the form model into the API shape and calculate the submitted weightage preview.
     const raw = this.form.getRawValue(); // includes disabled too (fine)
     const now = new Date();
 
@@ -263,6 +270,7 @@ export class FinalTableComponent implements OnInit {
   }
 
   private resetForm(): void {
+    // Clear edit state and restore the configured total-points default.
     this.form.reset({
       perspectives: '',
       category: '',
@@ -286,12 +294,14 @@ export class FinalTableComponent implements OnInit {
 
   // ✅ UI helper: show % with 4 decimals (same as DB)
   formatWeightage(val: number | null | undefined): string {
+    // Format the persisted percentage with the precision used by the table.
     const n = Number(val ?? 0);
     return `${n.toFixed(4)}%`;
   }
 
   /** Display weightage normalized to total points (table display) */
   getComputedWeightageForRecord(record: KpiDefinition): string {
+    // Calculate the table percentage from points so it remains understandable if totals change.
     const totalPoints = Number(record.totalPoints ?? 36000);
     if (totalPoints <= 0) return '0.0000%';
     const weightage = (Number(record.pointsApplicable ?? 0) / totalPoints) * 100;
@@ -300,6 +310,7 @@ export class FinalTableComponent implements OnInit {
 
   /** Calculate live weightage preview based on current points input */
   calculateLiveWeightage(): string {
+    // Preview the weightage while the administrator edits points, without saving anything.
     const pointsApplicable = Number(this.form.get('pointsApplicable')?.value ?? 0);
     const totalPoints = Number(this.form.get('totalPoints')?.value ?? 36000);
 
@@ -310,10 +321,12 @@ export class FinalTableComponent implements OnInit {
 
   /** Get total points for display hint */
   getTotalPointsDisplay(): number {
+    // Expose the active denominator for the form's helper text.
     return Number(this.form.get('totalPoints')?.value ?? 36000);
   }
 
   private normalizeRecord(raw: any): KpiDefinition {
+    // Normalize camelCase/PascalCase API responses into the frontend definition shape.
     return {
       id: Number(raw?.id ?? raw?.Id ?? 0),
       perspectives: raw?.perspectives ?? raw?.Perspectives ?? '',
@@ -332,6 +345,7 @@ export class FinalTableComponent implements OnInit {
   }
 
   private getPersistedTotalPoints(): number {
+    // Read the browser-level denominator and fall back to the standard value when invalid.
     const savedValue = Number(localStorage.getItem(this.totalPointsStorageKey) ?? 36000);
     return savedValue > 0 ? savedValue : 36000;
   }

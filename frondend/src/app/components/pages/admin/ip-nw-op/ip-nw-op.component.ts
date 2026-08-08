@@ -47,10 +47,12 @@ export class AdminIpNwOpComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Load the existing IP NW OP KPI records when the page opens.
     this.loadData();
   }
 
   loadData(): void {
+    // Fetch records, normalize the empty-response case, and sort them for stable display.
     this.loading = true;
     this.error = null;
 
@@ -72,6 +74,7 @@ export class AdminIpNwOpComponent implements OnInit {
   }
 
   handleInputChange(name: string, value: string): void {
+    // Translate template field names into the API-shaped form object without mutating it in place.
     const fieldMapping: Record<string, keyof typeof this.form> = {
       kpi: 'network_engineer_kpi',
       division: 'division',
@@ -84,6 +87,7 @@ export class AdminIpNwOpComponent implements OnInit {
   }
 
   async save(): Promise<void> {
+    // Validate trimmed values, then use the appropriate service method for add versus update.
     this.error = null;
 
     const payload = {
@@ -135,6 +139,7 @@ export class AdminIpNwOpComponent implements OnInit {
   }
 
   editRow(item: IpNwOpKpiDto): void {
+    // Copy the selected record into the form and remember its identifier for the next save.
     this.form = {
       network_engineer_kpi: item.network_engineer_kpi ?? '',
       division: item.division ?? '',
@@ -146,10 +151,12 @@ export class AdminIpNwOpComponent implements OnInit {
   }
 
   cancelEdit(): void {
+    // Discard unsaved edits and return to add mode.
     this.resetForm();
   }
 
   async deleteRow(id: number): Promise<void> {
+    // Confirm deletion, then remove the successfully deleted row from local state.
     const ok = window.confirm('Are you sure you want to delete this item?');
     if (!ok) return;
 
@@ -165,12 +172,14 @@ export class AdminIpNwOpComponent implements OnInit {
   }
 
   private sortData(): void {
+    // Keep records ordered by KPI name for predictable table navigation.
     this.data = [...this.data].sort((a, b) =>
       (a.network_engineer_kpi ?? '').localeCompare(b.network_engineer_kpi ?? '')
     );
   }
 
   resetForm(): void {
+    // Clear all fields and the edit identifier after save, cancel, or other reset actions.
     this.form = {
       network_engineer_kpi: '',
       division: '',

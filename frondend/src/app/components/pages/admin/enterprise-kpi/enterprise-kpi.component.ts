@@ -30,7 +30,7 @@ export class EnterpriseKpiComponent implements OnInit {
 
   form!: any;
 
-  // Target Variables
+  // Target values are selected by month/year independently of the KPI record list.
   selectedMonth: number = new Date().getMonth() + 1;
   selectedYear: number = new Date().getFullYear();
   get monthOptions() { return FilterUtils.getMonthOptions(this.selectedYear); }
@@ -48,6 +48,7 @@ export class EnterpriseKpiComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Build the KPI form and load both KPI records and period-specific targets.
     this.form = this.fb.group({
       networkEngineerKpi: ['', Validators.required],
       division: [''],
@@ -60,6 +61,7 @@ export class EnterpriseKpiComponent implements OnInit {
   }
 
   fetchData(): void {
+    // Load the Enterprise KPI definitions used by the table and target editor.
     this.loading = true;
     this.service.getAll().subscribe({
       next: (res) => { this.loading = false; this.records = res; this.cdr.detectChanges(); },
@@ -68,6 +70,7 @@ export class EnterpriseKpiComponent implements OnInit {
   }
 
   onSubmit(): void {
+    // Build the API DTO and route the request to create or update based on editingId.
     if (this.form.invalid) return;
 
     const payload: CreateEnterpriseKpi = {
@@ -93,6 +96,7 @@ export class EnterpriseKpiComponent implements OnInit {
   }
 
   onEdit(record: EnterpriseKpiRecord): void {
+    // Copy a table row into the form and switch the submit flow to update mode.
     this.editingId = record.id;
     this.form.patchValue({
       networkEngineerKpi: record.networkEngineerKpi,
@@ -103,6 +107,7 @@ export class EnterpriseKpiComponent implements OnInit {
   }
 
   onDelete(id: number): void {
+    // Confirm deletion, then refresh the table so the removed definition disappears.
     if (!confirm('Delete this record?')) return;
     this.saving = true;
     this.service.delete(id).subscribe({
@@ -119,14 +124,17 @@ export class EnterpriseKpiComponent implements OnInit {
   // TARGET ASSIGNMENT
   // =========================
   toggleTargetsExpanded(): void {
+    // Expand or collapse the inline target assignment section.
     this.targetsExpanded = !this.targetsExpanded;
   }
 
   onTargetPeriodChange(): void {
+    // Recalculate the displayed target values for the newly selected month/year.
     this.populateTargetEditValues();
   }
 
   loadTargets(): void {
+    // Load all target rows once; getTargetForKpi selects the active period locally.
     this.service.getTargets().subscribe({
       next: (data) => {
         this.allTargets = data;
@@ -140,6 +148,7 @@ export class EnterpriseKpiComponent implements OnInit {
   }
 
   populateTargetEditValues(): void {
+    // Initialize each editor with the target matching the current KPI and period.
     this.targetEditValues = {};
     for (const record of this.records) {
       const target = this.getTargetForKpi(record.id);
@@ -148,6 +157,7 @@ export class EnterpriseKpiComponent implements OnInit {
   }
 
   getTargetForKpi(kpiId: number): EnterpriseTargetDto | undefined {
+    // Match a target by both KPI identity and reporting period.
     return this.allTargets.find(t => 
       t.enterpriseKpiId === kpiId && 
       t.month === Number(this.selectedMonth) && 
@@ -156,6 +166,7 @@ export class EnterpriseKpiComponent implements OnInit {
   }
 
   saveTarget(kpiId: number): void {
+    // Upsert the target for the selected KPI and period, updating local state after success.
     const val = this.targetEditValues[kpiId];
 
     this.targetSaving[kpiId] = true;

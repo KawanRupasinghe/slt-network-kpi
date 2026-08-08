@@ -1,4 +1,4 @@
-/* Preserve edit-mode helpers */
+// Edit-state styles make the recipient currently being changed visually distinct.
 .kpi-form.edit-mode { border: 2px solid #007ad3; box-shadow: 0 0 0 2px #b3e0ff; background: #f6fbff; transition: box-shadow .2s, border .2s; }
 input.editing { border-color: #007ad3; background: #eaf6ff; }
 .edit-hint { margin-top: .5rem; color:#007ad3; font-size:.97rem; background:#eaf6ff; border-left:3px solid #007ad3; padding:.5rem 1rem; border-radius:0 4px 4px 0; }

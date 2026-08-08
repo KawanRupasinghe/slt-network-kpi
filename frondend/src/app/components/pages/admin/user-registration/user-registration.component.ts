@@ -65,11 +65,13 @@ export class UserRegistrationComponent implements OnInit {
 
   // Loads the initial component state.
   ngOnInit() {
+    // Load the user list before allowing create, edit, or delete actions.
     this.fetchUsers();
   }
 
   // Fetches users.
   fetchUsers() {
+    // Retrieve users and keep the page-level loading/error state synchronized with the API.
     this.isLoading = true;
     this.userService.getAllUsers().subscribe({
       next: (users: User[]) => {
@@ -87,6 +89,7 @@ export class UserRegistrationComponent implements OnInit {
   }
 
   handlePageChange(page: PageOption) {
+    // Platform admins may receive one page; other roles can toggle multiple page assignments.
     // For PlatformAdmin enforce single selection; for others allow multi
     if (this.formData.role === 'PlatformAdmin') {
       this.formData.pageIds = [page.pageId];
@@ -102,6 +105,7 @@ export class UserRegistrationComponent implements OnInit {
   }
 
   handleRoleChange() {
+    // Enforce the same single-page rule if the role changes after pages were selected.
     if (this.formData.role === 'PlatformAdmin' && this.formData.pageIds.length > 1) {
       this.formData.pageIds = [this.formData.pageIds[0]];
       this.syncSelectedPageNames();
@@ -114,6 +118,7 @@ export class UserRegistrationComponent implements OnInit {
 
   // Handles submit.
   handleSubmit(event: Event) {
+    // Validate identity fields, then create a new user or update the selected existing user.
     event.preventDefault();
     this.error = '';
     this.success = '';
@@ -183,6 +188,7 @@ export class UserRegistrationComponent implements OnInit {
 
   // Handles edit.
   handleEdit(user: User) {
+    // Convert saved page names/IDs into the form model and focus the edit form.
     const pageIds = user.pageIds?.length ? [...user.pageIds] : this.getPageIdsFromNames(user.pages);
 
     this.editingUser = user;
@@ -208,6 +214,7 @@ export class UserRegistrationComponent implements OnInit {
   }
 
   handleDelete(id: number) {
+    // Confirm deletion, remove the user locally, and cancel any edit for that user.
     if (!confirm('Are you sure you want to delete this user?')) return;
 
     this.isLoading = true;
@@ -232,12 +239,14 @@ export class UserRegistrationComponent implements OnInit {
 
   // Cancels the current edit.
   cancelEdit() {
+    // Leave edit mode and restore the default new-user form state.
     this.editingUser = null;
     this.resetForm();
   }
 
   // Resets form.
   private resetForm() {
+    // Reset identity, access, role, and active-status fields to safe defaults.
     this.formData = {
       serviceId: '',
       name: '',
@@ -264,6 +273,7 @@ export class UserRegistrationComponent implements OnInit {
 
   // Fills basic test data.
   fillBasicTestData() {
+    // Populate minimal local test values without sending a request to the backend.
     this.formData.name = 'Test User';
     this.formData.serviceId = (10000 + this.users.length).toString();
     this.formData.pageIds = this.availablePages.length ? [this.availablePages[0].pageId] : [];
@@ -272,6 +282,7 @@ export class UserRegistrationComponent implements OnInit {
 
   // Selects all pages.
   selectAllPages() {
+    // Select every available page except that PlatformAdmin remains limited to one page.
     this.formData.pageIds = this.formData.role === 'PlatformAdmin'
       ? (this.availablePages.length ? [this.availablePages[0].pageId] : [])
       : this.availablePages.map(page => page.pageId);
@@ -280,33 +291,39 @@ export class UserRegistrationComponent implements OnInit {
 
   // Clears pages.
   clearPages() {
+    // Remove all page assignments and keep the derived page-name list in sync.
     this.formData.pageIds = [];
     this.syncSelectedPageNames();
   }
 
   // Syncs selected page names.
   private syncSelectedPageNames() {
+    // Keep the human-readable page names aligned with the selected page IDs.
     this.formData.pages = this.getPageNamesFromIds(this.formData.pageIds);
   }
 
   private getPageNamesFromIds(pageIds: number[]): string[] {
+    // Convert persisted page IDs into names used by the user DTO and template.
     return pageIds
       .map(pageId => this.availablePages.find(page => page.pageId === pageId)?.name)
       .filter((name): name is string => !!name);
   }
 
   private getPageIdsFromNames(pageNames: string[] = []): number[] {
+    // Recover IDs from legacy name-based assignments using normalized comparisons.
     return pageNames
       .map(pageName => this.availablePages.find(page => this.normalizePageName(page.name) === this.normalizePageName(pageName))?.pageId)
       .filter((pageId): pageId is number => pageId !== undefined);
   }
 
   private normalizePageName(pageName: string): string {
+    // Ignore spaces, punctuation, and casing when matching page names from the API.
     return pageName.toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 
   // Handles test backend connection.
   testBackendConnection() {
+    // Perform a lightweight connectivity check against the users endpoint for troubleshooting.
     this.error = '';
     this.success = 'Testing backend connection...';
     fetch(`${environment.apiUrl}/users`)

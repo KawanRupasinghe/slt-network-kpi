@@ -1,3 +1,4 @@
+// Shared normalized shape used when region APIs return different property casing or aliases.
 export interface RegionLookupRow {
   id?: number;
   region?: string;
@@ -8,6 +9,7 @@ export interface RegionLookupRow {
 }
 
 export function normalizeLookupKey(value: string | null | undefined): string {
+  // Remove separators and casing differences before comparing engineer or LEA identifiers.
   return String(value ?? '').replace(/[^A-Za-z0-9]/g, '').toLowerCase();
 }
 
@@ -15,6 +17,7 @@ export function formatEngineerDisplay(
   networkEngineer: string | null | undefined,
   engName?: string | null
 ): string {
+  // Prefer the engineer code and append the human-readable name when both are available.
   const code = cleanDisplayValue(networkEngineer);
   const name = cleanDisplayValue(engName);
 
@@ -22,6 +25,7 @@ export function formatEngineerDisplay(
   return name ? `${code} - ${name}` : code;
 }
 
+// Map one API record into the normalized fields consumed by lookup builders.
 export function mapRegionRecord(item: any): RegionLookupRow {
   return {
     id: Number(item?.id ?? item?.Id ?? 0) || undefined,
@@ -50,6 +54,7 @@ export function mapRegionRecord(item: any): RegionLookupRow {
   };
 }
 
+// Normalize a collection and discard rows that contain no usable region/area information.
 export function mapRegionRecords(items: any[] | null | undefined): RegionLookupRow[] {
   return (Array.isArray(items) ? items : [])
     .map(mapRegionRecord)
@@ -60,6 +65,7 @@ export function buildEngineerDisplayMap(
   rows: RegionLookupRow[],
   engineers?: string[]
 ): Record<string, string> {
+  // Create one display label per engineer, using supplied engineers or the region data as the source.
   const byEngineer = new Map<string, RegionLookupRow>();
 
   rows.forEach((row) => {
@@ -86,6 +92,7 @@ export function buildEngineerDisplayLookupMap(
   rows: RegionLookupRow[],
   engineers?: string[]
 ): Record<string, string> {
+  // Register display labels under engineer, LEA, normalized, and NW/LEA aliases used by templates.
   const lookup: Record<string, string> = {};
 
   Object.entries(buildEngineerDisplayMap(rows, engineers)).forEach(([engineer, display]) => {
@@ -105,6 +112,7 @@ export function buildEngineerDisplayLookupMap(
 }
 
 function addDisplayLookup(map: Record<string, string>, key: string | null | undefined, display: string): void {
+  // Store both the original cleaned key and its normalized equivalent for tolerant lookups.
   const rawKey = cleanDisplayValue(key);
   const rawDisplay = cleanDisplayValue(display);
   if (!rawKey || !rawDisplay) return;
@@ -114,6 +122,7 @@ function addDisplayLookup(map: Record<string, string>, key: string | null | unde
 }
 
 function cleanDisplayValue(value: string | null | undefined): string {
+  // Treat empty and known placeholder glyphs as missing display values.
   const trimmed = String(value ?? '').trim();
   return trimmed === '—' || trimmed === 'â€”' || trimmed === '-' ? '' : trimmed;
 }

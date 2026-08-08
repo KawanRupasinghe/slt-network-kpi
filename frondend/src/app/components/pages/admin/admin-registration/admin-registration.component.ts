@@ -64,6 +64,7 @@ export class AdminRegistrationComponent implements OnInit {
 
   // ✅ Change this if your backend port changes
   //private readonly apiBase = 'http://localhost:5043/api/users';
+  // Use the environment API base so development and production share the same component logic.
   private readonly apiBase = `${environment.apiUrl}/users`;
 
   eligibleUsers: AdminUser[] = [];
@@ -77,12 +78,14 @@ export class AdminRegistrationComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    // Build the selector form and load both current admins and users eligible for promotion.
     this.buildForm();
     this.loadAdminsFromApi();
     this.loadEligibleUsers();
   }
 
   private buildForm(): void {
+    // The form stores the selected existing user; name and service ID come from the user record.
     this.adminForm = this.fb.group({
       userId: ['', Validators.required] // Select user ID instead of typing name/serviceId
     });
@@ -90,6 +93,7 @@ export class AdminRegistrationComponent implements OnInit {
 
   // Load ALL users to find eligible ones (User/PlatformAdmin)
   loadEligibleUsers(): void {
+    // Exclude users who already have Admin or SuperAdmin privileges from the promotion selector.
     this.http.get<AdminUser[]>(`${this.apiBase}`).subscribe({ // GET /api/users
       next: (data) => {
         // Filter out SuperAdmins and Admins (already in the list)
@@ -105,6 +109,7 @@ export class AdminRegistrationComponent implements OnInit {
 
   //  Load from backend
   loadAdminsFromApi(): void {
+    // Load the current admin list before applying the local search/status filters.
     this.errorMessage = '';
     this.http.get<AdminUser[]>(`${this.apiBase}/admins`).subscribe({
       next: (data) => {
@@ -120,6 +125,7 @@ export class AdminRegistrationComponent implements OnInit {
   }
 
   toggleFormVisibility(): void {
+    // Refresh eligible users whenever the promotion form is opened.
     this.isFormVisible = !this.isFormVisible;
     if (this.isFormVisible) {
       this.loadEligibleUsers(); // Refresh list when opening form
@@ -140,6 +146,7 @@ export class AdminRegistrationComponent implements OnInit {
 
   // PROMOTE USER TO ADMIN (PATCH)
   onSubmit(): void {
+    // Promote the selected eligible user and update the local lists after the API succeeds.
     if (this.adminForm.invalid || this.isSubmitting) return;
 
     this.errorMessage = '';
@@ -180,6 +187,7 @@ export class AdminRegistrationComponent implements OnInit {
 
   // ✅ DEMOTE ADMIN (PATCH)
   deleteAdmin(id: number): void {
+    // Demote an administrator through the API, then remove the account from the admin table.
     const admin = this.admins.find((a) => a.userId === id);
     if (!admin) return;
 
@@ -206,6 +214,7 @@ export class AdminRegistrationComponent implements OnInit {
 
   // ✅ TOGGLE ACTIVE/INACTIVE (PATCH)
   toggleStatus(admin: AdminUser): void {
+    // Toggle status immediately for responsive UI, rolling back if the server rejects the change.
     this.errorMessage = '';
     this.successMessage = '';
 
@@ -241,6 +250,7 @@ export class AdminRegistrationComponent implements OnInit {
   }
 
   private applyFilters(): void {
+    // Apply status first and then case-insensitive name/service-ID search to the rendered list.
     const normalizedSearch = this.searchTerm.trim().toLowerCase();
 
     let data = [...this.admins];

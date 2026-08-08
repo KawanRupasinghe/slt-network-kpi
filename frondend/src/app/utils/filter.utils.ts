@@ -1,3 +1,4 @@
+// Centralizes the month/year options shared by dashboard, analytics, and platform forms.
 export class FilterUtils {
   private static allMonths: Array<{ label: string; value: number }> = [
     { label: 'January', value: 1 },
@@ -15,6 +16,7 @@ export class FilterUtils {
   ];
 
   static generateYearOptions(): number[] {
+    // Overall pages expose years from the configured starting year through the current year.
     const currentYear = new Date().getFullYear();
     const years: number[] = [];
     for (let year = 2026; year <= currentYear; year++) {
@@ -24,6 +26,7 @@ export class FilterUtils {
   }
 
   static generatePlatformYearOptions(): number[] {
+    // Platform pages expose a rolling current-year window, with the 2026 transition exception.
     const currentYear = new Date().getFullYear();
     const years: number[] = [];
 
@@ -36,6 +39,7 @@ export class FilterUtils {
   }
 
   static getMonthOptions(selectedYear?: number): Array<{ label: string; value: number }> {
+    // Return months allowed for the selected year, hiding future months in the current year.
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
 

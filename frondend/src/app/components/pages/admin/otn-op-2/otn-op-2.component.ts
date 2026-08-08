@@ -42,10 +42,12 @@ export class OtnOp2Component implements OnInit {
   });
 
   ngOnInit(): void {
+    // Load the OTN OP2 definitions after the component form has been created.
     this.fetchData();
   }
 
   fetchData(): void {
+    // Retrieve records and keep the loading state synchronized with the observable lifecycle.
     this.loading = true;
 
     this.otnOp2Service.getAllKpis().subscribe({
@@ -67,6 +69,7 @@ export class OtnOp2Component implements OnInit {
   }
 
   onSubmit(): void {
+    // Validate the form, build the DTO, and route it to update or create.
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -115,6 +118,7 @@ export class OtnOp2Component implements OnInit {
   }
 
   onEdit(record: OtnOpKpi): void {
+    // Copy the selected record into the form while preserving nullable KPI percentage values.
     this.editingId = record.id;
 
     this.form.patchValue({
@@ -126,6 +130,7 @@ export class OtnOp2Component implements OnInit {
   }
 
   onDelete(id?: number): void {
+    // Confirm deletion and refresh the table after the API request completes.
     if (!id || !confirm('Delete this record?')) return;
 
     this.saving = true;
@@ -149,10 +154,12 @@ export class OtnOp2Component implements OnInit {
   }
 
   onCancelEdit(): void {
+    // Discard unsaved changes and leave edit mode.
     this.resetForm();
   }
 
   private resetForm(): void {
+    // Reset controls to their initial values and clear the edit identifier.
     this.form.reset({
       networkEngineerKpi: '',
       division: '',

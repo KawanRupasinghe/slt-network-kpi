@@ -46,6 +46,7 @@ export class EmailServiceComponent implements OnInit {
 
   // ✅ IMPORTANT: use your backend base url
  // private readonly apiBase = 'http://localhost:5043/api/emails';
+  // Use the environment API base so recipient management follows the active deployment.
   private readonly apiBase = `${environment.apiUrl}/emails`;
 
   form = this.fb.group({
@@ -53,10 +54,12 @@ export class EmailServiceComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // Populate the recipient list when the page is first rendered.
     this.fetchData();
   }
 
   fetchData(): void {
+    // Load recipients, sort them for stable display, and always clear the loading state.
     this.loading = true;
     this.errorMessage = '';
 
@@ -82,6 +85,7 @@ export class EmailServiceComponent implements OnInit {
   }
 
   onSubmit(): void {
+    // Validate the form, then choose add or update from the presence of editingId.
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -133,6 +137,7 @@ export class EmailServiceComponent implements OnInit {
   }
 
   onEdit(recipient: EmailRecipient): void {
+    // Populate the form and switch labels so the next submit updates this recipient.
     this.editingId = recipient.id; // ✅ SQL id
     this.form.patchValue({ email: recipient.email });
     this.formTitle = 'Update Recipient';
@@ -141,6 +146,7 @@ export class EmailServiceComponent implements OnInit {
   }
 
   onDelete(id: number): void {
+    // Confirm deletion, remove the record on success, and reload the list.
     if (!id || id <= 0) {
       this.errorMessage = 'Invalid recipient for deletion.';
       return;
@@ -176,6 +182,7 @@ export class EmailServiceComponent implements OnInit {
   }
 
   private resetForm(): void {
+    // Return the form and button labels to the default add-recipient state.
     this.form.reset({ email: '' });
     this.editingId = null;
     this.formTitle = 'Add Recipient';
