@@ -60,12 +60,15 @@ export class UserRegistrationComponent implements OnInit {
     { pageId: 10, name: 'Other KPI' }
   ];
 
+  // Injects the required dependencies.
   constructor(private userService: UserService) { }
 
+  // Loads the initial component state.
   ngOnInit() {
     this.fetchUsers();
   }
 
+  // Fetches users.
   fetchUsers() {
     this.isLoading = true;
     this.userService.getAllUsers().subscribe({
@@ -109,6 +112,7 @@ export class UserRegistrationComponent implements OnInit {
     return this.formData.pageIds.includes(pageId);
   }
 
+  // Handles submit.
   handleSubmit(event: Event) {
     event.preventDefault();
     this.error = '';
@@ -177,6 +181,7 @@ export class UserRegistrationComponent implements OnInit {
     }
   }
 
+  // Handles edit.
   handleEdit(user: User) {
     const pageIds = user.pageIds?.length ? [...user.pageIds] : this.getPageIdsFromNames(user.pages);
 
@@ -225,11 +230,13 @@ export class UserRegistrationComponent implements OnInit {
     });
   }
 
+  // Cancels the current edit.
   cancelEdit() {
     this.editingUser = null;
     this.resetForm();
   }
 
+  // Resets form.
   private resetForm() {
     this.formData = {
       serviceId: '',
@@ -255,6 +262,7 @@ export class UserRegistrationComponent implements OnInit {
     return colors[index];
   }
 
+  // Fills basic test data.
   fillBasicTestData() {
     this.formData.name = 'Test User';
     this.formData.serviceId = (10000 + this.users.length).toString();
@@ -262,6 +270,7 @@ export class UserRegistrationComponent implements OnInit {
     this.syncSelectedPageNames();
   }
 
+  // Selects all pages.
   selectAllPages() {
     this.formData.pageIds = this.formData.role === 'PlatformAdmin'
       ? (this.availablePages.length ? [this.availablePages[0].pageId] : [])
@@ -269,11 +278,13 @@ export class UserRegistrationComponent implements OnInit {
     this.syncSelectedPageNames();
   }
 
+  // Clears pages.
   clearPages() {
     this.formData.pageIds = [];
     this.syncSelectedPageNames();
   }
 
+  // Syncs selected page names.
   private syncSelectedPageNames() {
     this.formData.pages = this.getPageNamesFromIds(this.formData.pageIds);
   }
@@ -294,6 +305,7 @@ export class UserRegistrationComponent implements OnInit {
     return pageName.toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 
+  // Handles test backend connection.
   testBackendConnection() {
     this.error = '';
     this.success = 'Testing backend connection...';

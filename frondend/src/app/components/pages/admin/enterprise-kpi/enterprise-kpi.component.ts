@@ -40,6 +40,7 @@ export class EnterpriseKpiComponent implements OnInit {
   targetSaving: { [kpiId: number]: boolean } = {};
   targetsExpanded = true;
 
+  // Injects the required dependencies.
   constructor(
     private fb: FormBuilder,
     private service: EnterpriseKpiService,

@@ -69,6 +69,7 @@ export class AdminRegistrationComponent implements OnInit {
   eligibleUsers: AdminUser[] = [];
   selectedUserId: number | null = null;
 
+  // Injects the required dependencies.
   constructor(
     private fb: FormBuilder,
     private http: HttpClient,
@@ -102,7 +103,7 @@ export class AdminRegistrationComponent implements OnInit {
     });
   }
 
-  // ✅ Load from backend
+  //  Load from backend
   loadAdminsFromApi(): void {
     this.errorMessage = '';
     this.http.get<AdminUser[]>(`${this.apiBase}/admins`).subscribe({
@@ -137,7 +138,7 @@ export class AdminRegistrationComponent implements OnInit {
     return this.admins.filter((a) => !a.isActive).length;
   }
 
-  // ✅ PROMOTE USER TO ADMIN (PATCH)
+  // PROMOTE USER TO ADMIN (PATCH)
   onSubmit(): void {
     if (this.adminForm.invalid || this.isSubmitting) return;
 

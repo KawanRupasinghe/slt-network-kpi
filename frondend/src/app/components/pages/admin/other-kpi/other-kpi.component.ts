@@ -29,6 +29,7 @@ export class OtherKpiComponent implements OnInit {
 
   form!: any;
 
+  // Injects the required dependencies.
   constructor(
     private fb: FormBuilder,
     private service: OtherKpiService,

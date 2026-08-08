@@ -45,6 +45,7 @@ export class AdminServiceFulfilmentComponent implements OnInit {
   saving = false;
   errorMessage = '';
 
+  // Injects the required dependencies.
   constructor(
     private fb: FormBuilder,
     private serviceFulfilmentKpiService: ServiceFulfilmentKpiService

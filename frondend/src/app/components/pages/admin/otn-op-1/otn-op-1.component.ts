@@ -33,6 +33,7 @@ export class OtnOp1Component implements OnInit {
 
   form!: any;
 
+  // Injects the required dependencies.
   constructor(
     private fb: FormBuilder,
     private otnOp1Service: OtnOp1Service,

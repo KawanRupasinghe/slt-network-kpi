@@ -40,6 +40,7 @@ export class BbAnwComponent implements OnInit {
   /* Form data object */
   form: BbAnwHeaderDto = this.emptyForm();
 
+  // Injects the required dependencies.
   constructor(
     private service: BbAnwService,
     private cdr: ChangeDetectorRef

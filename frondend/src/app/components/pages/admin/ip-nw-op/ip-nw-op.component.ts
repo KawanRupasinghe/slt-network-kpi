@@ -40,6 +40,7 @@ export class AdminIpNwOpComponent implements OnInit {
   loading = false;
   error: string | null = null;
 
+  // Injects the required dependencies.
   constructor(
     private ipNwOpService: IpNwOpService,
     private cdr: ChangeDetectorRef

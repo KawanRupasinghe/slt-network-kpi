@@ -33,6 +33,7 @@ type RegionKey = 'region' | 'province' | 'networkengineer' | 'engname' | 'leacod
   styleUrls: ['./region-management.component.scss'],
 })
 export class RegionManagementComponent {
+  // Injects the required dependencies.
   constructor(
     @Inject(RegionService) private regionService: RegionService,
     private cdr: ChangeDetectorRef
