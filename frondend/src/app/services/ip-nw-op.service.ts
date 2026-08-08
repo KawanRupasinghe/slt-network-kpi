@@ -68,9 +68,10 @@ export class IpNwOpService {
   /* Backend API base URL */
   //private readonly apiBase = 'http://localhost:5043/ip-nw-op';
   private readonly apiBase = `${environment.apiUrl}/ip-nw-op`;
+  // Injects the required dependencies.
   constructor(private http: HttpClient) {}
 
-  /* Retrieve all IP NW OP KPIs with optional filtering */
+  // Retrieves all IP NW OP KPIs, with optional filters for month, year, and area
   getAll(month?: number, year?: number, area?: string): Observable<IpNwOpKpiDto[]> {
     let params = new HttpParams();
     if (month !== undefined) params = params.set('month', month.toString());
@@ -80,19 +81,22 @@ export class IpNwOpService {
     return this.http.get<IpNwOpKpiDto[]>(`${this.apiBase}/`, { params });
   }
 
-  /* Create new IP NW OP KPI record */
+  // Creates a new IP NW OP KPI record
   add(data: Omit<IpNwOpKpiDto, 'id' | 'updated_at'>): Observable<IpNwOpKpiDto> {
     return this.http.post<IpNwOpKpiDto>(`${this.apiBase}/add`, data);
   }
 
+  // Updates an existing IP NW OP KPI record partially
   update(id: number, data: Partial<Omit<IpNwOpKpiDto, 'id'>>): Observable<IpNwOpKpiDto> {
     return this.http.put<IpNwOpKpiDto>(`${this.apiBase}/update/${id}`, data);
   }
 
+  // Deletes an IP NW OP KPI record by ID
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiBase}/delete/${id}`);
   }
 
+  // Inserts or updates metric data for a specific IP NW OP KPI and area code
   upsertMetric(
     kpiId: number,
     areaCode: string,
@@ -111,6 +115,7 @@ export class IpNwOpService {
     );
   }
 
+  // Retrieves IP NW OP metrics for a specified time period and optional area code
   getMetrics(month: number, year: number, areaCode?: string): Observable<IpNwOpMetric[]> {
     let params = new HttpParams();
     params = params.set('month', month.toString());

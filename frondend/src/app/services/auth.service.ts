@@ -53,16 +53,17 @@ export class AuthService {
   /* Public observable for user state */
   public user$ = this.userSubject.asObservable();
 
+  // Injects the required dependencies.
   constructor(private http: HttpClient, private router: Router) { }
 
-  /* Get current user value from subject */
+  // Retrieves current user value from subject
   public get userValue(): User | null {
     return this.userSubject.value;
   }
 
   // Service-ID-only login removed - Azure authentication is now mandatory
   
-  /* Verify Azure login and get user authenticated with service ID */
+  // Verifies Azure login and authenticates user with service ID
   verifyAzureLogin(email: string, serviceId: string): Observable<User> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/verify-azure-login`, { email, serviceId })
       .pipe(
@@ -72,6 +73,7 @@ export class AuthService {
   }
 
   /* Map login response from multiple naming conventions to User object */
+  // Maps login response.
   private mapLoginResponse(res: LoginResponse): User {
     return {
       token: res.token,
@@ -83,45 +85,47 @@ export class AuthService {
   }
 
   /* Store user in localStorage and update subject */
+  // Handles auth success.
   private handleAuthSuccess(user: User) {
     localStorage.setItem('user', JSON.stringify(user));
     this.userSubject.next(user);
   }
 
   /* Clear user session and redirect to login */
+  // Handles user logout.
   logout() {
     localStorage.removeItem('user');
     this.userSubject.next(null);
     this.router.navigate(['/login']);
   }
 
-  /* Retrieve user from browser storage */
+  // Retrieves user from browser storage
   private getUserFromStorage(): User | null {
     const userStr = localStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
   }
 
-  /* Get current user's authentication token */
+  // Gets the current user's authentication token
   getToken(): string | null {
     return this.userValue?.token || null;
   }
 
-  /* Get current user's role */
+  // Gets the current user's role
   getRole(): string | null {
     return this.userValue?.role || null;
   }
 
-  /* Get list of all allowed pages for current user */
+  // Gets the list of all allowed pages for the current user
   getAllowedPages(): string[] {
     return this.userValue?.pages || [];
   }
 
-  /* Get list of assigned pages for current user */
+  // Gets the list of assigned pages for the current user
   getAssignedPages(): string[] {
     return this.userValue?.assignedPages || [];
   }
 
-  /* Check if user can edit a specific page based on role and page assignment */
+  // Checks if user can edit a specific page based on role and page assignment
   canEditPage(pageName: string): boolean {
     const normalize = (value: string | null | undefined) =>
       (value ?? '').trim().toLowerCase().replace(/[\s_-]+/g, '');

@@ -65,48 +65,37 @@ export class OtnOp1Service {
   /* Backend API base URL */
   private readonly apiUrl = environment.apiUrl;
 
+  // Injects the required dependencies.
   constructor(private http: HttpClient) {}
 
-  /**
-   * Get all OtnOp1 KPIs
-   */
+  // Retrieves all OtnOp1 KPIs
   getAllKpis(): Observable<OtnOpKpi[]> {
     return this.http.get<OtnOpKpi[]>(`${this.apiUrl}/OtnOp1`);
   }
 
-  /**
-   * Create a new OtnOp1 KPI
-   */
+  // Creates a new OtnOp1 KPI
   createKpi(payload: CreateOtnOpKpi): Observable<OtnOpKpi> {
     return this.http.post<OtnOpKpi>(`${this.apiUrl}/OtnOp1`, payload);
   }
 
-  /**
-   * Update an existing OtnOp1 KPI
-   */
+  // Updates an existing OtnOp1 KPI by ID
   updateKpi(id: number, payload: CreateOtnOpKpi): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/OtnOp1/${id}`, payload);
   }
 
-  /**
-   * Delete an OtnOp1 KPI
-   */
+  // Deletes an OtnOp1 KPI by ID
   deleteKpi(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/OtnOp1/${id}`);
   }
 
-  /**
-   * Get metrics for a specific OtnOp1 KPI by year and month
-   */
+  // Retrieves metrics for a specific OtnOp1 KPI by year and month
   getMetrics(id: number, year: number, month: number): Observable<OtnOp1Metric[]> {
     return this.http.get<OtnOp1Metric[]>(
       `${this.apiUrl}/OtnOp1/${id}/metrics?year=${year}&month=${month}`
     );
   }
 
-  /**
-   * Upsert (create or update) metrics for an OtnOp1 KPI
-   */
+  // Inserts or updates metrics for an OtnOp1 KPI
   upsertMetrics(id: number, metrics: OtnOp1Metric[]): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/OtnOp1/${id}/metrics`, metrics);
   }

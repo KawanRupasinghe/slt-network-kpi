@@ -48,8 +48,10 @@ export interface UpsertOtherMetricRequest {
 export class OtherKpiPlatformService {
   private readonly apiUrl = `${environment.apiUrl}/OtherKpi`;
 
+  // Injects the required dependencies.
   constructor(private http: HttpClient) { }
 
+  // Retrieves all other KPIs and determines their display order
   getAll(): Observable<OtherKpiDto[]> {
     return this.http.get<OtherKpiDto[]>(this.apiUrl).pipe(
       map((items) =>
@@ -61,6 +63,7 @@ export class OtherKpiPlatformService {
     );
   }
 
+  // Fetches other metrics for a specific month and year, optionally filtered by site
   getMetrics(month: number, year: number, site?: string): Observable<OtherMetricDto[]> {
     let params = new HttpParams()
       .set('month', month.toString())
@@ -73,6 +76,7 @@ export class OtherKpiPlatformService {
     return this.http.get<OtherMetricDto[]>(`${this.apiUrl}/metrics`, { params });
   }
 
+  // Inserts or updates a metric entry based on the provided request payload
   upsertMetric(request: UpsertOtherMetricRequest): Observable<OtherMetricDto> {
     return this.http.post<OtherMetricDto>(`${this.apiUrl}/metrics`, request);
   }

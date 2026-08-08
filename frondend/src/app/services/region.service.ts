@@ -34,24 +34,25 @@ export class RegionService {
   /* Backend API endpoint */
   //private apiUrl = 'http://localhost:5043/api/regiondata';
   private apiUrl = `${environment.apiUrl}/regiondata`;
+  // Injects the required dependencies.
   constructor(private http: HttpClient) {}
 
-  /* Retrieve all regions */
+  // Retrieves all regions
   getAll(): Observable<Region[]> {
     return this.http.get<Region[]>(this.apiUrl);
   }
 
-  /* Create a new region */
+  // Creates a new region
   create(data: Omit<Region, 'id'>): Observable<Region> {
     return this.http.post<Region>(this.apiUrl, data);
   }
 
-  /* Update existing region */
+  // Updates an existing region by ID
   update(id: number, data: Region): Observable<Region> {
     return this.http.put<Region>(`${this.apiUrl}/${id}`, data);
   }
 
-  /* Delete a region */
+  // Deletes a region by its ID
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }

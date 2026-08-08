@@ -106,8 +106,10 @@ export interface ServiceFulfilmentMetricDto {
 export class ServiceFulfilmentKpiService {
   private readonly apiUrl = `${environment.apiUrl}/service-fulfilment-kpi`;
 
+  // Injects the required dependencies.
   constructor(private http: HttpClient) {}
 
+  // Retrieves all Service Fulfilment KPIs, optionally filtered by month and year, and calculates display order
   getAll(month?: number, year?: number): Observable<ServiceFulfilmentKpiDto[]> {
     let params = new HttpParams();
 
@@ -138,22 +140,27 @@ export class ServiceFulfilmentKpiService {
       );
   }
 
+  // Retrieves a specific Service Fulfilment KPI by ID
   getById(id: number | string): Observable<ServiceFulfilmentKpiDto> {
     return this.http.get<ServiceFulfilmentKpiDto>(`${this.apiUrl}/${id}`);
   }
 
+  // Creates a new Service Fulfilment KPI entry
   add(data: ServiceFulfilmentKpiDto): Observable<ServiceFulfilmentKpiDto> {
     return this.http.post<ServiceFulfilmentKpiDto>(`${this.apiUrl}/add`, data);
   }
 
+  // Updates an existing Service Fulfilment KPI by ID
   update(id: number | string, data: ServiceFulfilmentKpiDto): Observable<ServiceFulfilmentKpiDto> {
     return this.http.put<ServiceFulfilmentKpiDto>(`${this.apiUrl}/update/${id}`, data);
   }
 
+  // Deletes a Service Fulfilment KPI by ID
   delete(id: number | string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/delete/${id}`);
   }
 
+  // Retrieves Service Fulfilment metrics for a given period, optionally filtered by area
   getMetrics(month: number, year: number, area?: string): Observable<ServiceFulfilmentMetricDto[]> {
     let params = new HttpParams()
       .set('month', month.toString())
@@ -184,6 +191,7 @@ export class ServiceFulfilmentKpiService {
       );
   }
 
+  // Creates or updates a Service Fulfilment metric based on the provided payload
   upsertMetric(request: UpsertServiceFulfilmentMetricRequest): Observable<ServiceFulfilmentMetricDto> {
     return this.http
       .post<ServiceFulfilmentMetricResponse>(`${this.apiUrl}/metrics`, request)

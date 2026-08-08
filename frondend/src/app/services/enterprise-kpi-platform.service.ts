@@ -52,8 +52,10 @@ export interface UpsertEnterpriseMetricRequest {
 export class EnterpriseKpiPlatformService {
   private readonly apiUrl = `${environment.apiUrl}/EnterpriseKpi`;
 
+  // Injects the required dependencies.
   constructor(private http: HttpClient) {}
 
+  // Retrieves all enterprise KPIs and calculates their display order
   getAll(): Observable<EnterpriseKpiDto[]> {
     return this.http.get<EnterpriseKpiDto[]>(this.apiUrl).pipe(
       map((items) =>
@@ -65,6 +67,7 @@ export class EnterpriseKpiPlatformService {
     );
   }
 
+  // Fetches enterprise metrics for a specific month and year, optionally filtered by site
   getMetrics(month: number, year: number, site?: string): Observable<EnterpriseMetricDto[]> {
     let params = new HttpParams()
       .set('month', month.toString())
@@ -92,6 +95,7 @@ export class EnterpriseKpiPlatformService {
     );
   }
 
+  // Creates or updates an enterprise metric based on the provided request payload
   upsertMetric(request: UpsertEnterpriseMetricRequest): Observable<EnterpriseMetricDto> {
     return this.http.post<EnterpriseMetricResponse>(`${this.apiUrl}/metrics`, request).pipe(
       map((item) => ({
