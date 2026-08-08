@@ -33,24 +33,25 @@ export class TmActivityService {
   /* Backend API base URL */
   private apiBase = `${environment.apiUrl}/TmActivityPlans`;
 
+  // Injects the required dependencies.
   constructor(private http: HttpClient) {}
 
-  /* Retrieve all activity plans */
+  // Retrieves all TM activity plans
   getAll(): Observable<ActivityRecord[]> {
     return this.http.get<ActivityRecord[]>(this.apiBase);
   }
 
-  /* Create new activity plan */
+  // Creates a new TM activity plan
   add(data: Omit<ActivityRecord, 'id'>): Observable<ActivityRecord> {
     return this.http.post<ActivityRecord>(this.apiBase, data);
   }
 
-  /* Update existing activity plan */
+  // Updates an existing TM activity plan by ID
   update(id: number, data: Partial<ActivityRecord>): Observable<ActivityRecord> {
     return this.http.put<ActivityRecord>(`${this.apiBase}/${id}`, data);
   }
 
-  /* Delete activity plan by ID */
+  // Deletes a TM activity plan by its ID
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiBase}/${id}`);
   }

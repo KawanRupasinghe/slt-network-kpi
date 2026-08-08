@@ -20,8 +20,10 @@ export type AnalyticsResultApi = {
 export class AnalyticsService {
   private readonly apiBase = `${environment.apiUrl}/analytics`;
 
+  // Injects the required dependencies.
   constructor(private http: HttpClient) {}
 
+  // Retrieves cumulative analytics data for a given year within a specific month range
   getCumulativeAnalytics(year: number, startMonth: number, endMonth: number): Observable<AnalyticsResultApi[]> {
     const params = new HttpParams()
       .set('year', year.toString())
@@ -31,10 +33,12 @@ export class AnalyticsService {
     return this.http.get<AnalyticsResultApi[]>(this.apiBase, { params });
   }
 
+  // Fetches a list of all available years that have analytics data
   getAvailableYears(): Observable<number[]> {
     return this.http.get<number[]>(`${this.apiBase}/years`);
   }
 
+  // Fetches a list of available months for a given year
   getAvailableMonths(year: number): Observable<number[]> {
     const params = new HttpParams().set('year', year.toString());
     return this.http.get<number[]>(`${this.apiBase}/months`, { params });
