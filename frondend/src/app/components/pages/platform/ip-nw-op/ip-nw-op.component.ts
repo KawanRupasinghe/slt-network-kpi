@@ -202,7 +202,7 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
       m => m.ip_nw_op_kpi_id === entry.id && m.area_code === this.selectedKey
     );
 
-    if (!metric || metric.total_minutes === undefined || metric.unavailable_minutes === undefined || metric.total_nodes === undefined) {
+    if (!metric) {
       return '-';
     }
 
@@ -458,10 +458,14 @@ export class IpNwOpComponent implements OnInit, OnDestroy {
     const um = Number(unavailableMinutes) || 0;
     const tn = Number(totalNodes) || 0;
 
-    const totalAvailableMinutes = tm - um;
-    const totalMin = 24 * 60 * this.daysInMonth * tn;
-    if (totalMin <= 0) return null;
-    return (100 * totalAvailableMinutes) / totalMin;
+    const denominator = tm > 0
+      ? tm
+      : 24 * 60 * this.daysInMonth * tn;
+    if (denominator <= 0) return null;
+
+    const numerator = denominator - um;
+    const pct = (100 * numerator) / denominator;
+    return Math.max(0, Math.min(100, pct));
   }
 
   // -------------------------

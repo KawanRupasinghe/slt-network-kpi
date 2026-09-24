@@ -181,7 +181,7 @@
                 #rightRowRef>
               <ng-container *ngFor="let metric of row.metrics">
                 <td class="text-center achieved-cell" [ngClass]="getAchievedCellClass(metric)">
-                  {{ metric.achieved | number : '1.2-2' }}%
+                  {{ getMetricAchievedDisplay(metric) }}
                 </td>
                 <td class="text-center maximum-points-cell">
                   {{ metric.maximumPoints | number : '1.4-4' }}
@@ -245,7 +245,7 @@
                     <div class="dashboard-engineer-area">({{ item.engineer.lea }})</div>
                   </div>
                   <div class="dashboard-percent-badge" [style.color]="getDashboardColor(item.overallPercent)">
-                    {{ item.overallPercent | number:'1.1-1' }}%
+                    {{ item.overallPercent === null ? '-' : (item.overallPercent | number:'1.1-1') + '%' }}
                   </div>
                 </div>
 

@@ -32,7 +32,7 @@ type Region = {
 };
 
 interface KpiMetric {
-  achieved: number;
+  achieved: number | null;
   maximumPoints: number;
   pointsAchieved: number;
 }
@@ -52,7 +52,7 @@ interface KpiRow {
 
 interface DashboardEngineerSummary {
   engineer: Region;
-  overallPercent: number;
+  overallPercent: number | null;
   maxPoints: number;
   achievedPoints: number;
 }
@@ -117,7 +117,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   totalPointsApplicable = 0;
   totalPointsAchievedByRegion: number[] = [];
   totalMaximumPointsByRegion: number[] = [];
-  totalPointsNormalized: number[] = [];
+  totalPointsNormalized: Array<number | null> = [];
   dashboardGroups: DashboardRegionGroup[] = [];
 
   private readonly apiBase = `${environment.apiUrl}/kpi-definitions`;
@@ -291,7 +291,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
           // Clear stale cells before applying the latest API response.
           this.kpiRows.forEach(row => {
             row.metrics.forEach((m: any) => {
-              m.achieved = 0;
+              m.achieved = null;
               m.maximumPoints = 0;
               m.pointsAchieved = 0;
             });
@@ -307,9 +307,11 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
               const idx = this.findEngineerIndexByArea(apiResult.areaCode);
               if (idx === undefined) return;
 
-              row.metrics[idx].achieved = apiResult.achievedKpi;
-              row.metrics[idx].maximumPoints = apiResult.maximumPointsPerKpi;
-              row.metrics[idx].pointsAchieved = apiResult.pointsAchieved;
+              row.metrics[idx].achieved = apiResult.achievedKpi == null
+                ? null
+                : Number(apiResult.achievedKpi);
+              row.metrics[idx].maximumPoints = Number(apiResult.maximumPointsPerKpi ?? 0);
+              row.metrics[idx].pointsAchieved = Number(apiResult.pointsAchieved ?? 0);
             });
           }
 
@@ -443,7 +445,7 @@ return {
 
         this.kpiRows = list.map((row, rowIndex) => {
           const metrics: KpiMetric[] = this.engineersFlat.map(() => {
-            return { achieved: 0, maximumPoints: 0, pointsAchieved: 0 };
+            return { achieved: null, maximumPoints: 0, pointsAchieved: 0 };
           });
 
           return {
@@ -536,7 +538,7 @@ return {
     this.totalPointsNormalized = this.totalPointsAchievedByRegion.map((total, colIndex) =>
       this.totalMaximumPointsByRegion[colIndex]
         ? +((total / this.totalMaximumPointsByRegion[colIndex]) * 100).toFixed(2)
-        : 0
+        : null
     );
   }
 
@@ -551,7 +553,9 @@ return {
 
       const maxPoints = metrics.reduce((sum, metric) => sum + (metric.maximumPoints ?? 0), 0);
       const achievedPoints = metrics.reduce((sum, metric) => sum + (metric.pointsAchieved ?? 0), 0);
-      const overallPercent = maxPoints > 0 ? +((achievedPoints / maxPoints) * 100).toFixed(1) : 0;
+      const overallPercent = maxPoints > 0
+        ? +((achievedPoints / maxPoints) * 100).toFixed(1)
+        : null;
 
       const region = engineer.region || 'Unknown';
       const province = engineer.province || 'Unknown';
@@ -582,8 +586,9 @@ return {
     }));
   }
 
-  getDashboardColor(percent: number): string {
+  getDashboardColor(percent: number | null): string {
     // Map the period score to the visual threshold color used by dashboard cards.
+    if (percent === null) return '#9ca3af';
     if (percent >= 90) return '#10b981';
     if (percent >= 75) return '#3b82f6';
     if (percent >= 50) return '#f59e0b';
@@ -591,8 +596,8 @@ return {
   }
 
   // Prevent progress bars from extending beyond their 100% visual range.
-getDashboardProgressPercent(percent: number): number {
-  return Math.min(100, percent);
+getDashboardProgressPercent(percent: number | null): number {
+  return percent === null ? 0 : Math.min(100, percent);
 }
 
   getEngineerHeaderLabel(eng: Region): string {
@@ -720,7 +725,9 @@ getDashboardProgressPercent(percent: number): number {
         row.target,
         this.getComputedWeightage(row),
         row.pointsApplicable,
-        Number(this.getTotalKpiPercentage(row).toFixed(2))
+        this.getTotalKpiPercentage(row) === null
+          ? '-'
+          : Number(this.getTotalKpiPercentage(row)!.toFixed(2))
       ];
 
       rowData.forEach((value, colIdx) => {
@@ -728,7 +735,7 @@ getDashboardProgressPercent(percent: number): number {
         cell.value = value;
         if (colIdx === 6) {
           cell.alignment = { horizontal: 'center', vertical: 'middle' };
-          cell.numFmt = '0.00"%"';
+          cell.numFmt = value === '-' ? '@' : '0.00"%"';
         } else {
           cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
         }
@@ -876,8 +883,11 @@ getDashboardProgressPercent(percent: number): number {
 
       row.metrics.forEach(metric => {
         const achievedCell = worksheet.getCell(currentRow, currentCol);
-        achievedCell.value = Number((metric.achieved).toFixed(2));
-        achievedCell.numFmt = '0.00"%"';
+        const achievedDisplay = this.getMetricAchievedDisplay(metric);
+        achievedCell.value = achievedDisplay === '-'
+          ? '-'
+          : Number(metric.achieved!.toFixed(2));
+        achievedCell.numFmt = achievedDisplay === '-' ? '@' : '0.00"%"';
         achievedCell.alignment = { horizontal: 'center', vertical: 'middle' };
         if (isAltRow) achievedCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: altRowBgColor } };
         achievedCell.border = {
@@ -950,8 +960,8 @@ getDashboardProgressPercent(percent: number): number {
       emptyCell2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
 
       const normCell = worksheet.getCell(currentRow, currentCol + 2);
-      normCell.value = Number(norm.toFixed(2));
-      normCell.numFmt = '0.00"%"';
+      normCell.value = norm === null ? '-' : Number(norm.toFixed(2));
+      normCell.numFmt = norm === null ? '@' : '0.00"%"';
       normCell.font = { bold: true, color: { argb: headerTextColor } };
       normCell.alignment = { horizontal: 'center', vertical: 'middle' };
       normCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
@@ -974,9 +984,29 @@ getDashboardProgressPercent(percent: number): number {
     return `${weightage.toFixed(2)}%`;
   }
 
-  getTotalKpiPercentage(row: KpiRow): number {
+  getMetricAchievedDisplay(metric: KpiMetric): string {
+    if (!metric || metric.achieved === null || metric.achieved === undefined) {
+      return '-';
+    }
+
+    if (metric.achieved === 0 && metric.maximumPoints <= 0 && metric.pointsAchieved === 0) {
+      return '-';
+    }
+
+    return `${metric.achieved.toFixed(2)}%`;
+  }
+
+  getTotalKpiPercentage(row: KpiRow): number | null {
     // Convert the row's achieved points into a capped percentage of its applicable points.
-    if (!row.metrics || row.metrics.length === 0 || !row.pointsApplicable) return 0;
+    if (!row.metrics || row.metrics.length === 0 || !row.pointsApplicable) return null;
+
+    const hasData = row.metrics.some((metric) =>
+      metric.maximumPoints > 0 ||
+      metric.pointsAchieved !== 0 ||
+      (metric.achieved !== null && metric.achieved !== 0)
+    );
+    if (!hasData) return null;
+
     const totalPoints = row.metrics.reduce((sum, m) => sum + (m.pointsAchieved ?? 0), 0);
     const cappedPoints = Math.min(totalPoints, row.pointsApplicable);
     return (cappedPoints / row.pointsApplicable) * 100;

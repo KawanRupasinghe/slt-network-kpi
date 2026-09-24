@@ -110,7 +110,9 @@
             <td class="col-target">{{ row.target }}</td>
             <td class="col-weight">{{ getComputedWeightage(row) }}</td>
             <td class="col-points">{{ row.pointsApplicable | number }}</td>
-            <td class="col-total-pct font-semibold text-center">{{ getTotalKpiPercentage(row) | number : '1.2-2' }}%</td>
+            <td class="col-total-pct font-semibold text-center">
+              {{ getTotalKpiPercentage(row) === null ? '-' : (getTotalKpiPercentage(row) | number : '1.2-2') + '%' }}
+            </td>
           </tr>
 
           <tr class="total-marks-row">
@@ -182,7 +184,7 @@
               #rightRowRef>
             <ng-container *ngFor="let metric of row.metrics">
               <td class="text-center achieved-cell" [ngClass]="getAchievedCellClass(metric)">
-                {{ metric.achieved === null ? '-' : (metric.achieved | number : '1.2-2') + '%' }}
+                {{ getMetricAchievedDisplay(metric) }}
               </td>
               <td class="text-center maximum-points-cell">
                 {{ metric.maximumPoints | number : '1.4-4' }}
@@ -209,9 +211,9 @@
             <ng-container *ngFor="let norm of totalPointsNormalized">
               <td></td>
               <td></td>
-              <td class="text-center points-achieved-cell group-margin">
-                <b>{{ norm | number : '1.2-2' }}%</b>
-              </td>
+                <td class="text-center points-achieved-cell group-margin">
+                  <b>{{ norm === null ? '-' : (norm | number : '1.2-2') + '%' }}</b>
+                </td>
             </ng-container>
           </tr>
         </tbody>

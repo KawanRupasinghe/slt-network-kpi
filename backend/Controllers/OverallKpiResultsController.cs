@@ -352,7 +352,7 @@ namespace backend.Controllers
                 {
                     Console.WriteLine("ENTERED IPNW BLOCK");
                     var totalIpnwNodes = ipnwResults.Sum(x => x.NodesCount);
-                    foreach (var record in ipnwResults)
+                    foreach (var record in ipnwResults.Where(x => x.NodesCount > 0m))
                     {
                         var area = record.NormalizedAreaCode;
                         var achieved = Math.Round(Math.Clamp(record.Percentage, 0m, 100m), 4);
@@ -385,7 +385,7 @@ namespace backend.Controllers
                 {
                     Console.WriteLine("ENTERED SLBN BLOCK");
                     var totalSlbnNodes = slbnResults.Sum(x => x.NodesCount);
-                    foreach (var record in slbnResults)
+                    foreach (var record in slbnResults.Where(x => x.NodesCount > 0m))
                     {
                         var area = record.NormalizedAreaCode;
                         var achieved = record.Percentage;
@@ -418,7 +418,7 @@ namespace backend.Controllers
                 {
                     Console.WriteLine("ENTERED MSAN BLOCK");
                     var totalMsanNodes = msanResults.Sum(x => x.NodesCount);
-                    foreach (var record in msanResults)
+                    foreach (var record in msanResults.Where(x => x.NodesCount > 0m))
                     {
                         var area = record.NormalizedAreaCode;
                         var achieved = record.Percentage;
@@ -451,7 +451,7 @@ namespace backend.Controllers
                 {
                     Console.WriteLine("ENTERED TOWER BLOCK");
                     var totalTowerNodes = towerResults.Sum(x => x.NodesCount);
-                    foreach (var record in towerResults)
+                    foreach (var record in towerResults.Where(x => x.NodesCount > 0m))
                     {
                         var area = record.NormalizedAreaCode;
                         var achieved = record.Percentage;
@@ -485,7 +485,7 @@ namespace backend.Controllers
                 {
                     Console.WriteLine("ENTERED POWER & AC BLOCK");
                     var totalPowerNodes = powerResults.Sum(x => x.NodesCount);
-                    foreach (var record in powerResults)
+                    foreach (var record in powerResults.Where(x => x.NodesCount > 0m))
                     {
                         var area = record.NormalizedAreaCode;
                         var achieved = record.Percentage;
@@ -777,8 +777,9 @@ namespace backend.Controllers
                     var area = CanonicalizeArea(row.AreaCode, officialAreas);
                     if (area == string.Empty) continue;
 
-                    var achieved = Math.Round(Math.Clamp(row.KpiValue ?? 0m, 0m, 100m), 4);
-                    result[area] = new AreaSnapshot(achieved, 0m);
+                    result[area] = row.KpiValue.HasValue
+                        ? new AreaSnapshot(Math.Round(Math.Clamp(row.KpiValue.Value, 0m, 100m), 4), 0m)
+                        : new AreaSnapshot(0m, 0m, IsUnavailable: true);
                 }
 
                 return result;
@@ -791,8 +792,9 @@ namespace backend.Controllers
                     var area = CanonicalizeArea(row.Site, officialAreas);
                     if (area == string.Empty) continue;
 
-                    var achieved = Math.Round(Math.Clamp(row.KpiValue ?? 0m, 0m, 100m), 4);
-                    result[area] = new AreaSnapshot(achieved, 0m);
+                    result[area] = row.KpiValue.HasValue
+                        ? new AreaSnapshot(Math.Round(Math.Clamp(row.KpiValue.Value, 0m, 100m), 4), 0m)
+                        : new AreaSnapshot(0m, 0m, IsUnavailable: true);
                 }
 
                 return result;
@@ -802,8 +804,9 @@ namespace backend.Controllers
             {
                 var area = CanonicalizeArea(row.AreaCode, officialAreas);
                 if (area == string.Empty) continue;
-                var achieved = Math.Clamp(row.KpiValue ?? 0m, 0m, 100m);
-                result[area] = new AreaSnapshot(achieved, 0);
+                result[area] = row.KpiValue.HasValue
+                    ? new AreaSnapshot(Math.Clamp(row.KpiValue.Value, 0m, 100m), 0m)
+                    : new AreaSnapshot(0m, 0m, IsUnavailable: true);
             }
             return result;
         }
@@ -916,10 +919,12 @@ namespace backend.Controllers
             decimal um = unavailableMinutes ?? 0;
             decimal tn = totalNodes ?? 0;
 
-            var denominator = tm > 0m ? tm : (24m * 60m * daysInMonth * tn);
+            var denominator = tm > 0m
+                ? tm
+                : (24m * 60m * daysInMonth * tn);
             if (denominator <= 0m) return null;
 
-            var numerator = tm - um;
+            var numerator = denominator - um;
             var pct = (numerator / denominator) * 100m;
             return Math.Clamp(pct, 0m, 100m);
         }
@@ -930,10 +935,12 @@ namespace backend.Controllers
             decimal um = unavailableMinutes ?? 0;
             decimal tn = totalNodes;
 
-            var denominator = tm > 0m ? tm : (24m * 60m * daysInMonth * tn);
+            var denominator = tm > 0m
+                ? tm
+                : (24m * 60m * daysInMonth * tn);
             if (denominator <= 0m) return null;
 
-            var numerator = tm - um;
+            var numerator = denominator - um;
             var pct = (numerator / denominator) * 100m;
             return Math.Clamp(pct, 0m, 100m);
         }

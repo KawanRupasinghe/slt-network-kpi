@@ -145,7 +145,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
   weightageSum = 0;
   totalPointsApplicable = 0;
   totalPointsAchievedByRegion: number[] = [];
-  totalPointsNormalized: number[] = [];
+  totalPointsNormalized: Array<number | null> = [];
   totalMaximumPointsByRegion: number[] = [];
 
   private readonly rowChangesSub = new Subscription();
@@ -495,7 +495,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
         if (percentByArea.size > 0) {
           this.totalPointsNormalized = this.engineersFlat.map((engineer, index) => {
             const value = percentByArea.get(this.normalizeArea(engineer.lea));
-            return value !== undefined ? Number(value.toFixed(2)) : this.totalPointsNormalized[index] ?? 0;
+            return value !== undefined ? Number(value.toFixed(2)) : this.totalPointsNormalized[index];
           });
         }
         this.scheduleRowSync();
@@ -587,7 +587,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     this.totalPointsNormalized = this.totalPointsAchievedByRegion.map((total, colIndex) =>
       this.totalMaximumPointsByRegion[colIndex]
         ? +((total / this.totalMaximumPointsByRegion[colIndex]) * 100).toFixed(2)
-        : 0
+        : null
     );
   }
 
@@ -634,9 +634,17 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /** Compute the total KPI percentage achieved by all engineers for a row, capped at 100% */
-  getTotalKpiPercentage(row: KpiRow): number {
+  getTotalKpiPercentage(row: KpiRow): number | null {
     // Convert achieved points to a capped percentage of the KPI's applicable points.
-    if (!row.metrics || row.metrics.length === 0 || !row.pointsApplicable) return 0;
+    if (!row.metrics || row.metrics.length === 0 || !row.pointsApplicable) return null;
+
+    const hasData = row.metrics.some((metric) =>
+      metric.maximumPoints > 0 ||
+      metric.pointsAchieved !== 0 ||
+      (metric.achieved !== null && metric.achieved !== 0)
+    );
+    if (!hasData) return null;
+
     const totalPoints = row.metrics.reduce((sum, m) => sum + (m.pointsAchieved ?? 0), 0);
     const cappedPoints = Math.min(totalPoints, row.pointsApplicable);
     return (cappedPoints / row.pointsApplicable) * 100;
@@ -726,7 +734,9 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
         row.target,
         this.getComputedWeightage(row),
         row.pointsApplicable,
-        Number(this.getTotalKpiPercentage(row).toFixed(2))
+        this.getTotalKpiPercentage(row) === null
+          ? '-'
+          : Number(this.getTotalKpiPercentage(row)!.toFixed(2))
       ];
 
       rowData.forEach((value, colIdx) => {
@@ -734,7 +744,7 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
         cell.value = value;
         if (colIdx === 6) {
           cell.alignment = { horizontal: 'center', vertical: 'middle' };
-          cell.numFmt = '0.00"%"';
+          cell.numFmt = value === '-' ? '@' : '0.00"%"';
         } else {
           cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
         }
@@ -881,8 +891,11 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
 
       row.metrics.forEach(metric => {
         const achievedCell = worksheet.getCell(currentRow, currentCol);
-        achievedCell.value = metric.achieved === null ? '-' : Number(metric.achieved.toFixed(2));
-        if (metric.achieved !== null) achievedCell.numFmt = '0.00"%"';
+        const achievedDisplay = this.getMetricAchievedDisplay(metric);
+        achievedCell.value = achievedDisplay === '-'
+          ? '-'
+          : Number(metric.achieved!.toFixed(2));
+        achievedCell.numFmt = achievedDisplay === '-' ? '@' : '0.00"%"';
         achievedCell.alignment = { horizontal: 'center', vertical: 'middle' };
         if (isAltRow) achievedCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: altRowBgColor } };
         achievedCell.border = {
@@ -955,8 +968,8 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
       emptyCell2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
 
       const normCell = worksheet.getCell(currentRow, currentCol + 2);
-      normCell.value = Number(norm.toFixed(2));
-      normCell.numFmt = '0.00"%"';
+      normCell.value = norm === null ? '-' : Number(norm.toFixed(2));
+      normCell.numFmt = norm === null ? '@' : '0.00"%"';
       normCell.font = { bold: true, color: { argb: headerTextColor } };
       normCell.alignment = { horizontal: 'center', vertical: 'middle' };
       normCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalRowBgColor } };
@@ -975,6 +988,18 @@ export class CurrentMonthComponent implements OnInit, AfterViewInit, OnDestroy {
     // Mark cells according to whether achieved points meet the allocated maximum.
     if (!metric || metric.achieved === null || !metric.maximumPoints || metric.maximumPoints <= 0) return '';
     return metric.pointsAchieved >= metric.maximumPoints ? 'target-achieved' : 'target-failed';
+  }
+
+  getMetricAchievedDisplay(metric: KpiMetric): string {
+    if (!metric || metric.achieved === null || metric.achieved === undefined) {
+      return '-';
+    }
+
+    if (metric.achieved === 0 && metric.maximumPoints <= 0 && metric.pointsAchieved === 0) {
+      return '-';
+    }
+
+    return `${metric.achieved.toFixed(2)}%`;
   }
 
   getKpiRowClass(row: KpiRow): string {

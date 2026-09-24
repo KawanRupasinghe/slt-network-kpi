@@ -484,8 +484,7 @@ export class RoutineMtncComponent implements OnInit {
 
       result[column] = cumSched
         ? Math.min((cumAchieved / cumSched) * 100, 100).toFixed(2)
-        : '0.00';
-      //result[column] = cumSched ? ((cumAchieved / cumSched) * 100).toFixed(2) : '0.00';
+        : '-';
     });
   }
 
