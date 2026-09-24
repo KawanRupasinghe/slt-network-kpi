@@ -830,15 +830,15 @@ ngOnInit(): void {
 		const um = Number(unavailableMinutes) || 0;
 		const tn = Number(totalNodes) || 0;
 
-		const totalAvailableMinutes = tm - um;
-		const denominator = tm > 0 ? tm : (24 * 60 * this.getDaysInMonth(meta?.year ?? this.selectedYear, meta?.month ?? this.selectedMonth) * tn);
-		if (denominator <= 0) {
-			return null;
-		}
+    const denominator = tm > 0 ? tm : (24 * 60 * this.getDaysInMonth(meta?.year ?? this.selectedYear, meta?.month ?? this.selectedMonth) * tn);
+    if (denominator <= 0) {
+      return null;
+    }
 
-		const pct = (100 * totalAvailableMinutes) / denominator;
-		return Math.max(0, Math.min(100, pct));
-	}
+    const numerator = denominator - um;
+    const pct = (100 * numerator) / denominator;
+    return Math.max(0, Math.min(100, pct));
+  }
 
 	calculatePercentageOtnOp2(totalFailed: any, slaNotViolated: any): number {
 		const failed = Number(totalFailed) || 0;

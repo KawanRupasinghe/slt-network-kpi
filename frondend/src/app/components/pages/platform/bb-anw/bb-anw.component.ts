@@ -583,14 +583,16 @@ private updateDropdown3Options(province: string): void {
 		const um = Number(unavailableMinutes) || 0;
 		const tn = Number(totalNodes) || 0;
 
-		const totalAvailableMinutes = tm - um;
-		const days = this.getDaysInMonth(meta?.month, meta?.year);
-		const totalMin = 24 * 60 * days * tn;
-		if (totalMin <= 0) return null;
+    const days = this.getDaysInMonth(meta?.month, meta?.year);
+    const denominator = tm > 0
+      ? tm
+      : 24 * 60 * days * tn;
+    if (denominator <= 0) return null;
 
-		const pct = (100 * totalAvailableMinutes) / totalMin;
-		return Math.max(0, Math.min(100, pct));
-	}
+    const numerator = denominator - um;
+    const pct = (100 * numerator) / denominator;
+    return Math.max(0, Math.min(100, pct));
+  }
 
 	// Starts editing a specific metric cell.
 	startEdit(entry: BbAnwEntry, key: MetricKey): void {
